@@ -73,48 +73,45 @@ export default {
       }
     },
     async fetchDataAndPopulateNodes() {
-      // Fetch user data from Random User API
-      async function fetchUser() {
-        const response = await fetch("https://randomuser.me/api/");
-        const data = await response.json();
-        return data.results[0];
-      }
-
-      // Define Cytoscape configuration
-      var cyConfig = {
+      const charactersData = await this.retrieveDataFromCRM();
+      const cyData = this.formatDataForCytoscape(charactersData);
+      this.populateCytoscapeGraph(cyData);
+    },
+    async retrieveDataFromCRM() {
+      // Implement code to retrieve data from CRM/database
+      // Example:
+      // const response = await fetch('https://crm-api-url/characters');
+      // const data = await response.json();
+      // return data;
+    },
+    formatDataForCytoscape(charactersData) {
+      const nodes = charactersData.map(character => ({
+        data: { id: character.id, label: character.name }
+      }));
+      const edges = this.extractEdgesFromCharacters(charactersData);
+      return { nodes, edges };
+    },
+    extractEdgesFromCharacters(charactersData) {
+      const edges = [];
+      charactersData.forEach(character => {
+        character.relatives.forEach(relativeId => {
+          edges.push({ data: { id: `${character.id}-${relativeId}`, source: character.id, target: relativeId } });
+        });
+      });
+      return edges;
+    },
+    populateCytoscapeGraph(cyData) {
+      var cy = cytoscape({
         container: document.getElementById("cy"),
-        elements: [
-          { data: { id: "a" } },
-          { data: { id: "b" } },
-          { data: { id: "c" } },
-          { data: { id: "d" } },
-          { data: { id: "e" } },
-          { data: { id: "f" } },
-          { data: { id: "g" } },
-          { data: { id: "ac", source: "a", target: "c" } },
-          { data: { id: "bc", source: "b", target: "c" } },
-          { data: { id: "df", source: "d", target: "f" } },
-          { data: { id: "ef", source: "e", target: "f" } },
-          { data: { id: "cg", source: "c", target: "g" } },
-          { data: { id: "fg", source: "f", target: "g" } },
-        ],
+        elements: {
+          nodes: cyData.nodes,
+          edges: cyData.edges
+        },
         layout: {
           name: 'dagre',
           nodeSep: 100,
           rankSep: 100,
           rankDir: 'TB',
-          /*positions: function (node) {
-            var positionMap = {
-              a: { x: -50, y: 0 },
-              b: { x: 50, y: 0 },
-              c: { x: 0, y: 100 },
-              d: { x: 150, y: 0 },
-              e: { x: 250, y: 0 },
-              f: { x: 200, y: 100 },
-              g: { x: 100, y: 200 },
-            };
-            return positionMap[node.id()] || { x: 0, y: 0 };
-          },*/
         },
         style: [
           {
@@ -123,7 +120,6 @@ export default {
               "background-color": "rgb(0, 87, 9)",
               width: "30px",
               height: "30px",
-              "background-image": "data(userImage)",
               border: "solid 1px #ccc",
             },
           },
@@ -137,28 +133,11 @@ export default {
             },
           },
         ],
-      };
-
-      var cy = cytoscape(cyConfig);
+      });
 
       cy.ready(() => {
         cy.zoom(0.75);
       })
-
-      var nodes = cy.nodes();
-      for (let i = 0; i < nodes.length; i++) {
-        const user = await fetchUser();
-        nodes[i].data("name", `${user.name.first} ${user.name.last}`);
-        nodes[i].data("info", {
-          // Store user info for the node
-          firstName: user.name.first,
-          lastName: user.name.last,
-          email: user.email,
-          phone: user.phone,
-          picture: user.picture.large,
-        });
-        nodes[i].data("userImage", user.picture.large);
-      }
 
       var popup = document.createElement("div");
       popup.id = "popup";
