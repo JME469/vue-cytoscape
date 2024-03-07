@@ -11,8 +11,12 @@
     "core-js": "^3.8.3",
     "cose": "^0.0.2",
     "cytoscape": "^3.28.1",
+    "cytoscape-cola": "^2.5.1",
+    "cytoscape-cose-bilkent": "^4.1.0",
     "cytoscape-dagre": "^2.5.0",
+    "cytoscape-euler": "^1.2.2",
     "cytoscape-fcose": "^2.2.0",
+    "cytoscape-springy": "^1.4.2",
     "vue": "^3.2.13"
   },
   "devDependencies": {

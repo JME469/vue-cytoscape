@@ -45,9 +45,16 @@
 import cytoscape from 'cytoscape';
 import dagre from 'cytoscape-dagre';
 import fcose from 'cytoscape-fcose';
+import cola from 'cytoscape-cola';
+import springy from 'cytoscape-springy';
+import coseBilkent from 'cytoscape-cose-bilkent';
 
 cytoscape.use(dagre);
 cytoscape.use(fcose);
+cytoscape.use(cola);
+cytoscape.use(springy);
+cytoscape.use(coseBilkent);
+
 
 
 export default {
@@ -89,6 +96,10 @@ export default {
       const data = responseData.data;
       console.log(data);
       return data;
+    },
+    getCharacterName(id) {
+      const character = this.charactersData.find(char => char.id === id);
+      return character ? character.nome_scelto : 'Unknown';
     },
     formatDataForCytoscape(charactersData) {
       const nodes = charactersData.map(character => ({
@@ -147,13 +158,43 @@ export default {
           nodes: cyData.nodes,
           edges: cyData.edges
         },
+
+
         layout: {
           name: 'fcose',
-          nodeRepulsion: 1000,
+          nodeRepulsion: 10000,
           randomize: true,
-          idealEdgeLength: 100,
-
+          idealEdgeLength: 75,
+          numIter: 25000,
+          nestingFactor: 500,
+          componentSpacing: 500,
+          nodeOverlap: 500,
         },
+
+        /*
+         layout: {
+           name: 'springy',
+           nodeDistance: 400,
+           iterations: 1000,
+           randomize: true,
+           springCoeff: 0.0008,
+           springLength: 350,
+           stiffness: 1,
+         },
+         */
+
+        /*
+         layout: {
+           name: 'cose-bilkent',
+           nodeRepulsion: 500,
+           idealEdgeLength: 200,
+           nestingFactor: 0,
+           gravity: 2,
+           numIter: 15000,
+           randomize: true,
+         },
+         */
+
         style: [
           {
             selector: "node",
@@ -161,7 +202,11 @@ export default {
               "background-color": "rgb(0, 87, 9)",
               width: "40px",
               height: "40px",
-              border: "solid 1px #ccc",
+              label: "data(id)", // This will set the label of each node to be its ID
+              "text-valign": "center", // Align the label vertically in the center
+              "text-halign": "center",
+              color: "#ffffff",
+              "font-size": "12px",
             },
           },
           {
@@ -193,17 +238,35 @@ export default {
         this.popupInfo = info;
         this.showPopup = true;
 
+        // Check if the character has an image reference
+        const imageSrc = info.icona ? `http://95.110.132.24:8071/assets/${info.icona}` : 'placeholder-image-url';
+        // Check if the character has a note
+        const noteSection = info.note ? `<p>Info: ${info.note}</p>` : '';
+        // Check if the character has a father
+        const fatherSection = info.padre ? this.getCharacterName(info.padre) : '';
+        // Check if the character has a mother
+        const motherSection = info.madre ? this.getCharacterName(info.madre) : '';
+        // Check if the character has a spouse
+        const spouseSection = info.marito_moglie ? this.getCharacterName(info.marito_moglie) : '';
+        // Check if the character has children
+        const childrenSection = info.figli_figlie && info.figli_figlie.length > 0 ?
+          `<p>Figli/Figlie: ${info.figli_figlie.map(childId => this.getCharacterName(childId)).join(', ')}</p>` : '';
 
+        // Construct the popup content
         popup.innerHTML = `
-          <div>
-            <img src="${info.icona}" alt="Icona">
+        <div>
+            <img src="${imageSrc}" alt="Icona">
             <div>
-              <p>Name: ${info.nome_scelto}</p>
-              <p>Id: ${info.id}</p>
-              <p>${info.note}</p>
+              <p>Id: ${info.id}</p>  
+              <p><b>${info.nome_scelto}</b></p>
+                ${noteSection}
+                ${fatherSection}
+                ${motherSection}
+                ${spouseSection}
+                ${childrenSection}
             </div>
-          </div>
-        `;
+        </div>
+    `;
 
 
         /*
