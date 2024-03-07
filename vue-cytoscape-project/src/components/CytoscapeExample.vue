@@ -63,6 +63,7 @@ export default {
     hidePopupOutside(event) {
       var popup = document.getElementById("popup");
       if (
+        popup &&
         popup.style.opacity === "1" &&
         !popup.contains(event.target) &&
         event.target !== this.clickedNode
@@ -73,16 +74,14 @@ export default {
       }
     },
     async fetchDataAndPopulateNodes() {
-      const charactersData = await this.retrieveDataFromCRM();
+      const charactersData = await this.retrieveData();
       const cyData = this.formatDataForCytoscape(charactersData);
       this.populateCytoscapeGraph(cyData);
     },
-    async retrieveDataFromCRM() {
-      // Implement code to retrieve data from CRM/database
-      // Example:
-      // const response = await fetch('https://crm-api-url/characters');
-      // const data = await response.json();
-      // return data;
+    async retrieveData() {
+      const response = await fetch('https://crm-api-url/characters');
+      const data = await response.json();
+      return data;
     },
     formatDataForCytoscape(charactersData) {
       const nodes = charactersData.map(character => ({
