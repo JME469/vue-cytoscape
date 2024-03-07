@@ -56,43 +56,7 @@ export default {
       showPopup: false,
       popupInfo: {},
       clickedNode: null,
-      charactersData: [
-        {
-          id: '1',
-          name: 'John Doe',
-          relatives: ['2', '3']
-        },
-        {
-          id: '2',
-          name: 'Jane Smith',
-          relatives: ['1', '3', '7']
-        },
-        {
-          id: '3',
-          name: 'Alice Johnson',
-          relatives: ['1', '2', '4']
-        },
-        {
-          id: '4',
-          name: 'Jamie Carragher',
-          relatives: ['3', '5', '6']
-        },
-        {
-          id: '5',
-          name: 'Micah Richards',
-          relatives: ['4', '6']
-        },
-        {
-          id: '6',
-          name: 'Alex Scott',
-          relatives: ['4', '5']
-        },
-        {
-          id: '7',
-          name: 'Hansen Graham',
-          relatives: ['2']
-        },
-      ]
+
     };
   },
   mounted() {
@@ -114,31 +78,64 @@ export default {
       }
     },
     async fetchDataAndPopulateNodes() {
-      //const charactersData = await this.retrieveData();
-      const cyData = this.formatDataForCytoscape(this.charactersData);
+      const charactersData = await this.retrieveData();
+      console.log(charactersData);
+      const cyData = this.formatDataForCytoscape(charactersData);
       this.populateCytoscapeGraph(cyData);
     },
     async retrieveData() {
-      const response = await fetch('https://crm-api-url/characters');
-      const data = await response.json();
+      const response = await fetch('http://95.110.132.24:8071/items/Virtuose/?limit=-1');
+      const responseData = await response.json();
+      const data = responseData.data;
+      console.log(data);
       return data;
     },
     formatDataForCytoscape(charactersData) {
       const nodes = charactersData.map(character => ({
         data: {
           id: character.id,
-          label: character.name,
+          label: character.nome_scelto,
           info: character
         }
       }));
       const edges = this.extractEdgesFromCharacters(charactersData);
       return { nodes, edges };
     },
+    extractRelatives(character) {
+      const relatives = [];
+      if (Array.isArray(character.figli_figlie)) {
+        relatives.push(...character.figli_figlie);
+      }
+      if (character.madre !== null) {
+        relatives.push(character.madre);
+      }
+      if (character.madrina !== null) {
+        relatives.push(character.madrina);
+      }
+      if (character.marito_moglie !== null) {
+        relatives.push(character.marito_moglie);
+      }
+      if (character.padre !== null) {
+        relatives.push(character.padre);
+      }
+      if (character.padrino !== null) {
+        relatives.push(character.padrino);
+      }
+      if (character.secondo_marito_moglie !== null) {
+        relatives.push(character.secondo_marito_moglie);
+      }
+      return relatives;
+    },
     extractEdgesFromCharacters(charactersData) {
       const edges = [];
       charactersData.forEach(character => {
-        character.relatives.forEach(relativeId => {
-          edges.push({ data: { id: `${character.id}-${relativeId}`, source: character.id, target: relativeId } });
+        const relatives = this.extractRelatives(character);
+        relatives.forEach(relativeId => {
+          const sourceExists = charactersData.some(char => char.id === character.id);
+          const targetExists = charactersData.some(char => char.id === relativeId);
+          if (sourceExists && targetExists) {
+            edges.push({ data: { id: `${character.id}-${relativeId}`, source: character.id, target: relativeId } });
+          }
         });
       });
       return edges;
@@ -152,16 +149,18 @@ export default {
         },
         layout: {
           name: 'fcose',
-          nodeRepulsion: 400,
+          nodeRepulsion: 1000,
           randomize: true,
+          idealEdgeLength: 100,
+
         },
         style: [
           {
             selector: "node",
             style: {
               "background-color": "rgb(0, 87, 9)",
-              width: "30px",
-              height: "30px",
+              width: "40px",
+              height: "40px",
               border: "solid 1px #ccc",
             },
           },
@@ -197,11 +196,11 @@ export default {
 
         popup.innerHTML = `
           <div>
-            
+            <img src="${info.icona}" alt="Icona">
             <div>
-              <p>Name: ${info.name}</p>
+              <p>Name: ${info.nome_scelto}</p>
               <p>Id: ${info.id}</p>
-              <p>Relatives: ${info.relatives}</p>
+              <p>${info.note}</p>
             </div>
           </div>
         `;
