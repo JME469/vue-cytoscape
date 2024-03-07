@@ -52,7 +52,44 @@ export default {
     return {
       showPopup: false,
       popupInfo: {},
-      clickedNode: null
+      clickedNode: null,
+      charactersData: [
+        {
+          id: '1',
+          name: 'John Doe',
+          relatives: ['2', '3']
+        },
+        {
+          id: '2',
+          name: 'Jane Smith',
+          relatives: ['1', '3']
+        },
+        {
+          id: '3',
+          name: 'Alice Johnson',
+          relatives: ['1', '2']
+        },
+        {
+          id: '4',
+          name: 'Jamie Carragher',
+          relatives: ['3', '6']
+        },
+        {
+          id: '5',
+          name: 'Micah Richards',
+          relatives: ['4', '6']
+        },
+        {
+          id: '6',
+          name: 'Alex Scott',
+          relatives: ['4', '5']
+        },
+        {
+          id: '7',
+          name: 'Hansen Graham',
+          relatives: ['2']
+        },
+      ]
     };
   },
   mounted() {
@@ -74,8 +111,8 @@ export default {
       }
     },
     async fetchDataAndPopulateNodes() {
-      const charactersData = await this.retrieveData();
-      const cyData = this.formatDataForCytoscape(charactersData);
+      //const charactersData = await this.retrieveData();
+      const cyData = this.formatDataForCytoscape(this.charactersData);
       this.populateCytoscapeGraph(cyData);
     },
     async retrieveData() {
@@ -85,7 +122,11 @@ export default {
     },
     formatDataForCytoscape(charactersData) {
       const nodes = charactersData.map(character => ({
-        data: { id: character.id, label: character.name }
+        data: { 
+          id: character.id,
+          label: character.name,
+          info: character
+        }
       }));
       const edges = this.extractEdgesFromCharacters(charactersData);
       return { nodes, edges };
@@ -151,6 +192,20 @@ export default {
         this.popupInfo = info;
         this.showPopup = true;
 
+        
+        popup.innerHTML = `
+          <div>
+            
+            <div>
+              <p>Name: ${info.name}</p>
+              <p>Id: ${info.id}</p>
+              <p>Relatives: ${info.relatives}</p>
+            </div>
+          </div>
+        `;
+        
+        
+        /*
         popup.innerHTML = `
           <div>
             <img src="${info.picture}" alt="Profile Picture">
@@ -161,6 +216,7 @@ export default {
             </div>
           </div>
         `;
+        */
 
         var position = node.renderedPosition();
 
