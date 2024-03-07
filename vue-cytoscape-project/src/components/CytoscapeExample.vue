@@ -44,8 +44,11 @@
 <script>
 import cytoscape from 'cytoscape';
 import dagre from 'cytoscape-dagre';
+import fcose from 'cytoscape-fcose';
 
 cytoscape.use(dagre);
+cytoscape.use(fcose);
+
 
 export default {
   data() {
@@ -62,17 +65,17 @@ export default {
         {
           id: '2',
           name: 'Jane Smith',
-          relatives: ['1', '3']
+          relatives: ['1', '3', '7']
         },
         {
           id: '3',
           name: 'Alice Johnson',
-          relatives: ['1', '2']
+          relatives: ['1', '2', '4']
         },
         {
           id: '4',
           name: 'Jamie Carragher',
-          relatives: ['3', '6']
+          relatives: ['3', '5', '6']
         },
         {
           id: '5',
@@ -122,7 +125,7 @@ export default {
     },
     formatDataForCytoscape(charactersData) {
       const nodes = charactersData.map(character => ({
-        data: { 
+        data: {
           id: character.id,
           label: character.name,
           info: character
@@ -148,10 +151,9 @@ export default {
           edges: cyData.edges
         },
         layout: {
-          name: 'dagre',
-          nodeSep: 100,
-          rankSep: 100,
-          rankDir: 'TB',
+          name: 'fcose',
+          nodeRepulsion: 400,
+          randomize: true,
         },
         style: [
           {
@@ -176,7 +178,7 @@ export default {
       });
 
       cy.ready(() => {
-        cy.zoom(0.75);
+        cy.zoom(0.55);
       })
 
       var popup = document.createElement("div");
@@ -192,7 +194,7 @@ export default {
         this.popupInfo = info;
         this.showPopup = true;
 
-        
+
         popup.innerHTML = `
           <div>
             
@@ -203,8 +205,8 @@ export default {
             </div>
           </div>
         `;
-        
-        
+
+
         /*
         popup.innerHTML = `
           <div>
