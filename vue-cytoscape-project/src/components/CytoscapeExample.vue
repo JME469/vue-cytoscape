@@ -21,6 +21,7 @@
 }
 
 #popup {
+  max-width: 500px;
   position: relative;
   background-color: white;
   border-radius: 15px;
@@ -63,6 +64,7 @@ export default {
     hidePopupOutside(event) {
       var popup = document.getElementById("popup");
       if (
+        popup &&
         popup.style.opacity === "1" &&
         !popup.contains(event.target) &&
         event.target !== this.clickedNode
@@ -195,7 +197,7 @@ export default {
 
         setTimeout(function () {
           // Show the popup
-          popup.style.width = "400px";
+          popup.style.width = "450px";
           popup.style.height = "auto";
           popup.style.opacity = "1";
 
