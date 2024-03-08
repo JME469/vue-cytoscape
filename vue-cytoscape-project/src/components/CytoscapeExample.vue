@@ -13,11 +13,21 @@
 }
 
 #popup>div {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 20px;
+}
+
+#popup>div>img {
+  grid-row: 1 / span 2;
+  border-radius: 10px;
+  margin: 15px;
+}
+
+#chInfo {
+  grid-column: 2;
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  align-content: center;
+  flex-direction: column;
 }
 
 #popup {
@@ -33,11 +43,6 @@
 
 #popup:hover {
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-}
-
-#popup>div>img {
-  border-radius: 10px;
-  margin: 15px;
 }
 </style>
 
@@ -63,6 +68,7 @@ export default {
       showPopup: false,
       popupInfo: {},
       clickedNode: null,
+      charactersData: [],
 
     };
   },
@@ -85,10 +91,15 @@ export default {
       }
     },
     async fetchDataAndPopulateNodes() {
-      const charactersData = await this.retrieveData();
-      console.log(charactersData);
-      const cyData = this.formatDataForCytoscape(charactersData);
-      this.populateCytoscapeGraph(cyData);
+      try {
+        const charactersData = await this.retrieveData();
+        this.charactersData = charactersData;
+        console.log(charactersData);
+        const cyData = this.formatDataForCytoscape(charactersData);
+        this.populateCytoscapeGraph(cyData);
+      } catch (error) {
+        console.error('Error fetching data and populating nodes: ', error);
+      }
     },
     async retrieveData() {
       const response = await fetch('http://95.110.132.24:8071/items/Virtuose/?limit=-1');
@@ -238,26 +249,21 @@ export default {
         this.popupInfo = info;
         this.showPopup = true;
 
-        // Check if the character has an image reference
-        const imageSrc = info.icona ? `http://95.110.132.24:8071/assets/${info.icona}` : 'placeholder-image-url';
-        // Check if the character has a note
+
+        const imageSrc = info.icona !== null ? `http://95.110.132.24:8071/assets/${info.icona}` : '';
         const noteSection = info.note ? `<p>Info: ${info.note}</p>` : '';
-        // Check if the character has a father
-        const fatherSection = info.padre ? this.getCharacterName(info.padre) : '';
-        // Check if the character has a mother
-        const motherSection = info.madre ? this.getCharacterName(info.madre) : '';
-        // Check if the character has a spouse
-        const spouseSection = info.marito_moglie ? this.getCharacterName(info.marito_moglie) : '';
-        // Check if the character has children
+        const fatherSection = info.padre ? `<p>Padre: ${this.getCharacterName(info.padre)}</p>` : '';
+        const motherSection = info.madre ? `<p>Madre: ${this.getCharacterName(info.madre)}</p>` : '';
+        const spouseSection = info.marito_moglie ? `<p>Marito/Moglie: ${this.getCharacterName(info.marito_moglie)}</p>` : '';
         const childrenSection = info.figli_figlie && info.figli_figlie.length > 0 ?
           `<p>Figli/Figlie: ${info.figli_figlie.map(childId => this.getCharacterName(childId)).join(', ')}</p>` : '';
 
         // Construct the popup content
         popup.innerHTML = `
-        <div>
-            <img src="${imageSrc}" alt="Icona">
-            <div>
-              <p>Id: ${info.id}</p>  
+        <div id="container">
+          ${imageSrc !== '' ? `<img src="${imageSrc}" alt="Icona" height="250px" width="auto">` : ''}
+            <div id="chInfo">
+              <p><i>ID: ${info.id}</i></p>  
               <p><b>${info.nome_scelto}</b></p>
                 ${noteSection}
                 ${fatherSection}
@@ -267,33 +273,19 @@ export default {
             </div>
         </div>
     `;
-
-
-        /*
-        popup.innerHTML = `
-          <div>
-            <img src="${info.picture}" alt="Profile Picture">
-            <div>
-              <p>Name: ${info.firstName} ${info.lastName}</p>
-              <p>Email: ${info.email}</p>
-              <p>Phone: ${info.phone}</p>
-            </div>
-          </div>
-        `;
-        */
-
-        var position = node.renderedPosition();
+        var position = event.target.renderedPosition();
+        var cyContainer = document.getElementById('cy');
 
         var popupOffsetX = -400;
         var popupOffsetY = -600;
-        var popupPositionX = position.x + popupOffsetX;
-        var popupPositionY = position.y + popupOffsetY;
+        var popupPositionX = Math.min(position.x + popupOffsetX, cyContainer.offsetWidth - popup.offsetWidth);
+        var popupPositionY = Math.min(position.y + popupOffsetY, cyContainer.offsetHeight - popup.offsetHeight);
 
         popup.style.transform = `translate(${popupPositionX}px, ${popupPositionY}px)`;
 
         setTimeout(function () {
           // Show the popup
-          popup.style.width = "400px";
+          popup.style.width = "500px";
           popup.style.height = "auto";
           popup.style.opacity = "1";
 
