@@ -7,7 +7,7 @@
 <style scoped>
 #cy {
   width: 100%;
-  height: 650px;
+  height: 800px;
   background-color: rgb(255, 246, 232);
   padding: 50px;
 }
@@ -94,8 +94,9 @@ export default {
       try {
         const charactersData = await this.retrieveData();
         this.charactersData = charactersData;
-        console.log(charactersData);
+        //console.log(charactersData);
         const cyData = this.formatDataForCytoscape(charactersData);
+        console.log(cyData);
         this.populateCytoscapeGraph(cyData);
       } catch (error) {
         console.error('Error fetching data and populating nodes: ', error);
@@ -105,7 +106,7 @@ export default {
       const response = await fetch('http://95.110.132.24:8071/items/Virtuose/?limit=-1');
       const responseData = await response.json();
       const data = responseData.data;
-      console.log(data);
+      //console.log(data);
       return data;
     },
     getCharacterName(id) {
@@ -175,8 +176,8 @@ export default {
           name: 'fcose',
           nodeRepulsion: 10000,
           randomize: true,
-          idealEdgeLength: 75,
-          numIter: 25000,
+          idealEdgeLength: 50,
+          numIter: 30000,
           nestingFactor: 500,
           componentSpacing: 500,
           nodeOverlap: 500,
@@ -210,7 +211,16 @@ export default {
           {
             selector: "node",
             style: {
-              "background-color": "rgb(0, 87, 9)",
+              "background-image": (node) => {
+                const info = node.data("info");
+                return info.icona !== null ? `url(http://95.110.132.24:8071/assets/${info.icona})` : 'none';
+              },
+              "background-fit": "cover",
+              "background-color": (node) => {
+                const info = node.data("info");
+                return info.icona !== null ? 'transparent' : 'rgb(0, 87, 9)';
+              },
+
               width: "40px",
               height: "40px",
               label: "data(id)", // This will set the label of each node to be its ID
@@ -230,7 +240,43 @@ export default {
             },
           },
         ],
+        minZoom: 0.1,
+        maxZoom: 2,
+        pan: { x: 0, y: 0 },
+        boxSelectionEnabled: false
       });
+
+      /*
+
+      let isDragging = false;
+      let initialPointerPosition = { x: 0, y: 0 };
+
+      const cyContainer = document.getElementById('cy');
+
+      cyContainer.addEventListener('mousedown', (event) => {
+        isDragging = true;
+        initialPointerPosition = { x: event.clientX, y: event.clientY };
+      });
+
+      cyContainer.addEventListener('mousemove', (event) => {
+        if (isDragging) {
+          const deltaX = event.clientX - initialPointerPosition.x;
+          const deltaY = event.clientY - initialPointerPosition.y;
+          const currentPan = cy.pan();
+          const limitedPan = {
+            x: Math.min(Math.max(currentPan.x + deltaX, -100), 100),
+            y: Math.min(Math.max(currentPan.y + deltaY, -100), 100)
+          };
+          cy.pan(limitedPan);
+          initialPointerPosition = { x: event.clientX, y: event.clientY };
+        }
+      });
+
+      cyContainer.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+      
+      */
 
       cy.ready(() => {
         cy.zoom(0.55);
@@ -261,7 +307,7 @@ export default {
         // Construct the popup content
         popup.innerHTML = `
         <div id="container">
-          ${imageSrc !== '' ? `<img src="${imageSrc}" alt="Icona" height="250px" width="auto">` : ''}
+          ${imageSrc !== '' ? `<img src="${imageSrc}" width="250px" alt="Icona">` : ''}
             <div id="chInfo">
               <p><i>ID: ${info.id}</i></p>  
               <p><b>${info.nome_scelto}</b></p>
@@ -276,8 +322,8 @@ export default {
         var position = event.target.renderedPosition();
         var cyContainer = document.getElementById('cy');
 
-        var popupOffsetX = -400;
-        var popupOffsetY = -600;
+        var popupOffsetX = -600;
+        var popupOffsetY = -800;
         var popupPositionX = Math.min(position.x + popupOffsetX, cyContainer.offsetWidth - popup.offsetWidth);
         var popupPositionY = Math.min(position.y + popupOffsetY, cyContainer.offsetHeight - popup.offsetHeight);
 
