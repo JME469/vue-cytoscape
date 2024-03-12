@@ -12,13 +12,13 @@
   padding: 50px;
 }
 
-#popup>div {
+#popup > div {
   display: grid;
   grid-template-columns: auto auto;
   gap: 20px;
 }
 
-#popup>div>img {
+#popup > div > img {
   grid-row: 1 / span 2;
   border-radius: 10px;
   margin: 15px;
@@ -47,20 +47,18 @@
 </style>
 
 <script>
-import cytoscape from 'cytoscape';
-import dagre from 'cytoscape-dagre';
-import fcose from 'cytoscape-fcose';
-import cola from 'cytoscape-cola';
-import springy from 'cytoscape-springy';
-import coseBilkent from 'cytoscape-cose-bilkent';
+import cytoscape from "cytoscape";
+import dagre from "cytoscape-dagre";
+import fcose from "cytoscape-fcose";
+import cola from "cytoscape-cola";
+import springy from "cytoscape-springy";
+import coseBilkent from "cytoscape-cose-bilkent";
 
 cytoscape.use(dagre);
 cytoscape.use(fcose);
 cytoscape.use(cola);
 cytoscape.use(springy);
 cytoscape.use(coseBilkent);
-
-
 
 export default {
   data() {
@@ -69,7 +67,6 @@ export default {
       popupInfo: {},
       clickedNode: null,
       charactersData: [],
-
     };
   },
   mounted() {
@@ -99,27 +96,29 @@ export default {
         console.log(cyData);
         this.populateCytoscapeGraph(cyData);
       } catch (error) {
-        console.error('Error fetching data and populating nodes: ', error);
+        console.error("Error fetching data and populating nodes: ", error);
       }
     },
     async retrieveData() {
-      const response = await fetch('http://95.110.132.24:8071/items/Virtuose/?limit=-1');
+      const response = await fetch(
+        "http://95.110.132.24:8071/items/Virtuose/?limit=-1"
+      );
       const responseData = await response.json();
       const data = responseData.data;
       //console.log(data);
       return data;
     },
     getCharacterName(id) {
-      const character = this.charactersData.find(char => char.id === id);
-      return character ? character.nome_scelto : 'Unknown';
+      const character = this.charactersData.find((char) => char.id === id);
+      return character ? character.nome_scelto : "Unknown";
     },
     formatDataForCytoscape(charactersData) {
-      const nodes = charactersData.map(character => ({
+      const nodes = charactersData.map((character) => ({
         data: {
           id: character.id,
           label: character.nome_scelto,
-          info: character
-        }
+          info: character,
+        },
       }));
       const edges = this.extractEdgesFromCharacters(charactersData);
       return { nodes, edges };
@@ -151,13 +150,23 @@ export default {
     },
     extractEdgesFromCharacters(charactersData) {
       const edges = [];
-      charactersData.forEach(character => {
+      charactersData.forEach((character) => {
         const relatives = this.extractRelatives(character);
-        relatives.forEach(relativeId => {
-          const sourceExists = charactersData.some(char => char.id === character.id);
-          const targetExists = charactersData.some(char => char.id === relativeId);
+        relatives.forEach((relativeId) => {
+          const sourceExists = charactersData.some(
+            (char) => char.id === character.id
+          );
+          const targetExists = charactersData.some(
+            (char) => char.id === relativeId
+          );
           if (sourceExists && targetExists) {
-            edges.push({ data: { id: `${character.id}-${relativeId}`, source: character.id, target: relativeId } });
+            edges.push({
+              data: {
+                id: `${character.id}-${relativeId}`,
+                source: character.id,
+                target: relativeId,
+              },
+            });
           }
         });
       });
@@ -168,44 +177,19 @@ export default {
         container: document.getElementById("cy"),
         elements: {
           nodes: cyData.nodes,
-          edges: cyData.edges
+          edges: cyData.edges,
         },
 
-
         layout: {
-          name: 'fcose',
+          name: "fcose",
           nodeRepulsion: 10000,
           randomize: true,
           idealEdgeLength: 50,
           numIter: 30000,
-          nestingFactor: 500,
-          componentSpacing: 500,
-          nodeOverlap: 500,
+          nestingFactor: 1000,
+          componentSpacing: 1000,
+          nodeOverlap: 1000,
         },
-
-        /*
-         layout: {
-           name: 'springy',
-           nodeDistance: 400,
-           iterations: 1000,
-           randomize: true,
-           springCoeff: 0.0008,
-           springLength: 350,
-           stiffness: 1,
-         },
-         */
-
-        /*
-         layout: {
-           name: 'cose-bilkent',
-           nodeRepulsion: 500,
-           idealEdgeLength: 200,
-           nestingFactor: 0,
-           gravity: 2,
-           numIter: 15000,
-           randomize: true,
-         },
-         */
 
         style: [
           {
@@ -213,12 +197,14 @@ export default {
             style: {
               "background-image": (node) => {
                 const info = node.data("info");
-                return info.icona !== null ? `url(http://95.110.132.24:8071/assets/${info.icona})` : 'none';
+                return info.icona !== null
+                  ? `url(http://95.110.132.24:8071/assets/${info.icona})`
+                  : "none";
               },
               "background-fit": "cover",
               "background-color": (node) => {
                 const info = node.data("info");
-                return info.icona !== null ? 'transparent' : 'rgb(0, 87, 9)';
+                return info.icona !== null ? "transparent" : "rgb(0, 87, 9)";
               },
 
               width: "40px",
@@ -240,47 +226,77 @@ export default {
             },
           },
         ],
-        minZoom: 0.1,
+        minZoom: 0.25,
         maxZoom: 2,
         pan: { x: 0, y: 0 },
-        boxSelectionEnabled: false
+        boxSelectionEnabled: false,
       });
 
-      /*
+      // Disable built-in panning
+      cy.userPanningEnabled(false);
 
-      let isDragging = false;
+      // Define variables for custom panning
+      let isPanning = false;
       let initialPointerPosition = { x: 0, y: 0 };
 
-      const cyContainer = document.getElementById('cy');
+      // Add mouse event listeners for custom panning
+      const cyContainer = document.getElementById("cy");
 
-      cyContainer.addEventListener('mousedown', (event) => {
-        isDragging = true;
-        initialPointerPosition = { x: event.clientX, y: event.clientY };
+      cyContainer.addEventListener("mousedown", (event) => {
+        console.log("X: ", event.clientX, "Y: ", event.clientY);
+        if (event.target && event.target.isNode && event.target.isNode()) {
+          isPanning = false;
+          console.log("Node being dragged");
+        } else {
+          console.log("Panning");
+          isPanning = true;
+          initialPointerPosition = { x: event.clientX, y: event.clientY };
+        }
       });
 
-      cyContainer.addEventListener('mousemove', (event) => {
-        if (isDragging) {
+      cyContainer.addEventListener("mousemove", (event) => {
+        if (isPanning) {
           const deltaX = event.clientX - initialPointerPosition.x;
           const deltaY = event.clientY - initialPointerPosition.y;
           const currentPan = cy.pan();
           const limitedPan = {
-            x: Math.min(Math.max(currentPan.x + deltaX, -100), 100),
-            y: Math.min(Math.max(currentPan.y + deltaY, -100), 100)
+            x: Math.min(Math.max(currentPan.x + deltaX, -300), 2400), // Adjust the panning boundaries as needed
+            y: Math.min(Math.max(currentPan.y + deltaY, -300), 900),
           };
           cy.pan(limitedPan);
           initialPointerPosition = { x: event.clientX, y: event.clientY };
         }
       });
 
-      cyContainer.addEventListener('mouseup', () => {
-        isDragging = false;
+      cyContainer.addEventListener("mouseup", () => {
+        isPanning = false;
       });
-      
-      */
+
+      cyContainer.addEventListener("wheel", (event) => {
+        if (event.ctrlKey || event.metaKey) {
+          return; // Let the default zoom behavior handle it
+        }
+        const zoomAmount = event.deltaY > 0 ? -0.1 : 0.1; // Change the zoom amount as needed
+        const containerRect = cyContainer.getBoundingClientRect();
+        const pointerPosition = {
+          x: event.clientX - containerRect.left,
+          y: event.clientY - containerRect.top,
+        };
+        const cyRelativePosition = {
+          x: pointerPosition.x / cy.width(),
+          y: pointerPosition.y / cy.height(),
+        };
+
+        cy.zoom({
+          level: cy.zoom() + zoomAmount,
+          position: cyRelativePosition,
+        });
+        event.preventDefault(); // Prevent default scrolling behavior
+      });
 
       cy.ready(() => {
         cy.zoom(0.55);
-      })
+      });
 
       var popup = document.createElement("div");
       popup.id = "popup";
@@ -295,19 +311,35 @@ export default {
         this.popupInfo = info;
         this.showPopup = true;
 
-
-        const imageSrc = info.icona !== null ? `http://95.110.132.24:8071/assets/${info.icona}` : '';
-        const noteSection = info.note ? `<p>Info: ${info.note}</p>` : '';
-        const fatherSection = info.padre ? `<p>Padre: ${this.getCharacterName(info.padre)}</p>` : '';
-        const motherSection = info.madre ? `<p>Madre: ${this.getCharacterName(info.madre)}</p>` : '';
-        const spouseSection = info.marito_moglie ? `<p>Marito/Moglie: ${this.getCharacterName(info.marito_moglie)}</p>` : '';
-        const childrenSection = info.figli_figlie && info.figli_figlie.length > 0 ?
-          `<p>Figli/Figlie: ${info.figli_figlie.map(childId => this.getCharacterName(childId)).join(', ')}</p>` : '';
+        const imageSrc =
+          info.icona !== null
+            ? `http://95.110.132.24:8071/assets/${info.icona}`
+            : "";
+        const noteSection = info.note ? `<p>Info: ${info.note}</p>` : "";
+        const fatherSection = info.padre
+          ? `<p>Padre: ${this.getCharacterName(info.padre)}</p>`
+          : "";
+        const motherSection = info.madre
+          ? `<p>Madre: ${this.getCharacterName(info.madre)}</p>`
+          : "";
+        const spouseSection = info.marito_moglie
+          ? `<p>Marito/Moglie: ${this.getCharacterName(info.marito_moglie)}</p>`
+          : "";
+        const childrenSection =
+          info.figli_figlie && info.figli_figlie.length > 0
+            ? `<p>Figli/Figlie: ${info.figli_figlie
+                .map((childId) => this.getCharacterName(childId))
+                .join(", ")}</p>`
+            : "";
 
         // Construct the popup content
         popup.innerHTML = `
         <div id="container">
-          ${imageSrc !== '' ? `<img src="${imageSrc}" width="250px" alt="Icona">` : ''}
+          ${
+            imageSrc !== ""
+              ? `<img src="${imageSrc}" width="250px" alt="Icona">`
+              : ""
+          }
             <div id="chInfo">
               <p><i>ID: ${info.id}</i></p>  
               <p><b>${info.nome_scelto}</b></p>
@@ -320,12 +352,18 @@ export default {
         </div>
     `;
         var position = event.target.renderedPosition();
-        var cyContainer = document.getElementById('cy');
+        var cyContainer = document.getElementById("cy");
 
-        var popupOffsetX = -600;
+        var popupOffsetX = -550;
         var popupOffsetY = -800;
-        var popupPositionX = Math.min(position.x + popupOffsetX, cyContainer.offsetWidth - popup.offsetWidth);
-        var popupPositionY = Math.min(position.y + popupOffsetY, cyContainer.offsetHeight - popup.offsetHeight);
+        var popupPositionX = Math.min(
+          position.x + popupOffsetX,
+          cyContainer.offsetWidth - popup.offsetWidth
+        );
+        var popupPositionY = Math.min(
+          position.y + popupOffsetY,
+          cyContainer.offsetHeight - popup.offsetHeight
+        );
 
         popup.style.transform = `translate(${popupPositionX}px, ${popupPositionY}px)`;
 
