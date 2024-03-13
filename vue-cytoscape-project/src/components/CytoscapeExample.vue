@@ -1,12 +1,18 @@
 <template>
-  <div>
+  <div id="container">
     <div id="cy"></div>
   </div>
 </template>
 
 <style scoped>
+#container {
+  background-color: rgb(255, 242, 223);
+  display: flex;
+  justify-content: center;
+}
+
 #cy {
-  width: 100%;
+  width: 60%;
   height: 800px;
   background-color: rgb(255, 246, 232);
   padding: 50px;
@@ -182,9 +188,9 @@ export default {
 
         layout: {
           name: "fcose",
-          nodeRepulsion: 10000,
+          nodeRepulsion: 15000,
           randomize: true,
-          idealEdgeLength: 50,
+          idealEdgeLength: 45,
           numIter: 30000,
           nestingFactor: 1000,
           componentSpacing: 1000,
@@ -204,14 +210,28 @@ export default {
               "background-fit": "cover",
               "background-color": (node) => {
                 const info = node.data("info");
-                return info.icona !== null ? "transparent" : "rgb(0, 87, 9)";
+                if (info.icona !== null) {
+                  return "transparent";
+                } else {
+                  return info.luogo_nascita === "Roma"
+                    ? "rgb(78, 6, 105)"
+                    : "rgb(0, 87, 9)";
+                }
               },
 
-              width: "40px",
-              height: "40px",
+              width: (node) => {
+                const info = node.data("info");
+                return info.virtuosa ? "50px" : "40px"; // Adjust the width based on the condition
+              },
+              height: (node) => {
+                const info = node.data("info");
+                return info.virtuosa ? "50px" : "40px"; // Adjust the height based on the condition
+              },
+              /*
               label: "data(id)", // This will set the label of each node to be its ID
-              "text-valign": "center", // Align the label vertically in the center
+              "text-valign": "center", 
               "text-halign": "center",
+              */
               color: "#ffffff",
               "font-size": "12px",
             },
@@ -226,8 +246,8 @@ export default {
             },
           },
         ],
-        minZoom: 0.25,
-        maxZoom: 2,
+        minZoom: 0.35,
+        maxZoom: 1.8,
         pan: { x: 0, y: 0 },
         boxSelectionEnabled: false,
       });
@@ -259,10 +279,17 @@ export default {
           const deltaX = event.clientX - initialPointerPosition.x;
           const deltaY = event.clientY - initialPointerPosition.y;
           const currentPan = cy.pan();
+
+          const maxX = cyContainer.offsetWidth;
+          const maxY = cyContainer.offsetHeight;
+          const minX = -cyContainer.offsetWidth * 0.5;
+          const minY = -cyContainer.offsetHeight * 0.5;
+
           const limitedPan = {
-            x: Math.min(Math.max(currentPan.x + deltaX, -300), 2400), // Adjust the panning boundaries as needed
-            y: Math.min(Math.max(currentPan.y + deltaY, -300), 900),
+            x: Math.min(Math.max(currentPan.x + deltaX, minX), maxX), // Adjust the panning boundaries as needed
+            y: Math.min(Math.max(currentPan.y + deltaY, minY), maxY),
           };
+
           cy.pan(limitedPan);
           initialPointerPosition = { x: event.clientX, y: event.clientY };
         }
@@ -273,19 +300,23 @@ export default {
       });
 
       cyContainer.addEventListener("wheel", (event) => {
+        let cursorX = event.clientX;
+        let cursorY = event.clientY;
+        const containerRect = cyContainer.getBoundingClientRect();
+        const containerWidth = containerRect.width;
+        const containerHeight = containerRect.height;
         if (event.ctrlKey || event.metaKey) {
           return; // Let the default zoom behavior handle it
         }
         const zoomAmount = event.deltaY > 0 ? -0.1 : 0.1; // Change the zoom amount as needed
-        const containerRect = cyContainer.getBoundingClientRect();
-        const pointerPosition = {
-          x: event.clientX - containerRect.left,
-          y: event.clientY - containerRect.top,
+        //const containerRect = cyContainer.getBoundingClientRect();
+
+        let cyRelativePosition = {
+          x: cursorX - containerWidth / 2,
+          y: cursorY - containerHeight / 2,
         };
-        const cyRelativePosition = {
-          x: pointerPosition.x / cy.width(),
-          y: pointerPosition.y / cy.height(),
-        };
+
+        console.log(cyRelativePosition);
 
         cy.zoom({
           level: cy.zoom() + zoomAmount,
@@ -315,19 +346,21 @@ export default {
           info.icona !== null
             ? `http://95.110.132.24:8071/assets/${info.icona}`
             : "";
-        const noteSection = info.note ? `<p>Info: ${info.note}</p>` : "";
+        const noteSection = info.note ? `<p><b>Info:</b> ${info.note}</p>` : "";
         const fatherSection = info.padre
-          ? `<p>Padre: ${this.getCharacterName(info.padre)}</p>`
+          ? `<p><b>Padre:</b> ${this.getCharacterName(info.padre)}</p>`
           : "";
         const motherSection = info.madre
-          ? `<p>Madre: ${this.getCharacterName(info.madre)}</p>`
+          ? `<p><b>Madre:</b> ${this.getCharacterName(info.madre)}</p>`
           : "";
         const spouseSection = info.marito_moglie
-          ? `<p>Marito/Moglie: ${this.getCharacterName(info.marito_moglie)}</p>`
+          ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
+              info.marito_moglie
+            )}</p>`
           : "";
         const childrenSection =
           info.figli_figlie && info.figli_figlie.length > 0
-            ? `<p>Figli/Figlie: ${info.figli_figlie
+            ? `<p><b>Figli/Figlie:</b> ${info.figli_figlie
                 .map((childId) => this.getCharacterName(childId))
                 .join(", ")}</p>`
             : "";
@@ -342,12 +375,14 @@ export default {
           }
             <div id="chInfo">
               <p><i>ID: ${info.id}</i></p>  
-              <p><b>${info.nome_scelto}</b></p>
-                ${noteSection}
+              <h3 style="margin-left:10px"><b><i>${
+                info.nome_scelto
+              }</i></b></h3>
                 ${fatherSection}
                 ${motherSection}
                 ${spouseSection}
                 ${childrenSection}
+                ${noteSection}
             </div>
         </div>
     `;
