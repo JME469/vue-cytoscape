@@ -18,10 +18,10 @@
   padding: 50px;
 }
 
-#popup > div {
+#content {
   display: grid;
   grid-template-columns: auto auto;
-  gap: 20px;
+  gap: 0;
 }
 
 #popup > div > img {
@@ -34,6 +34,23 @@
   grid-column: 2;
   display: flex;
   flex-direction: column;
+}
+
+#chInfo > h4 {
+  font-weight: lighter;
+  font-size: small;
+
+  color: rgb(67, 67, 67);
+}
+
+.birthPlace {
+  margin: 0 0 10px 0;
+  margin-left: 20px;
+
+  font-weight: lighter;
+  font-size: small;
+
+  color: rgb(67, 67, 67);
 }
 
 #popup {
@@ -99,7 +116,7 @@ export default {
         this.charactersData = charactersData;
         //console.log(charactersData);
         const cyData = this.formatDataForCytoscape(charactersData);
-        console.log(cyData);
+        //console.log(cyData);
         this.populateCytoscapeGraph(cyData);
       } catch (error) {
         console.error("Error fetching data and populating nodes: ", error);
@@ -195,6 +212,7 @@ export default {
           nestingFactor: 1000,
           componentSpacing: 1000,
           nodeOverlap: 1000,
+          animate: false,
         },
 
         style: [
@@ -221,17 +239,30 @@ export default {
 
               width: (node) => {
                 const info = node.data("info");
-                return info.virtuosa ? "50px" : "40px"; // Adjust the width based on the condition
+                return info.virtuosa ? "55px" : "40px"; // Adjust the width based on the condition
               },
               height: (node) => {
                 const info = node.data("info");
-                return info.virtuosa ? "50px" : "40px"; // Adjust the height based on the condition
+                return info.virtuosa ? "55px" : "40px"; // Adjust the height based on the condition
               },
+
               /*
-              label: "data(id)", // This will set the label of each node to be its ID
-              "text-valign": "center", 
+              label: (node) => {
+                const info = node.data("info");
+                return info.virtuosa ? "V" : "";
+              }, // This will set the label of each node to be its ID
+              "text-valign": "center",
               "text-halign": "center",
+              "text-outline-color": (node) => {
+                const info = node.data("info");
+                return info.virtuosa ? "pink" : "transparent"; // Adjust the outline color based on the condition
+              },
+              "text-outline-width": (node) => {
+                const info = node.data("info");
+                return info.virtuosa ? "2px" : "0px"; // Adjust the outline width based on the condition
+              },
               */
+
               color: "#ffffff",
               "font-size": "12px",
             },
@@ -240,7 +271,23 @@ export default {
             selector: "edge",
             style: {
               width: 3,
-              "line-color": "rgb(0, 87, 9)",
+              "line-color": (edge) => {
+                const sourceNode = edge.source();
+                const targetNode = edge.target();
+
+                const sourceInfo = sourceNode.data("info");
+                const targetInfo = targetNode.data("info");
+
+                // Check if either the source or target node is from Rome
+                if (
+                  sourceInfo.luogo_nascita === "Roma" ||
+                  targetInfo.luogo_nascita === "Roma"
+                ) {
+                  return "rgb(78, 6, 105)"; // Set the line color to purple if either node is from Rome
+                } else {
+                  return "rgb(0, 87, 9)"; // Set a default color for edges
+                }
+              },
               "target-arrow-color": "rgb(0, 87, 9)",
               "target-arrow-shape": "triangle",
             },
@@ -253,32 +300,42 @@ export default {
       });
 
       // Disable built-in panning
+
       cy.userPanningEnabled(false);
 
       // Define variables for custom panning
       let isPanning = false;
       let initialPointerPosition = { x: 0, y: 0 };
 
+      var nodeClicked = false;
+
       // Add mouse event listeners for custom panning
       const cyContainer = document.getElementById("cy");
 
       cyContainer.addEventListener("mousedown", (event) => {
-        console.log("X: ", event.clientX, "Y: ", event.clientY);
-        if (event.target && event.target.isNode && event.target.isNode()) {
+        // Check if the click occurred outside of nodes
+        //const target = cy.$(event.target);
+        if (nodeClicked) {
           isPanning = false;
-          console.log("Node being dragged");
         } else {
-          console.log("Panning");
           isPanning = true;
           initialPointerPosition = { x: event.clientX, y: event.clientY };
         }
       });
 
+      cy.on("grab", "node", (event) => {
+        nodeClicked = true;
+        isPanning = false;
+
+        // Prevent event propagation to the DOM
+        event.stopPropagation();
+      });
+
       cyContainer.addEventListener("mousemove", (event) => {
-        if (isPanning) {
-          const deltaX = event.clientX - initialPointerPosition.x;
-          const deltaY = event.clientY - initialPointerPosition.y;
-          const currentPan = cy.pan();
+        if (isPanning === true) {
+          var deltaX = event.clientX - initialPointerPosition.x;
+          var deltaY = event.clientY - initialPointerPosition.y;
+          var currentPan = cy.pan();
 
           const maxX = cyContainer.offsetWidth;
           const maxY = cyContainer.offsetHeight;
@@ -296,6 +353,9 @@ export default {
       });
 
       cyContainer.addEventListener("mouseup", () => {
+        if (nodeClicked) {
+          nodeClicked = false;
+        }
         isPanning = false;
       });
 
@@ -347,6 +407,10 @@ export default {
             ? `http://95.110.132.24:8071/assets/${info.icona}`
             : "";
         const noteSection = info.note ? `<p><b>Info:</b> ${info.note}</p>` : "";
+        const birthPlace =
+          info.luogo_nascita === "Roma" || info.luogo_nascita === "Firenze"
+            ? `${info.luogo_nascita}`
+            : "";
         const fatherSection = info.padre
           ? `<p><b>Padre:</b> ${this.getCharacterName(info.padre)}</p>`
           : "";
@@ -367,17 +431,17 @@ export default {
 
         // Construct the popup content
         popup.innerHTML = `
-        <div id="container">
+        <div id="content">
           ${
             imageSrc !== ""
-              ? `<img src="${imageSrc}" width="250px" alt="Icona">`
+              ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;" alt="Icona">`
               : ""
           }
             <div id="chInfo">
-              <p><i>ID: ${info.id}</i></p>  
               <h3 style="margin-left:10px"><b><i>${
                 info.nome_scelto
               }</i></b></h3>
+              <h4 class="birthPlace" style="margin:-3px 0 0 9px;font-weight:400;"><i>${birthPlace}</i></h4>  
                 ${fatherSection}
                 ${motherSection}
                 ${spouseSection}
