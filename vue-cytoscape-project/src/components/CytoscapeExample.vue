@@ -1,21 +1,129 @@
 <template>
+  <div id="banner"><h1>Cytoscape project</h1></div>
+  <hr>
+  <div id="nav-container">
+    <ul id="nav">
+      <li><button class="nav-button">Grafico</button></li>
+      <li><button class="nav-button">Eventi</button></li>
+      <li><button class="nav-button">Fonti</button></li>
+    </ul>
+  </div>
   <div id="container">
+    <!-- <button @click="saveLayout">Save Layout</button> -->
+    <select v-model="selectedEvent" @change="filterGraph" id="filters">
+      <option value="">All Events</option>
+      <option v-for="event in events" :key="event.id" :value="event.id">{{ event.name }}</option>
+    </select>
     <div id="cy"></div>
   </div>
 </template>
 
 <style scoped>
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap');
+
+*{
+    margin: 0;
+    padding: 0;
+}
+
+body{
+    min-width: 100vh;
+    height: 100vh;
+    width: 100%;
+    max-width: 100vw;
+}
+
+hr{
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+#banner{
+    display: flex;
+    min-height: 100px;
+    text-align: left;
+    background-color: rgb(255, 255, 255);
+    color: rgb(84, 42, 23);
+    justify-content: start;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+}
+
+#banner>h1{
+    text-align: center;
+    font-family: Syne;
+    font-weight: 500;
+    margin: 25px;
+}
+
+#nav-container{
+    display: flex;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+}
+
+#nav{
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+    list-style: none;
+    list-style-type: none;
+    height: 100%;
+    background-color: rgb(255, 255, 255);
+    margin-bottom: 20px;
+}
+
+li{
+    font-family: 'Source Sans 3';
+    height: 100%;
+}
+
+.nav-button{
+    height: 100%;
+    width: auto;
+    padding: 20px;
+    margin: 0;
+    font-size: larger;
+    border: none;
+    cursor: pointer;
+    background-color: rgb(255, 255, 255);
+    color: rgb(134, 134, 134);
+    transition: all 0.5s ease-out;
+}
+
+.nav-button:hover{
+    color: rgb(84, 42, 23);
+}
+
+#filters{
+  padding: 20px;
+  border: none;
+  border-radius: 10px;
+  background-color: rgb(244, 244, 244);
+  margin: 20px;
+  position: absolute;
+  top: 200px;
+  left: 25px;
+  z-index: 999;
+}
+
+#app{
+    height: auto;
+}
 #container {
-  background-color: rgb(255, 242, 223);
+  background-color: rgb(252, 252, 252);
   display: flex;
   justify-content: center;
 }
 
 #cy {
-  width: 60%;
-  height: 800px;
-  background-color: rgb(255, 246, 232);
-  padding: 50px;
+  width: 100%;
+  height: 900px;
+  background-color: rgb(252, 252, 252);
 }
 
 #content {
@@ -90,6 +198,8 @@ export default {
       popupInfo: {},
       clickedNode: null,
       charactersData: [],
+      cy: null,
+      cyData: null,
     };
   },
   mounted() {
@@ -110,14 +220,122 @@ export default {
         document.removeEventListener("click", this.hidePopupOutside);
       }
     },
+    saveLayout() {
+      var positions = {};
+      this.cy.nodes().forEach(function (node) {
+        positions[node.id()] = {
+          x: node.position().x,
+          y: node.position().y,
+        };
+      });
+      localStorage.setItem("savedPositions", JSON.stringify(positions));
+    },
+    loadLayout() {
+      var savedPositions = JSON.parse(localStorage.getItem("savedPositions"));
+      if(savedPositions){
+        Object.entries(savedPositions).forEach(([nodeId, position]) => {
+          const node = this.cy.getElementById(nodeId);
+          if(node){
+            node.position(position);
+          }
+        });
+      } else{
+        this.cy = cytoscape({
+        container: document.getElementById("cy"),
+        elements: {
+          nodes: this.cyData.nodes,
+          edges: this.cyData.edges,
+        },
+
+        layout: {
+          name: "fcose",
+          nodeRepulsion: 15000,
+          randomize: true,
+          idealEdgeLength: 45,
+          numIter: 30000,
+          nestingFactor: 1000,
+          componentSpacing: 1000,
+          nodeOverlap: 1000,
+          animate: false,
+        },
+
+        style: [
+          {
+            selector: "node",
+            style: {
+              "background-image": (node) => {
+                const info = node.data("info");
+                return info.icona !== null
+                  ? `url(http://95.110.132.24:8071/assets/${info.icona})`
+                  : "none";
+              },
+              "background-fit": "cover",
+              "background-color": (node) => {
+                const info = node.data("info");
+                if (info.icona !== null) {
+                  return "transparent";
+                } else {
+                  return info.luogo_nascita === "Roma"
+                    ? "rgb(78, 6, 105)"
+                    : "rgb(0, 87, 9)";
+                }
+              },
+
+              width: (node) => {
+                const info = node.data("info");
+                return info.virtuosa ? "55px" : "40px"; // Adjust the width based on the condition
+              },
+              height: (node) => {
+                const info = node.data("info");
+                return info.virtuosa ? "55px" : "40px"; // Adjust the height based on the condition
+              },
+
+              color: "#ffffff",
+              "font-size": "12px",
+            },
+          },
+          {
+            selector: "edge",
+            style: {
+              width: 3,
+              "line-color": (edge) => {
+                const sourceNode = edge.source();
+                const targetNode = edge.target();
+
+                const sourceInfo = sourceNode.data("info");
+                const targetInfo = targetNode.data("info");
+
+                // Check if either the source or target node is from Rome
+                if (
+                  sourceInfo.luogo_nascita === "Roma" ||
+                  targetInfo.luogo_nascita === "Roma"
+                ) {
+                  return "rgb(78, 6, 105)"; // Set the line color to purple if either node is from Rome
+                } else {
+                  return "rgb(0, 87, 9)"; // Set a default color for edges
+                }
+              },
+              "target-arrow-color": "rgb(0, 87, 9)",
+              "target-arrow-shape": "triangle",
+            },
+          },
+        ],
+        minZoom: 0.35,
+        maxZoom: 1.8,
+        pan: { x: 0, y: 0 },
+        boxSelectionEnabled: false,
+      });
+      }
+    },
     async fetchDataAndPopulateNodes() {
       try {
         const charactersData = await this.retrieveData();
         this.charactersData = charactersData;
         //console.log(charactersData);
-        const cyData = this.formatDataForCytoscape(charactersData);
+        this.cyData = this.formatDataForCytoscape(charactersData);
         //console.log(cyData);
-        this.populateCytoscapeGraph(cyData);
+        this.loadLayout();
+        this.populateCytoscapeGraph(this.cyData);
       } catch (error) {
         console.error("Error fetching data and populating nodes: ", error);
       }
@@ -135,12 +353,13 @@ export default {
       const character = this.charactersData.find((char) => char.id === id);
       return character ? character.nome_scelto : "Unknown";
     },
-    formatDataForCytoscape(charactersData) {
+     formatDataForCytoscape(charactersData) {
       const nodes = charactersData.map((character) => ({
         data: {
           id: character.id,
           label: character.nome_scelto,
           info: character,
+          relationships: { parents: [], children: [] },
         },
       }));
       const edges = this.extractEdgesFromCharacters(charactersData);
@@ -195,113 +414,41 @@ export default {
       });
       return edges;
     },
-    populateCytoscapeGraph(cyData) {
-      var cy = cytoscape({
-        container: document.getElementById("cy"),
-        elements: {
-          nodes: cyData.nodes,
-          edges: cyData.edges,
-        },
+    updateRelationships(nodes, edges) {
+      edges.forEach((edge) => {
+        const sourceId = edge.data.source;
+        const targetId = edge.data.target;
+        const sourceNode = nodes.find((node) => node.data.id === sourceId);
+        const targetNode = nodes.find((node) => node.data.id === targetId);
+        if (sourceNode && targetNode) {
+          const sourceInfo = sourceNode.data.info;
+          const targetInfo = targetNode.data.info;
 
-        layout: {
-          name: "fcose",
-          nodeRepulsion: 15000,
-          randomize: true,
-          idealEdgeLength: 45,
-          numIter: 30000,
-          nestingFactor: 1000,
-          componentSpacing: 1000,
-          nodeOverlap: 1000,
-          animate: false,
-        },
-
-        style: [
-          {
-            selector: "node",
-            style: {
-              "background-image": (node) => {
-                const info = node.data("info");
-                return info.icona !== null
-                  ? `url(http://95.110.132.24:8071/assets/${info.icona})`
-                  : "none";
-              },
-              "background-fit": "cover",
-              "background-color": (node) => {
-                const info = node.data("info");
-                if (info.icona !== null) {
-                  return "transparent";
-                } else {
-                  return info.luogo_nascita === "Roma"
-                    ? "rgb(78, 6, 105)"
-                    : "rgb(0, 87, 9)";
-                }
-              },
-
-              width: (node) => {
-                const info = node.data("info");
-                return info.virtuosa ? "55px" : "40px"; // Adjust the width based on the condition
-              },
-              height: (node) => {
-                const info = node.data("info");
-                return info.virtuosa ? "55px" : "40px"; // Adjust the height based on the condition
-              },
-
-              /*
-              label: (node) => {
-                const info = node.data("info");
-                return info.virtuosa ? "V" : "";
-              }, // This will set the label of each node to be its ID
-              "text-valign": "center",
-              "text-halign": "center",
-              "text-outline-color": (node) => {
-                const info = node.data("info");
-                return info.virtuosa ? "pink" : "transparent"; // Adjust the outline color based on the condition
-              },
-              "text-outline-width": (node) => {
-                const info = node.data("info");
-                return info.virtuosa ? "2px" : "0px"; // Adjust the outline width based on the condition
-              },
-              */
-
-              color: "#ffffff",
-              "font-size": "12px",
-            },
-          },
-          {
-            selector: "edge",
-            style: {
-              width: 3,
-              "line-color": (edge) => {
-                const sourceNode = edge.source();
-                const targetNode = edge.target();
-
-                const sourceInfo = sourceNode.data("info");
-                const targetInfo = targetNode.data("info");
-
-                // Check if either the source or target node is from Rome
-                if (
-                  sourceInfo.luogo_nascita === "Roma" ||
-                  targetInfo.luogo_nascita === "Roma"
-                ) {
-                  return "rgb(78, 6, 105)"; // Set the line color to purple if either node is from Rome
-                } else {
-                  return "rgb(0, 87, 9)"; // Set a default color for edges
-                }
-              },
-              "target-arrow-color": "rgb(0, 87, 9)",
-              "target-arrow-shape": "triangle",
-            },
-          },
-        ],
-        minZoom: 0.35,
-        maxZoom: 1.8,
-        pan: { x: 0, y: 0 },
-        boxSelectionEnabled: false,
+          if (sourceInfo.marito_moglie === targetId) {
+            // If the source is the husband of the target
+            sourceNode.data.relationships.wife = targetId;
+            targetNode.data.relationships.husband = sourceId;
+          } else if (targetInfo.marito_moglie === sourceId) {
+            // If the target is the husband of the source
+            targetNode.data.relationships.wife = sourceId;
+            sourceNode.data.relationships.husband = targetId;
+          } else if (sourceInfo.padre === targetId) {
+            // If the source is the father of the target
+            sourceNode.data.relationships.children.push(targetId);
+            targetNode.data.relationships.parents.push(sourceId);
+          } else if (targetInfo.padre === sourceId) {
+            // If the target is the father of the source
+            targetNode.data.relationships.children.push(sourceId);
+            sourceNode.data.relationships.parents.push(targetId);
+          }
+        }
       });
+    },
+    populateCytoscapeGraph() {
 
       // Disable built-in panning
 
-      cy.userPanningEnabled(false);
+      this.cy.userPanningEnabled(false);
 
       // Define variables for custom panning
       let isPanning = false;
@@ -323,7 +470,7 @@ export default {
         }
       });
 
-      cy.on("grab", "node", (event) => {
+      this.cy.on("grab", "node", (event) => {
         nodeClicked = true;
         isPanning = false;
 
@@ -335,7 +482,7 @@ export default {
         if (isPanning === true) {
           var deltaX = event.clientX - initialPointerPosition.x;
           var deltaY = event.clientY - initialPointerPosition.y;
-          var currentPan = cy.pan();
+          var currentPan = this.cy.pan();
 
           const maxX = cyContainer.offsetWidth;
           const maxY = cyContainer.offsetHeight;
@@ -347,7 +494,7 @@ export default {
             y: Math.min(Math.max(currentPan.y + deltaY, minY), maxY),
           };
 
-          cy.pan(limitedPan);
+          this.cy.pan(limitedPan);
           initialPointerPosition = { x: event.clientX, y: event.clientY };
         }
       });
@@ -378,15 +525,15 @@ export default {
 
         console.log(cyRelativePosition);
 
-        cy.zoom({
-          level: cy.zoom() + zoomAmount,
+        this.cy.zoom({
+          level: this.cy.zoom() + zoomAmount,
           position: cyRelativePosition,
         });
         event.preventDefault(); // Prevent default scrolling behavior
       });
 
-      cy.ready(() => {
-        cy.zoom(0.55);
+      this.cy.ready(() => {
+        this.cy.zoom(0.55);
       });
 
       var popup = document.createElement("div");
@@ -394,7 +541,7 @@ export default {
       popup.style.opacity = "0";
       document.getElementById("cy").appendChild(popup);
 
-      cy.on("click", "node", (event) => {
+      this.cy.on("click", "node", (event) => {
         var node = event.target;
         var info = node.data("info");
         this.clickedNode = node;
@@ -441,7 +588,7 @@ export default {
               <h3 style="margin-left:10px"><b><i>${
                 info.nome_scelto
               }</i></b></h3>
-              <h4 class="birthPlace" style="margin:-3px 0 0 9px;font-weight:400;"><i>${birthPlace}</i></h4>  
+              <h4 class="birthPlace" style="margin:-3px 0 0 9px;font-weight:400;"><i>${birthPlace}</i></h4>
                 ${fatherSection}
                 ${motherSection}
                 ${spouseSection}
