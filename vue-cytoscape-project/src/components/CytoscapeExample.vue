@@ -1,120 +1,200 @@
 <template>
-  <div id="banner"><h1>Cytoscape project</h1></div>
-  <hr>
+  <div id="banner">
+    <img src="../assets/vidimus_r.png" alt="" height="100px" />
+  </div>
+  <hr />
   <div id="nav-container">
     <ul id="nav">
-      <li><button class="nav-button">Grafico</button></li>
-      <li><button class="nav-button">Eventi</button></li>
-      <li><button class="nav-button">Fonti</button></li>
+      <li>
+        <button class="nav-button" @click="toggleDisplay()">
+          <img src="../assets/network_149181.png" alt="" width="40px" />
+          <div class="btn-text">GRAFICO</div>
+        </button>
+      </li>
+      <li>
+        <button class="nav-button" @click="toggleDisplay()">
+          <img src="../assets/calendar_2838779.png" alt="" width="40px" />
+          <div class="btn-text">EVENTI</div>
+        </button>
+      </li>
+      <li>
+        <button class="nav-button">
+          <img src="../assets/searching_6898982.png" alt="" width="40px" />
+          <div class="btn-text">FONTI</div>
+        </button>
+      </li>
     </ul>
   </div>
-  <div id="container">
+  <hr />
+  <div id="container" v-show="showCytoscape">
     <!-- <button @click="saveLayout">Save Layout</button> -->
     <select v-model="selectedEvent" @change="filterGraph" id="filters">
-      <option value="">All Events</option>
-      <option v-for="event in events" :key="event.id" :value="event.id">{{ event.name }}</option>
+      <option value="" selected>Filtrare per eventi</option>
+      <option v-for="event in eventsData" :key="event.id" :value="event.id">
+        {{ event.data }}, {{ event.luogo }}
+      </option>
     </select>
     <div id="cy"></div>
+  </div>
+  <div id="events" v-show="showEventList">
+    <h1>Eventi</h1>
+    <div v-for="event in eventsData" :key="event.id" :value="event.id">
+      <div id="event">
+        <h2>{{ event.data }}, {{ event.luogo }}</h2>
+        <p v-if="event.note !== null">{{ event.note }}</p>
+        <hr />
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Syne:wght@400..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap");
 
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400..800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap');
-
-*{
-    margin: 0;
-    padding: 0;
+* {
+  margin: 0;
+  padding: 0;
 }
 
-body{
-    min-width: 100vh;
-    height: 100vh;
-    width: 100%;
-    max-width: 100vw;
-}
-
-hr{
+body {
+  min-width: 100vh;
+  height: 100vh;
   width: 100%;
+  max-width: 100vw;
+}
+
+hr {
+  width: 100%;
+  margin-bottom: 20px;
+  border: none;
+  height: 3px;
+  background-color: rgb(120, 38, 46);
+}
+
+#banner {
+  display: flex;
+  min-height: 170px;
+  text-align: left;
+  background-color: rgb(255, 255, 255);
+  color: rgb(36, 68, 196);
+  justify-content: start;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+}
+
+#banner > img {
+  margin-left: 30px;
+}
+
+#nav-container {
+  display: flex;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+}
+
+#nav {
+  display: flex;
+  flex-direction: row;
+  gap: 30px;
+  list-style: none;
+  list-style-type: none;
+  height: 100%;
+  background-color: rgb(255, 255, 255);
   margin-bottom: 20px;
 }
 
-#banner{
-    display: flex;
-    min-height: 100px;
-    text-align: left;
-    background-color: rgb(255, 255, 255);
-    color: rgb(84, 42, 23);
-    justify-content: start;
-    align-items: center;
-    width: 100%;
-    max-width: 100%;
+li {
+  height: 100%;
 }
 
-#banner>h1{
-    text-align: center;
-    font-family: Syne;
-    font-weight: 500;
-    margin: 25px;
-}
-
-#nav-container{
-    display: flex;
-    text-align: center;
-    align-items: center;
-    justify-content: center;
-}
-
-#nav{
-    display: flex;
-    flex-direction: row;
-    gap: 30px;
-    list-style: none;
-    list-style-type: none;
-    height: 100%;
-    background-color: rgb(255, 255, 255);
-    margin-bottom: 20px;
-}
-
-li{
-    font-family: 'Source Sans 3';
-    height: 100%;
-}
-
-.nav-button{
-    height: 100%;
-    width: auto;
-    padding: 20px;
-    margin: 0;
-    font-size: larger;
-    border: none;
-    cursor: pointer;
-    background-color: rgb(255, 255, 255);
-    color: rgb(134, 134, 134);
-    transition: all 0.5s ease-out;
-}
-
-.nav-button:hover{
-    color: rgb(84, 42, 23);
-}
-
-#filters{
+.nav-button {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 100%;
+  width: auto;
   padding: 20px;
+  margin: 0;
+  font-size: larger;
   border: none;
+  cursor: pointer;
+  background-color: rgb(255, 255, 255);
+  color: rgb(76, 76, 76);
+  transition: all 0.5s ease-out;
+}
+
+.nav-button:hover {
+  background-color: rgb(120, 38, 46);
+  color: aliceblue;
+}
+
+.nav-button:hover img {
+  filter: invert(100%);
+}
+
+.nav-button:hover .btn-text {
+  color: white;
+}
+
+.nav-button > img {
+  margin-right: 15px;
+  transition: all 0.5s ease-out;
+}
+
+.btn-text {
+  font-family: Montserrat;
+  font-weight: 600;
+  transition: all 0.5s ease-out;
+}
+
+#filters {
+  max-width: 240px;
+  padding: 20px;
+  border: solid 1px rgb(120, 38, 46);
   border-radius: 10px;
   background-color: rgb(244, 244, 244);
   margin: 20px;
   position: absolute;
-  top: 200px;
+  top: 350px;
   left: 25px;
   z-index: 999;
+  overflow: visible;
 }
 
-#app{
-    height: auto;
+#events {
+  padding-bottom: 50px;
+  padding-top: 40px;
+}
+
+#events > h1 {
+  font-family: Montserrat;
+  text-align: center;
+  color: rgb(100, 9, 18);
+}
+
+#event {
+  margin: 60px;
+}
+
+#event > h2 {
+  font-family: "Source Sans 3";
+  margin: 20px;
+}
+
+#event > p {
+  font-family: "Source Sans 3";
+  margin: 20px;
+}
+
+#app {
+  height: auto;
 }
 #container {
+  margin-top: 50px;
   background-color: rgb(252, 252, 252);
   display: flex;
   justify-content: center;
@@ -142,6 +222,8 @@ li{
   grid-column: 2;
   display: flex;
   flex-direction: column;
+  text-align: center;
+  justify-content: center;
 }
 
 #chInfo > h4 {
@@ -194,10 +276,14 @@ cytoscape.use(coseBilkent);
 export default {
   data() {
     return {
+      showCytoscape: true,
+      showEventList: false,
       showPopup: false,
       popupInfo: {},
       clickedNode: null,
       charactersData: [],
+      relationsData: [],
+      eventsData: [],
       cy: null,
       cyData: null,
     };
@@ -207,6 +293,15 @@ export default {
     document.addEventListener("click", this.hidePopupOutside.bind(this));
   },
   methods: {
+    toggleDisplay() {
+      if (this.showCytoscape === true && this.showEventList === false) {
+        this.showCytoscape = false;
+        this.showEventList = true;
+      } else {
+        this.showCytoscape = true;
+        this.showEventList = false;
+      }
+    },
     hidePopupOutside(event) {
       var popup = document.getElementById("popup");
       if (
@@ -220,6 +315,20 @@ export default {
         document.removeEventListener("click", this.hidePopupOutside);
       }
     },
+    getNodeSize(node) {
+      const connections = node.connectedEdges().length;
+      const baseSize = 35;
+      const sizeIncrement = 5;
+      const maxSize = 65;
+
+      // Calculate the size based on connections
+      let size = baseSize + connections * sizeIncrement;
+
+      // Limit the size to the maximum allowed size
+      size = Math.min(size, maxSize);
+
+      return size;
+    },
     saveLayout() {
       var positions = {};
       this.cy.nodes().forEach(function (node) {
@@ -232,107 +341,121 @@ export default {
     },
     loadLayout() {
       var savedPositions = JSON.parse(localStorage.getItem("savedPositions"));
-      if(savedPositions){
+      if (savedPositions) {
         Object.entries(savedPositions).forEach(([nodeId, position]) => {
           const node = this.cy.getElementById(nodeId);
-          if(node){
+          if (node) {
             node.position(position);
           }
         });
-      } else{
+      } else {
         this.cy = cytoscape({
-        container: document.getElementById("cy"),
-        elements: {
-          nodes: this.cyData.nodes,
-          edges: this.cyData.edges,
-        },
-
-        layout: {
-          name: "fcose",
-          nodeRepulsion: 15000,
-          randomize: true,
-          idealEdgeLength: 45,
-          numIter: 30000,
-          nestingFactor: 1000,
-          componentSpacing: 1000,
-          nodeOverlap: 1000,
-          animate: false,
-        },
-
-        style: [
-          {
-            selector: "node",
-            style: {
-              "background-image": (node) => {
-                const info = node.data("info");
-                return info.icona !== null
-                  ? `url(http://95.110.132.24:8071/assets/${info.icona})`
-                  : "none";
-              },
-              "background-fit": "cover",
-              "background-color": (node) => {
-                const info = node.data("info");
-                if (info.icona !== null) {
-                  return "transparent";
-                } else {
-                  return info.luogo_nascita === "Roma"
-                    ? "rgb(78, 6, 105)"
-                    : "rgb(0, 87, 9)";
-                }
-              },
-
-              width: (node) => {
-                const info = node.data("info");
-                return info.virtuosa ? "55px" : "40px"; // Adjust the width based on the condition
-              },
-              height: (node) => {
-                const info = node.data("info");
-                return info.virtuosa ? "55px" : "40px"; // Adjust the height based on the condition
-              },
-
-              color: "#ffffff",
-              "font-size": "12px",
-            },
+          container: document.getElementById("cy"),
+          elements: {
+            nodes: this.cyData.nodes,
+            edges: this.cyData.edges,
           },
-          {
-            selector: "edge",
-            style: {
-              width: 3,
-              "line-color": (edge) => {
-                const sourceNode = edge.source();
-                const targetNode = edge.target();
 
-                const sourceInfo = sourceNode.data("info");
-                const targetInfo = targetNode.data("info");
-
-                // Check if either the source or target node is from Rome
-                if (
-                  sourceInfo.luogo_nascita === "Roma" ||
-                  targetInfo.luogo_nascita === "Roma"
-                ) {
-                  return "rgb(78, 6, 105)"; // Set the line color to purple if either node is from Rome
-                } else {
-                  return "rgb(0, 87, 9)"; // Set a default color for edges
-                }
-              },
-              "target-arrow-color": "rgb(0, 87, 9)",
-              "target-arrow-shape": "triangle",
-            },
+          layout: {
+            name: "fcose",
+            nodeRepulsion: 35000,
+            randomize: true,
+            idealEdgeLength: 50,
+            numIter: 30000,
+            nestingFactor: 1000,
+            componentSpacing: 1000,
+            nodeOverlap: 10000,
+            animate: false,
           },
-        ],
-        minZoom: 0.35,
-        maxZoom: 1.8,
-        pan: { x: 0, y: 0 },
-        boxSelectionEnabled: false,
-      });
+
+          style: [
+            {
+              selector: "node",
+              style: {
+                "background-image": (node) => {
+                  const info = node.data("info");
+                  return info.icona !== null
+                    ? `url(http://95.110.132.24:8071/assets/${info.icona})`
+                    : "none";
+                },
+                "background-fit": "cover",
+                // "background-color": (node) => {
+                //   const info = node.data("info");
+                //   if (info.icona !== null) {
+                //     return "transparent";
+                //   } else {
+                //     return info.luogo_nascita === "Roma"
+                //       ? "rgb(78, 6, 105)"
+                //       : "rgb(36, 68, 196)";
+                //   }
+                // },
+                "background-color": "rgb(36, 68, 196)",
+
+                // width: (node) => {
+                //   const info = node.data("info");
+                //   return info.virtuosa ? "55px" : "40px"; // Adjust the width based on the condition
+                // },
+                // height: (node) => {
+                //   const info = node.data("info");
+                //   return info.virtuosa ? "55px" : "40px"; // Adjust the height based on the condition
+                // },
+                width: "45px",
+                height: "45px",
+
+                color: "#ffffff",
+                "font-size": "12px",
+              },
+            },
+            {
+              selector: "edge",
+              style: {
+                width: 3,
+                "line-color": "rgb(36, 68, 196)",
+                // "line-color": (edge) => {
+                //   const sourceNode = edge.source();
+                //   const targetNode = edge.target();
+
+                //   const sourceInfo = sourceNode.data("info");
+                //   const targetInfo = targetNode.data("info");
+
+                //   // Check if either the source or target node is from Rome
+                //   if (
+                //     sourceInfo.luogo_nascita === "Roma" ||
+                //     targetInfo.luogo_nascita === "Roma"
+                //   ) {
+                //     return "rgb(78, 6, 105)"; // Set the line color to purple if either node is from Rome
+                //   } else {
+                //     return "rgb(36, 68, 196)"; // Set a default color for edges
+                //   }
+                // },
+              },
+            },
+          ],
+          minZoom: 0.35,
+          maxZoom: 1.8,
+          pan: { x: 0, y: 0 },
+          boxSelectionEnabled: false,
+        });
       }
     },
     async fetchDataAndPopulateNodes() {
       try {
         const charactersData = await this.retrieveData();
         this.charactersData = charactersData;
-        //console.log(charactersData);
+        console.log(charactersData);
+
+        const eventsData = await this.retrieveEvents();
+        this.eventsData = eventsData;
+        console.log(eventsData);
+
+        const relationsData = await this.retrieveRelations();
+        this.relationsData = relationsData;
+        console.log(relationsData);
+
+        this.combineData();
+
         this.cyData = this.formatDataForCytoscape(charactersData);
+
         //console.log(cyData);
         this.loadLayout();
         this.populateCytoscapeGraph(this.cyData);
@@ -342,27 +465,61 @@ export default {
     },
     async retrieveData() {
       const response = await fetch(
-        "http://95.110.132.24:8071/items/Virtuose/?limit=-1"
+        "http://95.110.132.24:8071/items/Virtuose?filter[pubblicato][_eq]=1"
       );
       const responseData = await response.json();
       const data = responseData.data;
       //console.log(data);
       return data;
     },
+    async retrieveRelations() {
+      const response = await fetch(
+        "http://95.110.132.24:8071/items/Virtuose_Virtuose"
+      );
+      const responseData = await response.json();
+      const data = responseData.data;
+      //console.log(data);
+      return data;
+    },
+    async retrieveEvents() {
+      try {
+        const response = await fetch("http://95.110.132.24:8071/items/eventi");
+        const eventData = await response.json();
+        const events = eventData.data;
+        return events;
+      } catch (error) {
+        console.error("Error fetching events: ", error);
+        throw error;
+      }
+    },
+    combineData() {
+      // Merge relationships data with characters data
+      this.charactersData.forEach((character) => {
+        const figliFiglieIds = character.figli_figlie;
+        const relatedCharacters = this.relationsData.filter((relation) =>
+          figliFiglieIds.includes(relation.id)
+        );
+        // Replace figli_figlie IDs with related character IDs
+        character.figli_figlie = relatedCharacters.map(
+          (relation) => relation.related_Virtuose_id
+        );
+      });
+    },
     getCharacterName(id) {
       const character = this.charactersData.find((char) => char.id === id);
-      return character ? character.nome_scelto : "Unknown";
+      return character ? character.nome_scelto : "Non conosciuto";
     },
-     formatDataForCytoscape(charactersData) {
+    formatDataForCytoscape(charactersData) {
       const nodes = charactersData.map((character) => ({
         data: {
           id: character.id,
           label: character.nome_scelto,
           info: character,
-          relationships: { parents: [], children: [] },
+          relationships: { mother: null, father: null, children: [], spouse: null },
         },
       }));
       const edges = this.extractEdgesFromCharacters(charactersData);
+      this.updateRelationships(nodes, edges);
       return { nodes, edges };
     },
     extractRelatives(character) {
@@ -425,26 +582,41 @@ export default {
           const targetInfo = targetNode.data.info;
 
           if (sourceInfo.marito_moglie === targetId) {
-            // If the source is the husband of the target
-            sourceNode.data.relationships.wife = targetId;
-            targetNode.data.relationships.husband = sourceId;
-          } else if (targetInfo.marito_moglie === sourceId) {
-            // If the target is the husband of the source
-            targetNode.data.relationships.wife = sourceId;
-            sourceNode.data.relationships.husband = targetId;
-          } else if (sourceInfo.padre === targetId) {
+            // If the source is the spouse of the target
+            sourceNode.data.relationships.spouse = targetId;
+            targetNode.data.relationships.spouse = sourceId;
+          } if (targetInfo.marito_moglie === sourceId) {
+            // If the target is the spouse of the source
+            targetNode.data.relationships.spouse = sourceId;
+            sourceNode.data.relationships.spouse = targetId;
+          } 
+            if (sourceInfo.padre === targetId) {
             // If the source is the father of the target
-            sourceNode.data.relationships.children.push(targetId);
-            targetNode.data.relationships.parents.push(sourceId);
-          } else if (targetInfo.padre === sourceId) {
-            // If the target is the father of the source
             targetNode.data.relationships.children.push(sourceId);
-            sourceNode.data.relationships.parents.push(targetId);
+            sourceNode.data.relationships.father = targetId;
+          } if (targetInfo.padre === sourceId) {
+            // If the target is the father of the source
+            sourceNode.data.relationships.children.push(targetId);
+            targetNode.data.relationships.father = sourceId;
+          }
+            if (sourceInfo.madre === targetId) {
+            // If the target is the mother of the source
+            targetNode.data.relationships.children.push(sourceId);
+            sourceNode.data.relationships.mother = targetId;
+          } if (targetInfo.madre === sourceId) {
+            // If the target is the mother of the source
+            sourceNode.data.relationships.children.push(targetId);
+            targetNode.data.relationships.mother = sourceId;
           }
         }
       });
     },
     populateCytoscapeGraph() {
+      this.cy.nodes().forEach((node) => {
+        const size = this.getNodeSize(node);
+        node.style("width", size);
+        node.style("height", size);
+      });
 
       // Disable built-in panning
 
@@ -544,6 +716,8 @@ export default {
       this.cy.on("click", "node", (event) => {
         var node = event.target;
         var info = node.data("info");
+        var relations = node.data("relationships");
+        console.log(relations);
         this.clickedNode = node;
 
         this.popupInfo = info;
@@ -558,20 +732,20 @@ export default {
           info.luogo_nascita === "Roma" || info.luogo_nascita === "Firenze"
             ? `${info.luogo_nascita}`
             : "";
-        const fatherSection = info.padre
-          ? `<p><b>Padre:</b> ${this.getCharacterName(info.padre)}</p>`
+        const fatherSection = relations.father !==null
+          ? `<p><b>Padre:</b> ${this.getCharacterName(relations.father)}</p>`
           : "";
-        const motherSection = info.madre
-          ? `<p><b>Madre:</b> ${this.getCharacterName(info.madre)}</p>`
+        const motherSection = relations.mother !==null
+          ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
           : "";
-        const spouseSection = info.marito_moglie
+        const spouseSection = relations.spouse !==null
           ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
-              info.marito_moglie
+              relations.spouse
             )}</p>`
           : "";
         const childrenSection =
-          info.figli_figlie && info.figli_figlie.length > 0
-            ? `<p><b>Figli/Figlie:</b> ${info.figli_figlie
+          relations.children && relations.children.length > 0
+            ? `<p><b>Figli/Figlie:</b> ${relations.children
                 .map((childId) => this.getCharacterName(childId))
                 .join(", ")}</p>`
             : "";
@@ -587,7 +761,7 @@ export default {
             <div id="chInfo">
               <h3 style="margin-left:10px"><b><i>${
                 info.nome_scelto
-              }</i></b></h3>
+              }, ${info.id}</i></b></h3>
               <h4 class="birthPlace" style="margin:-3px 0 0 9px;font-weight:400;"><i>${birthPlace}</i></h4>
                 ${fatherSection}
                 ${motherSection}
