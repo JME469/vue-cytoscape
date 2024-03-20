@@ -311,6 +311,7 @@ export default {
         event.target !== this.clickedNode
       ) {
         popup.style.opacity = "0";
+        popup.style.zIndex = "-999";
         this.clickedNode = null;
         document.removeEventListener("click", this.hidePopupOutside);
       }
@@ -515,7 +516,12 @@ export default {
           id: character.id,
           label: character.nome_scelto,
           info: character,
-          relationships: { mother: null, father: null, children: [], spouse: null },
+          relationships: {
+            mother: null,
+            father: null,
+            children: [],
+            spouse: null,
+          },
         },
       }));
       const edges = this.extractEdgesFromCharacters(charactersData);
@@ -585,28 +591,64 @@ export default {
             // If the source is the spouse of the target
             sourceNode.data.relationships.spouse = targetId;
             targetNode.data.relationships.spouse = sourceId;
-          } if (targetInfo.marito_moglie === sourceId) {
+          }
+          if (targetInfo.marito_moglie === sourceId) {
             // If the target is the spouse of the source
             targetNode.data.relationships.spouse = sourceId;
             sourceNode.data.relationships.spouse = targetId;
-          } 
-            if (sourceInfo.padre === targetId) {
+          }
+          if (sourceInfo.padre === targetId) {
             // If the source is the father of the target
-            targetNode.data.relationships.children.push(sourceId);
+            if(!targetNode.data.relationships.children.includes(sourceId)){
+              targetNode.data.relationships.children.push(sourceId);
+            }
             sourceNode.data.relationships.father = targetId;
-          } if (targetInfo.padre === sourceId) {
+          }
+          if (targetInfo.padre === sourceId) {
             // If the target is the father of the source
-            sourceNode.data.relationships.children.push(targetId);
+            if(!sourceNode.data.relationships.children.includes(targetId)){
+              sourceNode.data.relationships.children.push(targetId);
+            }
             targetNode.data.relationships.father = sourceId;
           }
-            if (sourceInfo.madre === targetId) {
+          if (sourceInfo.madre === targetId) {
             // If the target is the mother of the source
-            targetNode.data.relationships.children.push(sourceId);
+            if(!targetNode.data.relationships.children.includes(sourceId)){
+              targetNode.data.relationships.children.push(sourceId);
+            }
             sourceNode.data.relationships.mother = targetId;
-          } if (targetInfo.madre === sourceId) {
+          }
+          if (targetInfo.madre === sourceId) {
             // If the target is the mother of the source
-            sourceNode.data.relationships.children.push(targetId);
+            if(!sourceNode.data.relationships.children.includes(targetId)){
+              sourceNode.data.relationships.children.push(targetId);
+            }
             targetNode.data.relationships.mother = sourceId;
+          }
+          // Update child relationship data
+          const sourceChildren = sourceInfo.figli_figlie;
+          const targetChildren = targetInfo.figli_figlie;
+
+          if (sourceChildren && sourceChildren.includes(targetId)) {
+            if(!sourceNode.data.relationships.children.includes(targetId)){
+              sourceNode.data.relationships.children.push(targetId);
+            }
+            if(sourceNode.data.info.sesso === "M"){
+              targetNode.data.relationships.father = sourceId;
+            } else if(sourceNode.data.info.sesso === "F"){
+              targetNode.data.relationships.mother = sourceId;
+            }
+          }
+
+          if (targetChildren && targetChildren.includes(sourceId)) {
+            if(!targetNode.data.relationships.children.includes(sourceId)){
+              targetNode.data.relationships.children.push(sourceId);
+            }
+            if(targetNode.data.info.sesso === "M"){
+              sourceNode.data.relationships.father = targetId;
+            } else if(sourceNode.data.info.sesso === "F"){
+              sourceNode.data.relationships.mother = targetId;
+            }
           }
         }
       });
@@ -732,17 +774,20 @@ export default {
           info.luogo_nascita === "Roma" || info.luogo_nascita === "Firenze"
             ? `${info.luogo_nascita}`
             : "";
-        const fatherSection = relations.father !==null
-          ? `<p><b>Padre:</b> ${this.getCharacterName(relations.father)}</p>`
-          : "";
-        const motherSection = relations.mother !==null
-          ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
-          : "";
-        const spouseSection = relations.spouse !==null
-          ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
-              relations.spouse
-            )}</p>`
-          : "";
+        const fatherSection =
+          relations.father !== null
+            ? `<p><b>Padre:</b> ${this.getCharacterName(relations.father)}</p>`
+            : "";
+        const motherSection =
+          relations.mother !== null
+            ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
+            : "";
+        const spouseSection =
+          relations.spouse !== null
+            ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
+                relations.spouse
+              )}</p>`
+            : "";
         const childrenSection =
           relations.children && relations.children.length > 0
             ? `<p><b>Figli/Figlie:</b> ${relations.children
@@ -759,9 +804,9 @@ export default {
               : ""
           }
             <div id="chInfo">
-              <h3 style="margin-left:10px"><b><i>${
-                info.nome_scelto
-              }, ${info.id}</i></b></h3>
+              <h3 style="margin-left:10px"><b><i>${info.nome_scelto}, ${
+          info.id
+        }</i></b></h3>
               <h4 class="birthPlace" style="margin:-3px 0 0 9px;font-weight:400;"><i>${birthPlace}</i></h4>
                 ${fatherSection}
                 ${motherSection}
@@ -775,7 +820,7 @@ export default {
         var cyContainer = document.getElementById("cy");
 
         var popupOffsetX = -550;
-        var popupOffsetY = -800;
+        var popupOffsetY = -900;
         var popupPositionX = Math.min(
           position.x + popupOffsetX,
           cyContainer.offsetWidth - popup.offsetWidth
@@ -792,6 +837,7 @@ export default {
           popup.style.width = "500px";
           popup.style.height = "auto";
           popup.style.opacity = "1";
+          popup.style.zIndex = "999";
 
           // Add event listener to hide the popup when clicking outside of it
           document.addEventListener("click", this.hidePopupOutside);
