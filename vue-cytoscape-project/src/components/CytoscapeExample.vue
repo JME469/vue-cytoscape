@@ -250,7 +250,6 @@ li {
   border: 1px solid #ccc;
   font-family: "Source Sans 3";
   padding: 20px;
-  z-index: 999;
   transition: opacity 0.4s ease, box-shadow 0.35s ease, transform 0.5s ease;
 }
 
@@ -470,7 +469,6 @@ export default {
       );
       const responseData = await response.json();
       const data = responseData.data;
-      //console.log(data);
       return data;
     },
     async retrieveRelations() {
@@ -479,7 +477,6 @@ export default {
       );
       const responseData = await response.json();
       const data = responseData.data;
-      //console.log(data);
       return data;
     },
     async retrieveEvents() {
@@ -490,6 +487,96 @@ export default {
         return events;
       } catch (error) {
         console.error("Error fetching events: ", error);
+        throw error;
+      }
+    },
+    async retrieveEventRelations() {
+      try {
+        const response = await fetch(
+          "http://95.110.132.24:8071/items/Virtuose_eventi"
+        );
+        const responseData = await response.json();
+        const data = responseData.data;
+        return data;
+      } catch (error) {
+        console.error("Error fetching event relations: ", error);
+        throw error;
+      }
+    },
+    async retrieveMaestroRelationsData() {
+      try {
+        const response = await fetch(
+          "http://95.110.132.24:8071/items/Virtuose_maestro"
+        );
+        const responseData = await response.json();
+        const maestroRelations = responseData.data;
+
+        // Fetch data from the 'maestro' table using the IDs obtained from the relation table
+        const maestroIds = maestroRelations.map(
+          (relation) => relation.maestro_id
+        );
+        const maestroDataPromises = maestroIds.map((id) =>
+          fetch(`http://95.110.132.24:8071/items/maestro/${id}`)
+            .then((response) => response.json())
+            .then((responseData) => responseData.data)
+        );
+
+        const maestroData = await Promise.all(maestroDataPromises);
+
+        return { maestroRelations, maestroData };
+      } catch (error) {
+        console.error("Error fetching maestro relations data: ", error);
+        throw error;
+      }
+    },
+    async retrieveAndCombineMaestroData() {
+      try {
+        // Step 1: Retrieve data from Virtuose_maestro table
+        const maestroRelationsData = await retrieveMaestroRelationsData();
+
+        // Step 2: Extract IDs of connected maestros
+        const maestroIds = maestroRelationsData.map(
+          (relation) => relation.maestro_id
+        );
+
+        // Step 3: Retrieve data from maestro table for each maestro ID
+        const maestroDataPromises = maestroIds.map(async (maestroId) => {
+          const response = await fetch(
+            `http://95.110.132.24:8071/items/maestro/${maestroId}`
+          );
+          const responseData = await response.json();
+          return responseData;
+        });
+
+        const maestroData = await Promise.all(maestroDataPromises);
+
+        // Step 4: Combine data from both tables
+        const combinedData = maestroRelationsData.map((relation, index) => {
+          return {
+            id: relation.id,
+            virtuose_id: relation.Virtuose_id,
+            maestro_id: relation.maestro_id,
+            maestro_info: maestroData[index], // Add maestro data to the relation object
+          };
+        });
+
+        // Step 5: Return combined data
+        return combinedData;
+      } catch (error) {
+        console.error("Error retrieving and combining maestro data: ", error);
+        throw error;
+      }
+    },
+    async retrieveMecenatiRelations() {
+      try {
+        const response = await fetch(
+          "http://95.110.132.24:8071/items/Virtuose_mecenati"
+        );
+        const responseData = await response.json();
+        const data = responseData.data;
+        return data;
+      } catch (error) {
+        console.error("Error fetching event relations: ", error);
         throw error;
       }
     },
@@ -599,28 +686,28 @@ export default {
           }
           if (sourceInfo.padre === targetId) {
             // If the source is the father of the target
-            if(!targetNode.data.relationships.children.includes(sourceId)){
+            if (!targetNode.data.relationships.children.includes(sourceId)) {
               targetNode.data.relationships.children.push(sourceId);
             }
             sourceNode.data.relationships.father = targetId;
           }
           if (targetInfo.padre === sourceId) {
             // If the target is the father of the source
-            if(!sourceNode.data.relationships.children.includes(targetId)){
+            if (!sourceNode.data.relationships.children.includes(targetId)) {
               sourceNode.data.relationships.children.push(targetId);
             }
             targetNode.data.relationships.father = sourceId;
           }
           if (sourceInfo.madre === targetId) {
             // If the target is the mother of the source
-            if(!targetNode.data.relationships.children.includes(sourceId)){
+            if (!targetNode.data.relationships.children.includes(sourceId)) {
               targetNode.data.relationships.children.push(sourceId);
             }
             sourceNode.data.relationships.mother = targetId;
           }
           if (targetInfo.madre === sourceId) {
             // If the target is the mother of the source
-            if(!sourceNode.data.relationships.children.includes(targetId)){
+            if (!sourceNode.data.relationships.children.includes(targetId)) {
               sourceNode.data.relationships.children.push(targetId);
             }
             targetNode.data.relationships.mother = sourceId;
@@ -630,23 +717,23 @@ export default {
           const targetChildren = targetInfo.figli_figlie;
 
           if (sourceChildren && sourceChildren.includes(targetId)) {
-            if(!sourceNode.data.relationships.children.includes(targetId)){
+            if (!sourceNode.data.relationships.children.includes(targetId)) {
               sourceNode.data.relationships.children.push(targetId);
             }
-            if(sourceNode.data.info.sesso === "M"){
+            if (sourceNode.data.info.sesso === "M") {
               targetNode.data.relationships.father = sourceId;
-            } else if(sourceNode.data.info.sesso === "F"){
+            } else if (sourceNode.data.info.sesso === "F") {
               targetNode.data.relationships.mother = sourceId;
             }
           }
 
           if (targetChildren && targetChildren.includes(sourceId)) {
-            if(!targetNode.data.relationships.children.includes(sourceId)){
+            if (!targetNode.data.relationships.children.includes(sourceId)) {
               targetNode.data.relationships.children.push(sourceId);
             }
-            if(targetNode.data.info.sesso === "M"){
+            if (targetNode.data.info.sesso === "M") {
               sourceNode.data.relationships.father = targetId;
-            } else if(sourceNode.data.info.sesso === "F"){
+            } else if (sourceNode.data.info.sesso === "F") {
               sourceNode.data.relationships.mother = targetId;
             }
           }
@@ -817,10 +904,19 @@ export default {
         </div>
     `;
         var position = event.target.renderedPosition();
+        console.log("Position: ", position);
         var cyContainer = document.getElementById("cy");
+        var popupHeight = popup.offsetHeight;
+        var popupWidth = popup.offsetWidth;
 
         var popupOffsetX = -550;
         var popupOffsetY = -900;
+        if (position.y > 750) {
+          popupOffsetY = popupOffsetY - popupHeight;
+        }
+        if (position.x < 500) {
+          popupOffsetX = popupOffsetX + popupWidth;
+        }
         var popupPositionX = Math.min(
           position.x + popupOffsetX,
           cyContainer.offsetWidth - popup.offsetWidth
