@@ -26,15 +26,32 @@
     </ul>
   </div>
   <hr />
-  <div id="container" v-show="showCytoscape">
-    <!-- <button @click="saveLayout">Save Layout</button> -->
-    <select v-model="selectedEvent" @change="filterGraph" id="filters">
+  <div v-show="showCytoscape">
+    <select
+      class="select"
+      v-model="filterToggle"
+      @change="toggleFilter"
+      id="filter"
+    >
+      <option value="">Filtrare per dati anagrafici</option>
+      <option value="">Filtrare per lavoro</option>
+    </select>
+    <select
+      class="select"
+      v-model="selectedEvent"
+      @change="filterGraph"
+      id="filters"
+      v-show="eventFilter"
+    >
       <option value="" selected>Filtrare per eventi</option>
       <option v-for="event in eventsData" :key="event.id" :value="event.id">
         {{ event.data }}, {{ event.luogo }}
       </option>
     </select>
-    <div id="cy"></div>
+    <div id="container">
+      <!-- <button @click="saveLayout">Save Layout</button> -->
+      <div id="cy"></div>
+    </div>
   </div>
   <div id="events" v-show="showEventList">
     <h1>Eventi</h1>
@@ -151,16 +168,13 @@ li {
   transition: all 0.5s ease-out;
 }
 
-#filters {
+.select {
   max-width: 240px;
-  padding: 20px;
+  padding: 10px 20px;
   border: solid 1px rgb(120, 38, 46);
   border-radius: 10px;
   background-color: rgb(244, 244, 244);
   margin: 20px;
-  position: absolute;
-  top: 350px;
-  left: 25px;
   z-index: 999;
   overflow: visible;
 }
@@ -282,9 +296,13 @@ export default {
       clickedNode: null,
       charactersData: [],
       relationsData: [],
+      maestroRelations: [],
+      mecenatiRelations: [],
       eventsData: [],
       cy: null,
       cyData: null,
+      filter: "family",
+      eventFilter: false,
     };
   },
   mounted() {
@@ -300,6 +318,10 @@ export default {
         this.showCytoscape = true;
         this.showEventList = false;
       }
+    },
+    async toggleFilter() {
+      this.filter = this.filter === "family" ? "work" : "family";
+      await this.fetchDataAndPopulateNodes();
     },
     hidePopupOutside(event) {
       var popup = document.getElementById("popup");
@@ -391,14 +413,10 @@ export default {
                 // },
                 "background-color": "rgb(36, 68, 196)",
 
-                // width: (node) => {
-                //   const info = node.data("info");
-                //   return info.virtuosa ? "55px" : "40px"; // Adjust the width based on the condition
-                // },
-                // height: (node) => {
-                //   const info = node.data("info");
-                //   return info.virtuosa ? "55px" : "40px"; // Adjust the height based on the condition
-                // },
+                //label: "data(id)", 
+                "text-valign": "center", 
+                "text-halign": "center",
+
                 width: "45px",
                 height: "45px",
 
@@ -438,23 +456,50 @@ export default {
         });
       }
     },
+    // kkkkkkkk
     async fetchDataAndPopulateNodes() {
       try {
         const charactersData = await this.retrieveData();
         this.charactersData = charactersData;
         console.log(charactersData);
-
         const eventsData = await this.retrieveEvents();
         this.eventsData = eventsData;
-        console.log(eventsData);
 
-        const relationsData = await this.retrieveRelations();
-        this.relationsData = relationsData;
-        console.log(relationsData);
+        if (this.filter === "family") {
+          this.eventFilter = false;
+          const relationsData = await this.retrieveRelations();
+          this.relationsData = relationsData;
+        } else if (this.filter === "work") {
+          this.eventFilter = true;
+
+          const maestroRelations = await this.retrieveMaestroRelations();
+          this.maestroRelations = maestroRelations;
+          const mecenatiRelations = await this.retrieveMecenatiRelations();
+          this.mecenatiRelations = mecenatiRelations;
+
+          const maestroData = await this.retrieveMaestroData();
+          const mecenatiData = await this.retrieveMecenatiData();
+
+          const combinedMaestroData = this.combineMaestroData(
+            maestroRelations,
+            maestroData
+          );
+          const combinedMecenatiData = this.combineMecenatiData(
+            mecenatiRelations,
+            mecenatiData
+          );
+
+          this.updateCharacterMaestroRelations(combinedMaestroData);
+          this.updateCharacterMecenatiRelations(combinedMecenatiData);
+        }
 
         this.combineData();
 
-        this.cyData = this.formatDataForCytoscape(charactersData);
+        this.cyData = this.formatDataForCytoscape(
+          charactersData,
+          this.maestroRelations,
+          this.mecenatiRelations
+        );
 
         //console.log(cyData);
         this.loadLayout();
@@ -503,7 +548,7 @@ export default {
         throw error;
       }
     },
-    async retrieveMaestroRelationsData() {
+    async retrieveMaestroRelations() {
       try {
         const response = await fetch(
           "http://95.110.132.24:8071/items/Virtuose_maestro"
@@ -511,59 +556,21 @@ export default {
         const responseData = await response.json();
         const maestroRelations = responseData.data;
 
-        // Fetch data from the 'maestro' table using the IDs obtained from the relation table
-        const maestroIds = maestroRelations.map(
-          (relation) => relation.maestro_id
-        );
-        const maestroDataPromises = maestroIds.map((id) =>
-          fetch(`http://95.110.132.24:8071/items/maestro/${id}`)
-            .then((response) => response.json())
-            .then((responseData) => responseData.data)
-        );
-
-        const maestroData = await Promise.all(maestroDataPromises);
-
-        return { maestroRelations, maestroData };
+        return maestroRelations;
       } catch (error) {
         console.error("Error fetching maestro relations data: ", error);
         throw error;
       }
     },
-    async retrieveAndCombineMaestroData() {
+    async retrieveMaestroData() {
       try {
-        // Step 1: Retrieve data from Virtuose_maestro table
-        const maestroRelationsData = await retrieveMaestroRelationsData();
+        const response = await fetch("http://95.110.132.24:8071/items/maestro");
+        const responseData = await response.json();
+        const maestroData = responseData.data;
 
-        // Step 2: Extract IDs of connected maestros
-        const maestroIds = maestroRelationsData.map(
-          (relation) => relation.maestro_id
-        );
-
-        // Step 3: Retrieve data from maestro table for each maestro ID
-        const maestroDataPromises = maestroIds.map(async (maestroId) => {
-          const response = await fetch(
-            `http://95.110.132.24:8071/items/maestro/${maestroId}`
-          );
-          const responseData = await response.json();
-          return responseData;
-        });
-
-        const maestroData = await Promise.all(maestroDataPromises);
-
-        // Step 4: Combine data from both tables
-        const combinedData = maestroRelationsData.map((relation, index) => {
-          return {
-            id: relation.id,
-            virtuose_id: relation.Virtuose_id,
-            maestro_id: relation.maestro_id,
-            maestro_info: maestroData[index], // Add maestro data to the relation object
-          };
-        });
-
-        // Step 5: Return combined data
-        return combinedData;
+        return maestroData;
       } catch (error) {
-        console.error("Error retrieving and combining maestro data: ", error);
+        console.error("Error fetching maestro relations data: ", error);
         throw error;
       }
     },
@@ -574,6 +581,21 @@ export default {
         );
         const responseData = await response.json();
         const data = responseData.data;
+
+        return data;
+      } catch (error) {
+        console.error("Error fetching event relations: ", error);
+        throw error;
+      }
+    },
+    async retrieveMecenatiData() {
+      try {
+        const response = await fetch(
+          "http://95.110.132.24:8071/items/mecenati"
+        );
+        const responseData = await response.json();
+        const data = responseData.data;
+
         return data;
       } catch (error) {
         console.error("Error fetching event relations: ", error);
@@ -593,11 +615,66 @@ export default {
         );
       });
     },
+    combineMaestroData(maestroRelations, maestroData) {
+      return maestroRelations.map((relation) => {
+        const maestro = maestroData.find(
+          (maestro) => maestro.id === relation.maestro_id
+        );
+        return {
+          relation,
+          maestro,
+        };
+      });
+    },
+    combineMecenatiData(mecenatiRelations, mecenatiData) {
+      return mecenatiRelations.map((relation) => {
+        const mecenati = mecenatiData.find(
+          (mecenati) => mecenati.id === relation.mecenati_id
+        );
+        return {
+          relation,
+          mecenati,
+        };
+      });
+    },
+    // Function to update character data with maestro relations
+    updateCharacterMaestroRelations(combinedMaestroData) {
+      combinedMaestroData.forEach(({ relation, maestro }) => {
+        const character = this.charactersData.find(
+          (char) => char.id === relation.Virtuose_id
+        );
+        if (character) {
+          // Update character's maestro relations
+          if (!character.maestro) {
+            character.maestro = [];
+          }
+          character.maestro.push(maestro.id);
+        }
+      });
+    },
+    updateCharacterMecenatiRelations(combinedMecenatiData) {
+      combinedMecenatiData.forEach(({ relation, mecenati }) => {
+        const character = this.charactersData.find(
+          (char) => char.id === relation.Virtuose_id
+        );
+        if (character) {
+          // Update character's maestro relations
+          if (!character.mecenati) {
+            character.mecenati = [];
+          }
+          character.mecenati.push(mecenati.id);
+        }
+      });
+    },
     getCharacterName(id) {
       const character = this.charactersData.find((char) => char.id === id);
       return character ? character.nome_scelto : "Non conosciuto";
     },
-    formatDataForCytoscape(charactersData) {
+    formatDataForCytoscape(
+      charactersData,
+      maestroRelations,
+      mecenatiRelations
+    ) {
       const nodes = charactersData.map((character) => ({
         data: {
           id: character.id,
@@ -608,42 +685,69 @@ export default {
             father: null,
             children: [],
             spouse: null,
+            maestro: [],
+            mecenati: [],
           },
         },
       }));
-      const edges = this.extractEdgesFromCharacters(charactersData);
+      const edges = this.extractEdgesFromCharacters(
+        charactersData,
+        maestroRelations,
+        mecenatiRelations
+      );
       this.updateRelationships(nodes, edges);
       return { nodes, edges };
     },
-    extractRelatives(character) {
+    extractRelatives(character, maestroRelations, mecenatiRelations) {
       const relatives = [];
-      if (Array.isArray(character.figli_figlie)) {
-        relatives.push(...character.figli_figlie);
-      }
-      if (character.madre !== null) {
-        relatives.push(character.madre);
-      }
-      if (character.madrina !== null) {
-        relatives.push(character.madrina);
-      }
-      if (character.marito_moglie !== null) {
-        relatives.push(character.marito_moglie);
-      }
-      if (character.padre !== null) {
-        relatives.push(character.padre);
-      }
-      if (character.padrino !== null) {
-        relatives.push(character.padrino);
-      }
-      if (character.secondo_marito_moglie !== null) {
-        relatives.push(character.secondo_marito_moglie);
+      if (this.filter === "family") {
+        if (Array.isArray(character.figli_figlie)) {
+          relatives.push(...character.figli_figlie);
+        }
+        if (character.madre !== null) {
+          relatives.push(character.madre);
+        }
+        if (character.madrina !== null) {
+          relatives.push(character.madrina);
+        }
+        if (character.marito_moglie !== null) {
+          relatives.push(character.marito_moglie);
+        }
+        if (character.padre !== null) {
+          relatives.push(character.padre);
+        }
+        if (character.padrino !== null) {
+          relatives.push(character.padrino);
+        }
+        if (character.secondo_marito_moglie !== null) {
+          relatives.push(character.secondo_marito_moglie);
+        }
+      } else {
+        maestroRelations.forEach((relation) => {
+          if (relation.Virtuose_id === character.id) {
+            relatives.push(relation.maestro_id);
+          }
+        });
+        mecenatiRelations.forEach((relation) => {
+          if (relation.Virtuose_id === character.id) {
+            relatives.push(relation.mecenati_id);
+          }
+        });
       }
       return relatives;
     },
-    extractEdgesFromCharacters(charactersData) {
+    extractEdgesFromCharacters(
+      charactersData,
+      maestroRelations,
+      mecenatiRelations
+    ) {
       const edges = [];
       charactersData.forEach((character) => {
-        const relatives = this.extractRelatives(character);
+        const relatives = this.extractRelatives(
+          character,
+          maestroRelations,
+          mecenatiRelations
+        );
         relatives.forEach((relativeId) => {
           const sourceExists = charactersData.some(
             (char) => char.id === character.id
@@ -740,11 +844,27 @@ export default {
         }
       });
     },
+    removeCytoscapeEventListeners() {
+      // Remove existing event listeners
+      const cyContainer = document.getElementById("cy");
+      cyContainer.removeEventListener("mousedown", this.handleMouseDown);
+      cyContainer.removeEventListener("mousemove", this.handleMouseMove);
+      cyContainer.removeEventListener("mouseup", this.handleMouseUp);
+      cyContainer.removeEventListener("wheel", this.handleWheel);
+      this.cy.off("click", "node", this.handleNodeClick);
+      this.cy.off("grab", "node", this.handleNodeGrab);
+    },
     populateCytoscapeGraph() {
+      this.removeCytoscapeEventListeners();
+
       this.cy.nodes().forEach((node) => {
-        const size = this.getNodeSize(node);
-        node.style("width", size);
-        node.style("height", size);
+        if (node.connectedEdges().length === 0) {
+          node.hide();
+        } else {
+          const size = this.getNodeSize(node);
+          node.style("width", size);
+          node.style("height", size);
+        }
       });
 
       // Disable built-in panning
@@ -760,7 +880,7 @@ export default {
       // Add mouse event listeners for custom panning
       const cyContainer = document.getElementById("cy");
 
-      cyContainer.addEventListener("mousedown", (event) => {
+      const handleMouseDown = (event) => {
         // Check if the click occurred outside of nodes
         //const target = cy.$(event.target);
         if (nodeClicked) {
@@ -769,17 +889,9 @@ export default {
           isPanning = true;
           initialPointerPosition = { x: event.clientX, y: event.clientY };
         }
-      });
+      };
 
-      this.cy.on("grab", "node", (event) => {
-        nodeClicked = true;
-        isPanning = false;
-
-        // Prevent event propagation to the DOM
-        event.stopPropagation();
-      });
-
-      cyContainer.addEventListener("mousemove", (event) => {
+      const handleMouseMove = (event) => {
         if (isPanning === true) {
           var deltaX = event.clientX - initialPointerPosition.x;
           var deltaY = event.clientY - initialPointerPosition.y;
@@ -798,16 +910,16 @@ export default {
           this.cy.pan(limitedPan);
           initialPointerPosition = { x: event.clientX, y: event.clientY };
         }
-      });
+      };
 
-      cyContainer.addEventListener("mouseup", () => {
+      const handleMouseUp = () => {
         if (nodeClicked) {
           nodeClicked = false;
         }
         isPanning = false;
-      });
+      };
 
-      cyContainer.addEventListener("wheel", (event) => {
+      const handleWheel = (event) => {
         let cursorX = event.clientX;
         let cursorY = event.clientY;
         const containerRect = cyContainer.getBoundingClientRect();
@@ -824,29 +936,20 @@ export default {
           y: cursorY - containerHeight / 2,
         };
 
-        console.log(cyRelativePosition);
+        // console.log(cyRelativePosition);
 
         this.cy.zoom({
           level: this.cy.zoom() + zoomAmount,
           position: cyRelativePosition,
         });
         event.preventDefault(); // Prevent default scrolling behavior
-      });
+      };
 
-      this.cy.ready(() => {
-        this.cy.zoom(0.55);
-      });
-
-      var popup = document.createElement("div");
-      popup.id = "popup";
-      popup.style.opacity = "0";
-      document.getElementById("cy").appendChild(popup);
-
-      this.cy.on("click", "node", (event) => {
+      const handleNodeClick = (event) => {
         var node = event.target;
         var info = node.data("info");
         var relations = node.data("relationships");
-        console.log(relations);
+        // console.log(relations);
         this.clickedNode = node;
 
         this.popupInfo = info;
@@ -904,7 +1007,7 @@ export default {
         </div>
     `;
         var position = event.target.renderedPosition();
-        console.log("Position: ", position);
+        // console.log("Position: ", position);
         var cyContainer = document.getElementById("cy");
         var popupHeight = popup.offsetHeight;
         var popupWidth = popup.offsetWidth;
@@ -928,7 +1031,7 @@ export default {
 
         popup.style.transform = `translate(${popupPositionX}px, ${popupPositionY}px)`;
 
-        setTimeout(function () {
+        setTimeout(() => {
           // Show the popup
           popup.style.width = "500px";
           popup.style.height = "auto";
@@ -940,7 +1043,36 @@ export default {
         }, 200);
 
         event.stopPropagation();
+      };
+
+      const handleNodeGrab = (event) => {
+        nodeClicked = true;
+        isPanning = false;
+
+        // Prevent event propagation to the DOM
+        event.stopPropagation();
+      };
+
+      cyContainer.addEventListener("mousedown", handleMouseDown);
+
+      this.cy.on("grab", "node", handleNodeGrab);
+
+      cyContainer.addEventListener("mousemove", handleMouseMove);
+
+      cyContainer.addEventListener("mouseup", handleMouseUp);
+
+      cyContainer.addEventListener("wheel", handleWheel);
+
+      this.cy.ready(() => {
+        this.cy.zoom(0.55);
       });
+
+      var popup = document.createElement("div");
+      popup.id = "popup";
+      popup.style.opacity = "0";
+      document.getElementById("cy").appendChild(popup);
+
+      this.cy.on("click", "node", handleNodeClick);
     },
   },
 };
