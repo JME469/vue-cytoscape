@@ -845,14 +845,15 @@ export default {
       });
     },
     removeCytoscapeEventListeners() {
+      console.log(this.handleMouseDown);
       // Remove existing event listeners
       const cyContainer = document.getElementById("cy");
-      cyContainer.removeEventListener("mousedown", this.handleMouseDown);
-      cyContainer.removeEventListener("mousemove", this.handleMouseMove);
-      cyContainer.removeEventListener("mouseup", this.handleMouseUp);
-      cyContainer.removeEventListener("wheel", this.handleWheel);
-      this.cy.off("click", "node", this.handleNodeClick);
-      this.cy.off("grab", "node", this.handleNodeGrab);
+      cyContainer.removeEventListener("mousedown", this.populateCytoscapeGraph.handleMouseDown);
+      cyContainer.removeEventListener("mousemove", this.populateCytoscapeGraph.handleMouseMove);
+      cyContainer.removeEventListener("mouseup", this.populateCytoscapeGraph.handleMouseUp);
+      cyContainer.removeEventListener("wheel", this.populateCytoscapeGraph.handleWheel);
+      this.cy.off("click", "node", this.populateCytoscapeGraph.handleNodeClick);
+      this.cy.off("grab", "node", this.populateCytoscapeGraph.handleNodeGrab);
     },
     populateCytoscapeGraph() {
       this.removeCytoscapeEventListeners();
