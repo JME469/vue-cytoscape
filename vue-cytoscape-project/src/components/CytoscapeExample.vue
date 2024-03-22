@@ -27,14 +27,10 @@
   </div>
   <hr />
   <div v-show="showCytoscape">
-    <select
-      class="select"
-      v-model="filterToggle"
-      @change="toggleFilter"
-      id="filter"
-    >
-      <option value="">Filtrare per dati anagrafici</option>
-      <option value="">Filtrare per lavoro</option>
+    <select class="select" v-model="filter" @change="toggleFilter" id="filter">
+      <option value="family">Filtrare per dati anagrafici</option>
+      <option value="work">Filtrare per lavoro</option>
+      <option value="all">Mostra tutte le relazioni</option>
     </select>
     <select
       class="select"
@@ -292,6 +288,9 @@ export default {
       showCytoscape: true,
       showEventList: false,
       showPopup: false,
+      isPanning: false,
+      initialPointerPosition: { x: 0, y: 0 },
+      nodeClicked: false,
       popupInfo: {},
       clickedNode: null,
       charactersData: [],
@@ -303,6 +302,7 @@ export default {
       cyData: null,
       filter: "family",
       eventFilter: false,
+      firstLoad: true,
     };
   },
   mounted() {
@@ -320,7 +320,13 @@ export default {
       }
     },
     async toggleFilter() {
-      this.filter = this.filter === "family" ? "work" : "family";
+      if (this.filter === "work") {
+        this.filter = "work";
+      } else if (this.filter === "all") {
+        this.filter = "all";
+      } else {
+        this.filter = "family";
+      }
       await this.fetchDataAndPopulateNodes();
     },
     hidePopupOutside(event) {
@@ -413,8 +419,15 @@ export default {
                 // },
                 "background-color": "rgb(36, 68, 196)",
 
-                //label: "data(id)", 
-                "text-valign": "center", 
+                "border-color": (node) => {
+                  const info = node.data("info");
+                  return info.virtuose
+                    ? "pink"
+                    : "none";
+                },
+
+                //label: "data(id)",
+                "text-valign": "center",
                 "text-halign": "center",
 
                 width: "45px",
@@ -428,24 +441,13 @@ export default {
               selector: "edge",
               style: {
                 width: 3,
-                "line-color": "rgb(36, 68, 196)",
-                // "line-color": (edge) => {
-                //   const sourceNode = edge.source();
-                //   const targetNode = edge.target();
-
-                //   const sourceInfo = sourceNode.data("info");
-                //   const targetInfo = targetNode.data("info");
-
-                //   // Check if either the source or target node is from Rome
-                //   if (
-                //     sourceInfo.luogo_nascita === "Roma" ||
-                //     targetInfo.luogo_nascita === "Roma"
-                //   ) {
-                //     return "rgb(78, 6, 105)"; // Set the line color to purple if either node is from Rome
-                //   } else {
-                //     return "rgb(36, 68, 196)"; // Set a default color for edges
-                //   }
-                // },
+                "line-color": (edge) => {
+                  if (edge.type === "work") {
+                    return "rgb(78, 6, 105)"; // Set the line color to purple if either node is from Rome
+                  } else {
+                    return "rgb(36, 68, 196)"; // Set a default color for edges
+                  }
+                },
               },
             },
           ],
@@ -461,15 +463,17 @@ export default {
       try {
         const charactersData = await this.retrieveData();
         this.charactersData = charactersData;
-        console.log(charactersData);
+
         const eventsData = await this.retrieveEvents();
         this.eventsData = eventsData;
 
-        if (this.filter === "family") {
+        if (this.filter === "family" || this.filter === "all") {
           this.eventFilter = false;
           const relationsData = await this.retrieveRelations();
           this.relationsData = relationsData;
-        } else if (this.filter === "work") {
+        }
+
+        if (this.filter === "work" || this.filter === "all") {
           this.eventFilter = true;
 
           const maestroRelations = await this.retrieveMaestroRelations();
@@ -503,7 +507,8 @@ export default {
 
         //console.log(cyData);
         this.loadLayout();
-        this.populateCytoscapeGraph(this.cyData);
+        this.populateCytoscapeGraph();
+        this.addCytoscapeEventListeners();
       } catch (error) {
         console.error("Error fetching data and populating nodes: ", error);
       }
@@ -700,7 +705,7 @@ export default {
     },
     extractRelatives(character, maestroRelations, mecenatiRelations) {
       const relatives = [];
-      if (this.filter === "family") {
+      if (this.filter === "family" || this.filter === "all") {
         if (Array.isArray(character.figli_figlie)) {
           relatives.push(...character.figli_figlie);
         }
@@ -722,7 +727,8 @@ export default {
         if (character.secondo_marito_moglie !== null) {
           relatives.push(character.secondo_marito_moglie);
         }
-      } else {
+      }
+      if (this.filter === "work" || this.filter === "all") {
         maestroRelations.forEach((relation) => {
           if (relation.Virtuose_id === character.id) {
             relatives.push(relation.maestro_id);
@@ -756,11 +762,18 @@ export default {
             (char) => char.id === relativeId
           );
           if (sourceExists && targetExists) {
+            let relationType = "family";
+            if (maestroRelations.some((relation) => relation.Virtuose_id === character.id && relation.maestro_id === relativeId)) {
+              relationType = "work";
+            } else if (mecenatiRelations.some((relation) => relation.Virtuose_id === character.id && relation.mecenati_id === relativeId)) {
+              relationType = "work";
+            }
             edges.push({
               data: {
                 id: `${character.id}-${relativeId}`,
                 source: character.id,
                 target: relativeId,
+                type: relationType
               },
             });
           }
@@ -845,18 +858,201 @@ export default {
       });
     },
     removeCytoscapeEventListeners() {
-      console.log(this.handleMouseDown);
-      // Remove existing event listeners
       const cyContainer = document.getElementById("cy");
-      cyContainer.removeEventListener("mousedown", this.populateCytoscapeGraph.handleMouseDown);
-      cyContainer.removeEventListener("mousemove", this.populateCytoscapeGraph.handleMouseMove);
-      cyContainer.removeEventListener("mouseup", this.populateCytoscapeGraph.handleMouseUp);
-      cyContainer.removeEventListener("wheel", this.populateCytoscapeGraph.handleWheel);
-      this.cy.off("click", "node", this.populateCytoscapeGraph.handleNodeClick);
-      this.cy.off("grab", "node", this.populateCytoscapeGraph.handleNodeGrab);
+
+      cyContainer.removeEventListener("mousedown", this.handleMouseDown);
+      cyContainer.removeEventListener("mousemove", this.handleMouseMove);
+      cyContainer.removeEventListener("mouseup", this.handleMouseUp);
+      cyContainer.removeEventListener("wheel", this.handleWheel);
+
+      this.cy.off("click", "node", this.handleNodeClick);
+      this.cy.off("grab", "node", this.handleNodeGrab);
+    },
+    handleMouseDown(event) {
+      if (this.nodeClicked) {
+        this.isPanning = false;
+      } else {
+        this.isPanning = true;
+        this.initialPointerPosition = { x: event.clientX, y: event.clientY };
+      }
+    },
+    handleMouseMove(event) {
+      const cyContainer = document.getElementById("cy");
+      if (this.isPanning === true) {
+        var deltaX = event.clientX - this.initialPointerPosition.x;
+        var deltaY = event.clientY - this.initialPointerPosition.y;
+        var currentPan = this.cy.pan();
+
+        const maxX = cyContainer.offsetWidth;
+        const maxY = cyContainer.offsetHeight;
+        const minX = -cyContainer.offsetWidth * 0.5;
+        const minY = -cyContainer.offsetHeight * 0.5;
+
+        const limitedPan = {
+          x: Math.min(Math.max(currentPan.x + deltaX, minX), maxX), // Adjust the panning boundaries as needed
+          y: Math.min(Math.max(currentPan.y + deltaY, minY), maxY),
+        };
+
+        this.cy.pan(limitedPan);
+        this.initialPointerPosition = { x: event.clientX, y: event.clientY };
+      }
+    },
+    handleMouseUp() {
+      if (this.nodeClicked) {
+        this.nodeClicked = false;
+      }
+      this.isPanning = false;
+    },
+    handleWheel(event) {
+      const cyContainer = document.getElementById("cy");
+      let cursorX = event.clientX;
+      let cursorY = event.clientY;
+      const containerRect = cyContainer.getBoundingClientRect();
+      const containerWidth = containerRect.width;
+      const containerHeight = containerRect.height;
+      if (event.ctrlKey || event.metaKey) {
+        return; // Let the default zoom behavior handle it
+      }
+      const zoomAmount = event.deltaY > 0 ? -0.1 : 0.1; // Change the zoom amount as needed
+      //const containerRect = cyContainer.getBoundingClientRect();
+
+      let cyRelativePosition = {
+        x: cursorX - containerWidth / 2,
+        y: cursorY - containerHeight / 2,
+      };
+
+      // console.log(cyRelativePosition);
+
+      this.cy.zoom({
+        level: this.cy.zoom() + zoomAmount,
+        position: cyRelativePosition,
+      });
+      event.preventDefault();
+    },
+    handleNodeClick(event) {
+      const popup = document.getElementById("popup");
+
+      var node = event.target;
+      var info = node.data("info");
+      var relations = node.data("relationships");
+      // console.log(relations);
+      this.clickedNode = node;
+
+      this.popupInfo = info;
+      this.showPopup = true;
+
+      const imageSrc =
+        info.icona !== null
+          ? `http://95.110.132.24:8071/assets/${info.icona}`
+          : "";
+      const noteSection = info.note ? `<p><b>Info:</b> ${info.note}</p>` : "";
+      const birthPlace =
+        info.luogo_nascita === "Roma" || info.luogo_nascita === "Firenze"
+          ? `${info.luogo_nascita}`
+          : "";
+      const fatherSection =
+        relations.father !== null
+          ? `<p><b>Padre:</b> ${this.getCharacterName(relations.father)}</p>`
+          : "";
+      const motherSection =
+        relations.mother !== null
+          ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
+          : "";
+      const spouseSection =
+        relations.spouse !== null
+          ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
+              relations.spouse
+            )}</p>`
+          : "";
+      const childrenSection =
+        relations.children && relations.children.length > 0
+          ? `<p><b>Figli/Figlie:</b> ${relations.children
+              .map((childId) => this.getCharacterName(childId))
+              .join(", ")}</p>`
+          : "";
+
+      // Construct the popup content
+      popup.innerHTML = `
+        <div id="content">
+          ${
+            imageSrc !== ""
+              ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;" alt="Icona">`
+              : ""
+          }
+            <div id="chInfo">
+              <h3 style="margin-left:10px"><b><i>${info.nome_scelto}, ${
+        info.id
+      }</i></b></h3>
+              <h4 class="birthPlace" style="margin:-3px 0 0 9px;font-weight:400;"><i>${birthPlace}</i></h4>
+                ${fatherSection}
+                ${motherSection}
+                ${spouseSection}
+                ${childrenSection}
+                ${noteSection}
+            </div>
+        </div>
+    `;
+      var position = event.target.renderedPosition();
+      // console.log("Position: ", position);
+      var cyContainer = document.getElementById("cy");
+      var popupHeight = popup.offsetHeight;
+      var popupWidth = popup.offsetWidth;
+
+      var popupOffsetX = -550;
+      var popupOffsetY = -900;
+      if (position.y > 750) {
+        popupOffsetY = popupOffsetY - popupHeight;
+      }
+      if (position.x < 500) {
+        popupOffsetX = popupOffsetX + popupWidth;
+      }
+      var popupPositionX = Math.min(
+        position.x + popupOffsetX,
+        cyContainer.offsetWidth - popup.offsetWidth
+      );
+      var popupPositionY = Math.min(
+        position.y + popupOffsetY,
+        cyContainer.offsetHeight - popup.offsetHeight
+      );
+
+      popup.style.transform = `translate(${popupPositionX}px, ${popupPositionY}px)`;
+
+      setTimeout(() => {
+        // Show the popup
+        popup.style.width = "500px";
+        popup.style.height = "auto";
+        popup.style.opacity = "1";
+        popup.style.zIndex = "999";
+
+        // Add event listener to hide the popup when clicking outside of it
+        document.addEventListener("click", this.hidePopupOutside);
+      }, 200);
+
+      event.stopPropagation();
+    },
+    handleNodeGrab(event) {
+      this.nodeClicked = true;
+      this.isPanning = false;
+
+      // Prevent event propagation to the DOM
+      event.stopPropagation();
+    },
+    addCytoscapeEventListeners() {
+      const cyContainer = document.getElementById("cy");
+
+      cyContainer.addEventListener("mousedown", this.handleMouseDown);
+      cyContainer.addEventListener("mousemove", this.handleMouseMove);
+      cyContainer.addEventListener("mouseup", this.handleMouseUp);
+      cyContainer.addEventListener("wheel", this.handleWheel);
+
+      this.cy.on("grab", "node", this.handleNodeGrab);
+      this.cy.on("click", "node", this.handleNodeClick);
     },
     populateCytoscapeGraph() {
-      this.removeCytoscapeEventListeners();
+      var popup = document.createElement("div");
+      popup.id = "popup";
+      popup.style.opacity = "0";
+      document.getElementById("cy").appendChild(popup);
 
       this.cy.nodes().forEach((node) => {
         if (node.connectedEdges().length === 0) {
@@ -872,208 +1068,11 @@ export default {
 
       this.cy.userPanningEnabled(false);
 
-      // Define variables for custom panning
-      let isPanning = false;
-      let initialPointerPosition = { x: 0, y: 0 };
-
-      var nodeClicked = false;
-
       // Add mouse event listeners for custom panning
-      const cyContainer = document.getElementById("cy");
-
-      const handleMouseDown = (event) => {
-        // Check if the click occurred outside of nodes
-        //const target = cy.$(event.target);
-        if (nodeClicked) {
-          isPanning = false;
-        } else {
-          isPanning = true;
-          initialPointerPosition = { x: event.clientX, y: event.clientY };
-        }
-      };
-
-      const handleMouseMove = (event) => {
-        if (isPanning === true) {
-          var deltaX = event.clientX - initialPointerPosition.x;
-          var deltaY = event.clientY - initialPointerPosition.y;
-          var currentPan = this.cy.pan();
-
-          const maxX = cyContainer.offsetWidth;
-          const maxY = cyContainer.offsetHeight;
-          const minX = -cyContainer.offsetWidth * 0.5;
-          const minY = -cyContainer.offsetHeight * 0.5;
-
-          const limitedPan = {
-            x: Math.min(Math.max(currentPan.x + deltaX, minX), maxX), // Adjust the panning boundaries as needed
-            y: Math.min(Math.max(currentPan.y + deltaY, minY), maxY),
-          };
-
-          this.cy.pan(limitedPan);
-          initialPointerPosition = { x: event.clientX, y: event.clientY };
-        }
-      };
-
-      const handleMouseUp = () => {
-        if (nodeClicked) {
-          nodeClicked = false;
-        }
-        isPanning = false;
-      };
-
-      const handleWheel = (event) => {
-        let cursorX = event.clientX;
-        let cursorY = event.clientY;
-        const containerRect = cyContainer.getBoundingClientRect();
-        const containerWidth = containerRect.width;
-        const containerHeight = containerRect.height;
-        if (event.ctrlKey || event.metaKey) {
-          return; // Let the default zoom behavior handle it
-        }
-        const zoomAmount = event.deltaY > 0 ? -0.1 : 0.1; // Change the zoom amount as needed
-        //const containerRect = cyContainer.getBoundingClientRect();
-
-        let cyRelativePosition = {
-          x: cursorX - containerWidth / 2,
-          y: cursorY - containerHeight / 2,
-        };
-
-        // console.log(cyRelativePosition);
-
-        this.cy.zoom({
-          level: this.cy.zoom() + zoomAmount,
-          position: cyRelativePosition,
-        });
-        event.preventDefault(); // Prevent default scrolling behavior
-      };
-
-      const handleNodeClick = (event) => {
-        var node = event.target;
-        var info = node.data("info");
-        var relations = node.data("relationships");
-        // console.log(relations);
-        this.clickedNode = node;
-
-        this.popupInfo = info;
-        this.showPopup = true;
-
-        const imageSrc =
-          info.icona !== null
-            ? `http://95.110.132.24:8071/assets/${info.icona}`
-            : "";
-        const noteSection = info.note ? `<p><b>Info:</b> ${info.note}</p>` : "";
-        const birthPlace =
-          info.luogo_nascita === "Roma" || info.luogo_nascita === "Firenze"
-            ? `${info.luogo_nascita}`
-            : "";
-        const fatherSection =
-          relations.father !== null
-            ? `<p><b>Padre:</b> ${this.getCharacterName(relations.father)}</p>`
-            : "";
-        const motherSection =
-          relations.mother !== null
-            ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
-            : "";
-        const spouseSection =
-          relations.spouse !== null
-            ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
-                relations.spouse
-              )}</p>`
-            : "";
-        const childrenSection =
-          relations.children && relations.children.length > 0
-            ? `<p><b>Figli/Figlie:</b> ${relations.children
-                .map((childId) => this.getCharacterName(childId))
-                .join(", ")}</p>`
-            : "";
-
-        // Construct the popup content
-        popup.innerHTML = `
-        <div id="content">
-          ${
-            imageSrc !== ""
-              ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;" alt="Icona">`
-              : ""
-          }
-            <div id="chInfo">
-              <h3 style="margin-left:10px"><b><i>${info.nome_scelto}, ${
-          info.id
-        }</i></b></h3>
-              <h4 class="birthPlace" style="margin:-3px 0 0 9px;font-weight:400;"><i>${birthPlace}</i></h4>
-                ${fatherSection}
-                ${motherSection}
-                ${spouseSection}
-                ${childrenSection}
-                ${noteSection}
-            </div>
-        </div>
-    `;
-        var position = event.target.renderedPosition();
-        // console.log("Position: ", position);
-        var cyContainer = document.getElementById("cy");
-        var popupHeight = popup.offsetHeight;
-        var popupWidth = popup.offsetWidth;
-
-        var popupOffsetX = -550;
-        var popupOffsetY = -900;
-        if (position.y > 750) {
-          popupOffsetY = popupOffsetY - popupHeight;
-        }
-        if (position.x < 500) {
-          popupOffsetX = popupOffsetX + popupWidth;
-        }
-        var popupPositionX = Math.min(
-          position.x + popupOffsetX,
-          cyContainer.offsetWidth - popup.offsetWidth
-        );
-        var popupPositionY = Math.min(
-          position.y + popupOffsetY,
-          cyContainer.offsetHeight - popup.offsetHeight
-        );
-
-        popup.style.transform = `translate(${popupPositionX}px, ${popupPositionY}px)`;
-
-        setTimeout(() => {
-          // Show the popup
-          popup.style.width = "500px";
-          popup.style.height = "auto";
-          popup.style.opacity = "1";
-          popup.style.zIndex = "999";
-
-          // Add event listener to hide the popup when clicking outside of it
-          document.addEventListener("click", this.hidePopupOutside);
-        }, 200);
-
-        event.stopPropagation();
-      };
-
-      const handleNodeGrab = (event) => {
-        nodeClicked = true;
-        isPanning = false;
-
-        // Prevent event propagation to the DOM
-        event.stopPropagation();
-      };
-
-      cyContainer.addEventListener("mousedown", handleMouseDown);
-
-      this.cy.on("grab", "node", handleNodeGrab);
-
-      cyContainer.addEventListener("mousemove", handleMouseMove);
-
-      cyContainer.addEventListener("mouseup", handleMouseUp);
-
-      cyContainer.addEventListener("wheel", handleWheel);
 
       this.cy.ready(() => {
         this.cy.zoom(0.55);
       });
-
-      var popup = document.createElement("div");
-      popup.id = "popup";
-      popup.style.opacity = "0";
-      document.getElementById("cy").appendChild(popup);
-
-      this.cy.on("click", "node", handleNodeClick);
     },
   },
 };
