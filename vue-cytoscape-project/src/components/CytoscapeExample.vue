@@ -301,6 +301,12 @@ li {
   margin: 15px;
 }
 
+.logo{
+  position: absolute; 
+  top: 15px;
+  right: 15px;
+}
+
 #chInfo {
   grid-column: 2;
   display: flex;
@@ -1077,10 +1083,15 @@ export default {
       this.popupInfo = info;
       this.showPopup = true;
 
+      const logoSrc =
+        info.virtuosa
+          ? `/img/logo_r.png`
+          : "";
       const imageSrc =
         info.icona !== null
           ? `http://95.110.132.24:8071/assets/${info.icona}`
           : "";
+
       // const virtuoseLogo = info.virtuosa
       //   ? `${this.baseUrl}/assets/logo_r.png`
       //   : "";
@@ -1131,6 +1142,12 @@ export default {
               ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;" alt="Icona">`
               : ""
           }
+          ${
+            logoSrc !== ""
+              ? `<img src="${logoSrc}" style="max-width:25px;" alt="Logo" class="logo">`
+              : ""
+          }
+          
             <div id="chInfo">
               <h3 style="margin-left:10px"><b><i>${info.nome_scelto}, ${
         info.id
