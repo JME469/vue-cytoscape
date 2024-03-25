@@ -1,18 +1,19 @@
 <template>
   <div id="banner">
     <img src="../assets/vidimus_r.png" alt="" height="100px" />
+    <div id="title">VIdiMUS - <i>Le Virtuose di musica</i></div>
   </div>
   <hr />
   <div id="nav-container">
     <ul id="nav">
       <li>
-        <button class="nav-button" @click="toggleDisplay()">
+        <button class="nav-button" @click="displayGraph()">
           <img src="../assets/network_149181.png" alt="" width="40px" />
-          <div class="btn-text">GRAFICO</div>
+          <div class="btn-text">LE VIRTUOSE</div>
         </button>
       </li>
       <li>
-        <button class="nav-button" @click="toggleDisplay()">
+        <button class="nav-button" @click="displayEvents()">
           <img src="../assets/calendar_2838779.png" alt="" width="40px" />
           <div class="btn-text">EVENTI</div>
         </button>
@@ -23,16 +24,51 @@
           <div class="btn-text">FONTI</div>
         </button>
       </li>
+      <li>
+        <button class="nav-button">
+          <img src="../assets/guitar_96421.png" alt="" width="40px" />
+          <div class="btn-text">REPERTORIO</div>
+        </button>
+      </li>
     </ul>
   </div>
   <hr />
   <div v-show="showCytoscape">
-    <select class="select" v-model="filter" @change="toggleFilter" id="filter">
-      <option value="family">Filtrare per dati anagrafici</option>
-      <option value="work">Filtrare per lavoro</option>
-      <option value="all">Mostra tutte le relazioni</option>
-    </select>
-    <select
+    <!-- <select class="select" v-model="filter" @change="toggleFilter" id="filter">
+      <option value="family">La rete della famiglia</option>
+      <option value="work">La rete dei maestri e dei mecenati</option>
+      <option value="all">Il network</option>
+    </select> -->
+    <div id="nav-container">
+      <ul id="nav">
+        <li>
+          <button class="nav-button" @click="toggleFilter('family')">
+            <div class="btn-text filters">Famiglia</div>
+          </button>
+        </li>
+        <li>
+          <button class="nav-button" @click="toggleFilter('work')">
+            <div class="btn-text filters">Lavoro</div>
+          </button>
+        </li>
+        <li>
+          <button class="nav-button" @click="toggleFilter('all')">
+            <div class="btn-text filters">Network</div>
+          </button>
+        </li>
+        <li>
+          <div class="dropdown">
+            <button class="nav-button dropbtn btn-text filters" @click="toggleDropdown">{{ dropdownLabel }}</button>
+            <div class="dropdown-content btn-text filters" v-show="showDropdown">
+              <button class="nav-button dd-content btn-text filters" v-for="event in eventsData" :key="event.id" @click="selectEvent(event)">
+                <div class="btn-text filters">{{ event.data }}, {{ event.luogo }}</div>
+              </button>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <!-- <select
       class="select"
       v-model="selectedEvent"
       @change="filterGraph"
@@ -43,9 +79,8 @@
       <option v-for="event in eventsData" :key="event.id" :value="event.id">
         {{ event.data }}, {{ event.luogo }}
       </option>
-    </select>
+    </select> -->
     <div id="container">
-      <!-- <button @click="saveLayout">Save Layout</button> -->
       <div id="cy"></div>
     </div>
   </div>
@@ -65,6 +100,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Syne:wght@400..800&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Montaga&display=swap");
 
 * {
   margin: 0;
@@ -89,17 +125,32 @@ hr {
 #banner {
   display: flex;
   min-height: 170px;
-  text-align: left;
+  text-align: center;
   background-color: rgb(255, 255, 255);
-  color: rgb(36, 68, 196);
-  justify-content: start;
+  color: rgb(120, 38, 46);
+  justify-content: center;
   align-items: center;
   width: 100%;
   max-width: 100%;
 }
 
+#title {
+  font-family: Montaga;
+  font-size: 28px;
+  margin-top: 70px;
+}
+
 #banner > img {
-  margin-left: 30px;
+  left: 30px;
+  position: absolute;
+}
+
+#circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: none;
+  border: solid 2px red;
 }
 
 #nav-container {
@@ -140,6 +191,10 @@ li {
   transition: all 0.5s ease-out;
 }
 
+.filters {
+  font-weight: 500 !important;
+}
+
 .nav-button:hover {
   background-color: rgb(120, 38, 46);
   color: aliceblue;
@@ -162,6 +217,24 @@ li {
   font-family: Montserrat;
   font-weight: 600;
   transition: all 0.5s ease-out;
+}
+
+.dropdown{
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content{
+  position: absolute;
+  left: 0;
+  top: 100%;
+  z-index: 1000;
+}
+
+.dd-content{
+  font-size: medium;
+  min-width: 200px;
+  text-align: center;
 }
 
 .select {
@@ -288,21 +361,52 @@ export default {
       showCytoscape: true,
       showEventList: false,
       showPopup: false,
+
       isPanning: false,
       initialPointerPosition: { x: 0, y: 0 },
       nodeClicked: false,
       popupInfo: {},
       clickedNode: null,
+
       charactersData: [],
       relationsData: [],
       maestroRelations: [],
       mecenatiRelations: [],
       eventsData: [],
+
       cy: null,
       cyData: null,
       filter: "family",
       eventFilter: false,
-      firstLoad: true,
+      layout1: {
+        name: "fcose",
+        nodeRepulsion: 35000,
+        randomize: true,
+        idealEdgeLength: 50,
+        numIter: 30000,
+        nestingFactor: 1000,
+        componentSpacing: 1000,
+        nodeOverlap: 10000,
+        animate: false,
+      },
+      layout2: {
+        name: "fcose",
+        nodeRepulsion: 100000,
+        randomize: true,
+        idealEdgeLength: 45,
+        numIter: 300000,
+        nestingFactor: 10000,
+        componentSpacing: 1000,
+        nodeOverlap: 100,
+        animate: false,
+      },
+      layoutConfig: null,
+
+      baseUrl: window.location.origin,
+
+      showDropdown: false,
+      dropdownLabel: 'Eventi', 
+      selectedEvent: null,
     };
   },
   mounted() {
@@ -310,24 +414,27 @@ export default {
     document.addEventListener("click", this.hidePopupOutside.bind(this));
   },
   methods: {
-    toggleDisplay() {
-      if (this.showCytoscape === true && this.showEventList === false) {
-        this.showCytoscape = false;
-        this.showEventList = true;
-      } else {
-        this.showCytoscape = true;
-        this.showEventList = false;
+    displayGraph() {
+      this.showEventList = false;
+      this.showCytoscape = true;
+    },
+    displayEvents() {
+      this.showCytoscape = false;
+      this.showEventList = true;
+    },
+    async toggleFilter(filterValue) {
+      if (this.filter !== filterValue) {
+        this.filter = filterValue;
+        await this.fetchDataAndPopulateNodes();
       }
     },
-    async toggleFilter() {
-      if (this.filter === "work") {
-        this.filter = "work";
-      } else if (this.filter === "all") {
-        this.filter = "all";
-      } else {
-        this.filter = "family";
-      }
-      await this.fetchDataAndPopulateNodes();
+    toggleDropdown() {
+      this.showDropdown = !this.showDropdown; // Toggle the dropdown menu
+    },
+    selectEvent(event) {
+      this.selectedEvent = event.id; // Set the selected event
+      this.toggleDropdown(); // Hide the dropdown after selecting an event
+      this.filterGraph(); // You can call your filterGraph method here or perform any other action
     },
     hidePopupOutside(event) {
       var popup = document.getElementById("popup");
@@ -377,6 +484,11 @@ export default {
           }
         });
       } else {
+        if (this.filter === "all") {
+          this.layoutConfig = this.layout2;
+        } else {
+          this.layoutConfig = this.layout1;
+        }
         this.cy = cytoscape({
           container: document.getElementById("cy"),
           elements: {
@@ -384,17 +496,7 @@ export default {
             edges: this.cyData.edges,
           },
 
-          layout: {
-            name: "fcose",
-            nodeRepulsion: 35000,
-            randomize: true,
-            idealEdgeLength: 50,
-            numIter: 30000,
-            nestingFactor: 1000,
-            componentSpacing: 1000,
-            nodeOverlap: 10000,
-            animate: false,
-          },
+          layout: this.layoutConfig,
 
           style: [
             {
@@ -417,13 +519,15 @@ export default {
                 //       : "rgb(36, 68, 196)";
                 //   }
                 // },
-                "background-color": "rgb(36, 68, 196)",
+                "background-color": "#96b8d2",
 
+                "border-width": (node) => {
+                  const info = node.data("info");
+                  return info.virtuosa ? "6px" : "0";
+                },
                 "border-color": (node) => {
                   const info = node.data("info");
-                  return info.virtuose
-                    ? "pink"
-                    : "none";
+                  return info.virtuosa ? "rgb(120, 38, 46)" : "transparent";
                 },
 
                 //label: "data(id)",
@@ -442,10 +546,11 @@ export default {
               style: {
                 width: 3,
                 "line-color": (edge) => {
-                  if (edge.type === "work") {
-                    return "rgb(78, 6, 105)"; // Set the line color to purple if either node is from Rome
+                  const relation = edge.data();
+                  if (relation.type === "work") {
+                    return "red"; // Set the line color to purple if either node is from Rome
                   } else {
-                    return "rgb(36, 68, 196)"; // Set a default color for edges
+                    return "#96b8d2"; // Set a default color for edges
                   }
                 },
               },
@@ -695,6 +800,25 @@ export default {
           },
         },
       }));
+
+      maestroRelations.forEach((relation) => {
+        const node = nodes.find(
+          (node) => node.data.id === relation.Virtuose_id
+        );
+        if (node) {
+          node.data.relationships.maestro.push(relation.maestro_id);
+        }
+      });
+
+      mecenatiRelations.forEach((relation) => {
+        const node = nodes.find(
+          (node) => node.data.id === relation.Virtuose_id
+        );
+        if (node) {
+          node.data.relationships.mecenati.push(relation.mecenati_id);
+        }
+      });
+
       const edges = this.extractEdgesFromCharacters(
         charactersData,
         maestroRelations,
@@ -763,9 +887,21 @@ export default {
           );
           if (sourceExists && targetExists) {
             let relationType = "family";
-            if (maestroRelations.some((relation) => relation.Virtuose_id === character.id && relation.maestro_id === relativeId)) {
+            if (
+              maestroRelations.some(
+                (relation) =>
+                  relation.Virtuose_id === character.id &&
+                  relation.maestro_id === relativeId
+              )
+            ) {
               relationType = "work";
-            } else if (mecenatiRelations.some((relation) => relation.Virtuose_id === character.id && relation.mecenati_id === relativeId)) {
+            } else if (
+              mecenatiRelations.some(
+                (relation) =>
+                  relation.Virtuose_id === character.id &&
+                  relation.mecenati_id === relativeId
+              )
+            ) {
               relationType = "work";
             }
             edges.push({
@@ -773,7 +909,7 @@ export default {
                 id: `${character.id}-${relativeId}`,
                 source: character.id,
                 target: relativeId,
-                type: relationType
+                type: relationType,
               },
             });
           }
@@ -945,11 +1081,15 @@ export default {
         info.icona !== null
           ? `http://95.110.132.24:8071/assets/${info.icona}`
           : "";
+      // const virtuoseLogo = info.virtuosa
+      //   ? `${this.baseUrl}/assets/logo_r.png`
+      //   : "";
+
       const noteSection = info.note ? `<p><b>Info:</b> ${info.note}</p>` : "";
-      const birthPlace =
-        info.luogo_nascita === "Roma" || info.luogo_nascita === "Firenze"
-          ? `${info.luogo_nascita}`
-          : "";
+      // const birthPlace =
+      //   info.luogo_nascita === "Roma" || info.luogo_nascita === "Firenze"
+      //     ? `${info.luogo_nascita}`
+      //     : "";
       const fatherSection =
         relations.father !== null
           ? `<p><b>Padre:</b> ${this.getCharacterName(relations.father)}</p>`
@@ -970,6 +1110,18 @@ export default {
               .map((childId) => this.getCharacterName(childId))
               .join(", ")}</p>`
           : "";
+      const maestroSection =
+        relations.maestro && relations.maestro.length > 0
+          ? `<p><b>Maestro:</b> ${relations.maestro
+              .map((maestroId) => this.getCharacterName(maestroId))
+              .join(", ")}</p>`
+          : "";
+      const mecenatiSection =
+        relations.mecenati && relations.mecenati.length > 0
+          ? `<p><b>Mecenati:</b> ${relations.mecenati
+              .map((mecenatiId) => this.getCharacterName(mecenatiId))
+              .join(", ")}</p>`
+          : "";
 
       // Construct the popup content
       popup.innerHTML = `
@@ -982,13 +1134,15 @@ export default {
             <div id="chInfo">
               <h3 style="margin-left:10px"><b><i>${info.nome_scelto}, ${
         info.id
-      }</i></b></h3>
-              <h4 class="birthPlace" style="margin:-3px 0 0 9px;font-weight:400;"><i>${birthPlace}</i></h4>
+      }</i></b></h3><br>
                 ${fatherSection}
                 ${motherSection}
                 ${spouseSection}
                 ${childrenSection}
                 ${noteSection}
+
+                ${maestroSection}
+                ${mecenatiSection}
             </div>
         </div>
     `;
