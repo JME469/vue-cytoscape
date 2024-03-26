@@ -1257,6 +1257,8 @@ export default {
       document.getElementById("cy").appendChild(popup);
 
       
+      //dividir en maestro y mecenati las relaciones
+
       //kkkkkkkkkkkk
       this.cy.nodes().forEach((node) => {
         if (node.connectedEdges().length === 0) {
