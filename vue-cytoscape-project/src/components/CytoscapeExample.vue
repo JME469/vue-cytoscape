@@ -60,7 +60,8 @@
           <div class="dropdown">
             <button class="nav-button dropbtn btn-text filters" @click="toggleDropdown">{{ dropdownLabel }}</button>
             <div class="dropdown-content btn-text filters" v-show="showDropdown">
-              <button class="nav-button dd-content btn-text filters" v-for="event in eventsData" :key="event.id" @click="selectEvent(event)">
+              <button class="nav-button dd-content btn-text filters" v-for="event in eventsData" :key="event.id"
+                @click="selectEvent(event)">
                 <div class="btn-text filters">{{ event.data }}, {{ event.luogo }}</div>
               </button>
             </div>
@@ -140,7 +141,7 @@ hr {
   margin-top: 70px;
 }
 
-#banner > img {
+#banner>img {
   left: 30px;
   position: absolute;
 }
@@ -208,7 +209,7 @@ li {
   color: white;
 }
 
-.nav-button > img {
+.nav-button>img {
   margin-right: 15px;
   transition: all 0.5s ease-out;
 }
@@ -219,19 +220,21 @@ li {
   transition: all 0.5s ease-out;
 }
 
-.dropdown{
+.dropdown {
   position: relative;
   display: inline-block;
 }
 
-.dropdown-content{
+.dropdown-content {
   position: absolute;
   left: 0;
   top: 100%;
   z-index: 1000;
+  max-height: 500px;
+  overflow-y: scroll;
 }
 
-.dd-content{
+.dd-content {
   font-size: medium;
   min-width: 200px;
   text-align: center;
@@ -253,7 +256,7 @@ li {
   padding-top: 40px;
 }
 
-#events > h1 {
+#events>h1 {
   font-family: Montserrat;
   text-align: center;
   color: rgb(100, 9, 18);
@@ -263,12 +266,12 @@ li {
   margin: 60px;
 }
 
-#event > h2 {
+#event>h2 {
   font-family: "Source Sans 3";
   margin: 20px;
 }
 
-#event > p {
+#event>p {
   font-family: "Source Sans 3";
   margin: 20px;
 }
@@ -276,6 +279,7 @@ li {
 #app {
   height: auto;
 }
+
 #container {
   margin-top: 50px;
   background-color: rgb(252, 252, 252);
@@ -295,16 +299,17 @@ li {
   gap: 0;
 }
 
-#popup > div > img {
+#picture {
   grid-row: 1 / span 2;
   border-radius: 10px;
   margin: 15px;
 }
 
-.logo{
-  position: absolute; 
+.logo {
+  position: absolute;
   top: 15px;
   right: 15px;
+  float: right;
 }
 
 #chInfo {
@@ -315,7 +320,7 @@ li {
   justify-content: center;
 }
 
-#chInfo > h4 {
+#chInfo>h4 {
   font-weight: lighter;
   font-size: small;
 
@@ -411,7 +416,7 @@ export default {
       baseUrl: window.location.origin,
 
       showDropdown: false,
-      dropdownLabel: 'Eventi', 
+      dropdownLabel: 'Eventi',
       selectedEvent: null,
     };
   },
@@ -1112,46 +1117,42 @@ export default {
       const spouseSection =
         relations.spouse !== null
           ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
-              relations.spouse
-            )}</p>`
+            relations.spouse
+          )}</p>`
           : "";
       const childrenSection =
         relations.children && relations.children.length > 0
           ? `<p><b>Figli/Figlie:</b> ${relations.children
-              .map((childId) => this.getCharacterName(childId))
-              .join(", ")}</p>`
+            .map((childId) => this.getCharacterName(childId))
+            .join(", ")}</p>`
           : "";
       const maestroSection =
         relations.maestro && relations.maestro.length > 0
           ? `<p><b>Maestro:</b> ${relations.maestro
-              .map((maestroId) => this.getCharacterName(maestroId))
-              .join(", ")}</p>`
+            .map((maestroId) => this.getCharacterName(maestroId))
+            .join(", ")}</p>`
           : "";
       const mecenatiSection =
         relations.mecenati && relations.mecenati.length > 0
           ? `<p><b>Mecenati:</b> ${relations.mecenati
-              .map((mecenatiId) => this.getCharacterName(mecenatiId))
-              .join(", ")}</p>`
+            .map((mecenatiId) => this.getCharacterName(mecenatiId))
+            .join(", ")}</p>`
           : "";
 
       // Construct the popup content
       popup.innerHTML = `
         <div id="content">
-          ${
-            imageSrc !== ""
-              ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;" alt="Icona">`
-              : ""
-          }
-          ${
-            logoSrc !== ""
-              ? `<img src="${logoSrc}" style="max-width:25px;" alt="Logo" class="logo">`
-              : ""
-          }
+          
+          ${imageSrc !== ""
+          ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;" alt="Icona" id="picture">`
+          : ""
+        }
           
             <div id="chInfo">
-              <h3 style="margin-left:10px"><b><i>${info.nome_scelto}, ${
-        info.id
-      }</i></b></h3><br>
+              <h3 style="margin-left:10px"><b><i>${info.nome_scelto}</i></b>${logoSrc !== ""
+          ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
+          : ""
+        }</h3><br>
                 ${fatherSection}
                 ${motherSection}
                 ${spouseSection}
@@ -1190,6 +1191,11 @@ export default {
 
       setTimeout(() => {
         // Show the popup
+        if(info.virtuosa){
+          popup.style.border = "solid 2px rgb(120, 38, 46)"
+        } else{
+          popup.style.border = "solid 1px grey";
+        }
         popup.style.width = "500px";
         popup.style.height = "auto";
         popup.style.opacity = "1";
