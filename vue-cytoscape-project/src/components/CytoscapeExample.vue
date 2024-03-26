@@ -20,14 +20,14 @@
       </li>
       <li>
         <button class="nav-button">
-          <img src="../assets/searching_6898982.png" alt="" width="40px" />
-          <div class="btn-text">FONTI</div>
+          <img src="../assets/guitar_96421.png" alt="" width="40px" />
+          <div class="btn-text">REPERTORIO</div>
         </button>
       </li>
       <li>
         <button class="nav-button">
-          <img src="../assets/guitar_96421.png" alt="" width="40px" />
-          <div class="btn-text">REPERTORIO</div>
+          <img src="../assets/searching_6898982.png" alt="" width="40px" />
+          <div class="btn-text">FONTI</div>
         </button>
       </li>
     </ul>
@@ -42,17 +42,17 @@
     <div id="nav-container">
       <ul id="nav">
         <li>
-          <button class="nav-button" @click="toggleFilter('family')">
+          <button id="family" class="nav-button" @click="toggleFilter('family')">
             <div class="btn-text filters">Famiglia</div>
           </button>
         </li>
         <li>
-          <button class="nav-button" @click="toggleFilter('work')">
+          <button id="work" class="nav-button" @click="toggleFilter('work')">
             <div class="btn-text filters">Lavoro</div>
           </button>
         </li>
         <li>
-          <button class="nav-button" @click="toggleFilter('all')">
+          <button id="all" class="nav-button" @click="toggleFilter('all')">
             <div class="btn-text filters">Network</div>
           </button>
         </li>
@@ -61,7 +61,7 @@
             <button class="nav-button dropbtn btn-text filters" @click="toggleDropdown">{{ dropdownLabel }}</button>
             <div class="dropdown-content btn-text filters" v-show="showDropdown">
               <button class="nav-button dd-content btn-text filters" v-for="event in eventsData" :key="event.id"
-                @click="selectEvent(event)">
+                >
                 <div class="btn-text filters">{{ event.data }}, {{ event.luogo }}</div>
               </button>
             </div>
@@ -137,7 +137,7 @@ hr {
 
 #title {
   font-family: Montaga;
-  font-size: 28px;
+  font-size: 60px;
   margin-top: 70px;
 }
 
@@ -197,6 +197,11 @@ li {
 }
 
 .nav-button:hover {
+  background-color: rgb(120, 38, 46);
+  color: aliceblue;
+}
+
+.selected{
   background-color: rgb(120, 38, 46);
   color: aliceblue;
 }
@@ -1106,6 +1111,12 @@ export default {
       //   info.luogo_nascita === "Roma" || info.luogo_nascita === "Firenze"
       //     ? `${info.luogo_nascita}`
       //     : "";
+      const pseudonimo =
+        info.pseudonimo !== null
+          ? `<p><i>${info.pseudonimo}</i></p>`
+          : "";
+          const nascita = info.data_nascita !== null ? `<p><b>Data di nascita: </b>${info.data_nascita}</p>`: "";
+          const morte = info.data_morte !== null ? `<p><b>Data di morte: </b>${info.data_morte}</p>`: "";
       const fatherSection =
         relations.father !== null
           ? `<p><b>Padre:</b> ${this.getCharacterName(relations.father)}</p>`
@@ -1113,6 +1124,14 @@ export default {
       const motherSection =
         relations.mother !== null
           ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
+          : "";
+          const padrinoSection =
+        info.padrino !== null
+          ? `<p><b>Padrino:</b> ${this.getCharacterName(info.padrino)}</p>`
+          : "";
+          const madrinaSection =
+        info.padrino !== null
+          ? `<p><b>Madrina:</b> ${this.getCharacterName(info.madrina)}</p>`
           : "";
       const spouseSection =
         relations.spouse !== null
@@ -1149,14 +1168,20 @@ export default {
         }
           
             <div id="chInfo">
-              <h3 style="margin-left:10px"><b><i>${info.nome_scelto}</i></b>${logoSrc !== ""
+              <h3 style="margin-left:10px"><b><i>${info.nome_scelto}, ${info.id}</i></b>${logoSrc !== ""
           ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
           : ""
-        }</h3><br>
+        }</h3>
+        <h4 style="margin-left:10px">${pseudonimo}</h4>
+        <br>
+                ${nascita}
+                ${morte}        
                 ${fatherSection}
                 ${motherSection}
                 ${spouseSection}
                 ${childrenSection}
+                ${padrinoSection}
+                ${madrinaSection}
                 ${noteSection}
 
                 ${maestroSection}
@@ -1231,6 +1256,8 @@ export default {
       popup.style.opacity = "0";
       document.getElementById("cy").appendChild(popup);
 
+      
+      //kkkkkkkkkkkk
       this.cy.nodes().forEach((node) => {
         if (node.connectedEdges().length === 0) {
           node.hide();
