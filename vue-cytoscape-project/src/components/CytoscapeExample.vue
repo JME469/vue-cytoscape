@@ -42,7 +42,11 @@
     <div id="nav-container">
       <ul id="nav">
         <li>
-          <button id="family" class="nav-button" @click="toggleFilter('family')">
+          <button
+            id="family"
+            class="nav-button"
+            @click="toggleFilter('family')"
+          >
             <div class="btn-text filters">Famiglia</div>
           </button>
         </li>
@@ -58,11 +62,24 @@
         </li>
         <li>
           <div class="dropdown">
-            <button class="nav-button dropbtn btn-text filters" @click="toggleDropdown">{{ dropdownLabel }}</button>
-            <div class="dropdown-content btn-text filters" v-show="showDropdown">
-              <button class="nav-button dd-content btn-text filters" v-for="event in eventsData" :key="event.id"
-                >
-                <div class="btn-text filters">{{ event.data }}, {{ event.luogo }}</div>
+            <button
+              class="nav-button dropbtn btn-text filters"
+              @click="toggleDropdown"
+            >
+              {{ dropdownLabel }}
+            </button>
+            <div
+              class="dropdown-content btn-text filters"
+              v-show="showDropdown"
+            >
+              <button
+                class="nav-button dd-content btn-text filters"
+                v-for="event in eventsData"
+                :key="event.id"
+              >
+                <div class="btn-text filters">
+                  {{ event.data }}, {{ event.luogo }}
+                </div>
               </button>
             </div>
           </div>
@@ -141,7 +158,7 @@ hr {
   margin-top: 70px;
 }
 
-#banner>img {
+#banner > img {
   left: 30px;
   position: absolute;
 }
@@ -201,7 +218,7 @@ li {
   color: aliceblue;
 }
 
-.selected{
+.selected {
   background-color: rgb(120, 38, 46);
   color: aliceblue;
 }
@@ -214,7 +231,7 @@ li {
   color: white;
 }
 
-.nav-button>img {
+.nav-button > img {
   margin-right: 15px;
   transition: all 0.5s ease-out;
 }
@@ -261,7 +278,7 @@ li {
   padding-top: 40px;
 }
 
-#events>h1 {
+#events > h1 {
   font-family: Montserrat;
   text-align: center;
   color: rgb(100, 9, 18);
@@ -271,18 +288,23 @@ li {
   margin: 60px;
 }
 
-#event>h2 {
+#event > h2 {
   font-family: "Source Sans 3";
   margin: 20px;
 }
 
-#event>p {
+#event > p {
   font-family: "Source Sans 3";
   margin: 20px;
 }
 
 #app {
   height: auto;
+}
+
+.color {
+  color: rgb(177, 80, 80);
+  background-color: rgb(45, 116, 59);
 }
 
 #container {
@@ -325,7 +347,7 @@ li {
   justify-content: center;
 }
 
-#chInfo>h4 {
+#chInfo > h4 {
   font-weight: lighter;
   font-size: small;
 
@@ -388,6 +410,8 @@ export default {
       relationsData: [],
       maestroRelations: [],
       mecenatiRelations: [],
+      maestroData: [],
+      mecenatiData: [],
       eventsData: [],
 
       cy: null,
@@ -421,7 +445,7 @@ export default {
       baseUrl: window.location.origin,
 
       showDropdown: false,
-      dropdownLabel: 'Eventi',
+      dropdownLabel: "Eventi",
       selectedEvent: null,
     };
   },
@@ -563,10 +587,12 @@ export default {
                 width: 3,
                 "line-color": (edge) => {
                   const relation = edge.data();
-                  if (relation.type === "work") {
-                    return "red"; // Set the line color to purple if either node is from Rome
+                  if (relation.type === "maestro") {
+                    return "rgb(177, 80, 80)"; // Maestro relations
+                  } else if (relation.type === "mecenati") {
+                    return "rgb(45, 116, 59)"; // Mecenati relations
                   } else {
-                    return "#96b8d2"; // Set a default color for edges
+                    return "#96b8d2";
                   }
                 },
               },
@@ -603,7 +629,9 @@ export default {
           this.mecenatiRelations = mecenatiRelations;
 
           const maestroData = await this.retrieveMaestroData();
+          this.maestroData = maestroData;
           const mecenatiData = await this.retrieveMecenatiData();
+          this.mecenatiData = mecenatiData;
 
           const combinedMaestroData = this.combineMaestroData(
             maestroRelations,
@@ -623,7 +651,9 @@ export default {
         this.cyData = this.formatDataForCytoscape(
           charactersData,
           this.maestroRelations,
-          this.mecenatiRelations
+          this.mecenatiRelations,
+          this.maestroData,
+          this.mecenatiData
         );
 
         //console.log(cyData);
@@ -748,7 +778,7 @@ export default {
         );
         return {
           relation,
-          maestro,
+          maestro: maestro.maestro,
         };
       });
     },
@@ -759,7 +789,7 @@ export default {
         );
         return {
           relation,
-          mecenati,
+          mecenati: mecenati.mecenate,
         };
       });
     },
@@ -774,7 +804,8 @@ export default {
           if (!character.maestro) {
             character.maestro = [];
           }
-          character.maestro.push(maestro.id);
+
+          character.maestro.push(maestro);
         }
       });
     },
@@ -788,7 +819,7 @@ export default {
           if (!character.mecenati) {
             character.mecenati = [];
           }
-          character.mecenati.push(mecenati.id);
+          character.mecenati.push(mecenati);
         }
       });
     },
@@ -799,7 +830,9 @@ export default {
     formatDataForCytoscape(
       charactersData,
       maestroRelations,
-      mecenatiRelations
+      mecenatiRelations,
+      maestroData,
+      mecenatiData
     ) {
       const nodes = charactersData.map((character) => ({
         data: {
@@ -838,12 +871,20 @@ export default {
       const edges = this.extractEdgesFromCharacters(
         charactersData,
         maestroRelations,
-        mecenatiRelations
+        mecenatiRelations,
+        maestroData,
+        mecenatiData
       );
       this.updateRelationships(nodes, edges);
       return { nodes, edges };
     },
-    extractRelatives(character, maestroRelations, mecenatiRelations) {
+    extractRelatives(
+      character,
+      maestroRelations,
+      mecenatiRelations,
+      maestroData,
+      mecenatiData
+    ) {
       const relatives = [];
       if (this.filter === "family" || this.filter === "all") {
         if (Array.isArray(character.figli_figlie)) {
@@ -871,12 +912,22 @@ export default {
       if (this.filter === "work" || this.filter === "all") {
         maestroRelations.forEach((relation) => {
           if (relation.Virtuose_id === character.id) {
-            relatives.push(relation.maestro_id);
+            const maestro = maestroData.find(
+              (m) => m.id === relation.maestro_id
+            );
+            if (maestro) {
+              relatives.push(maestro.maestro);
+            }
           }
         });
         mecenatiRelations.forEach((relation) => {
           if (relation.Virtuose_id === character.id) {
-            relatives.push(relation.mecenati_id);
+            const mecenati = mecenatiData.find(
+              (m) => m.id === relation.mecenati_id
+            );
+            if (mecenati) {
+              relatives.push(mecenati.mecenate);
+            }
           }
         });
       }
@@ -885,14 +936,18 @@ export default {
     extractEdgesFromCharacters(
       charactersData,
       maestroRelations,
-      mecenatiRelations
+      mecenatiRelations,
+      maestroData,
+      mecenatiData
     ) {
       const edges = [];
       charactersData.forEach((character) => {
         const relatives = this.extractRelatives(
           character,
           maestroRelations,
-          mecenatiRelations
+          mecenatiRelations,
+          maestroData,
+          mecenatiData
         );
         relatives.forEach((relativeId) => {
           const sourceExists = charactersData.some(
@@ -903,22 +958,12 @@ export default {
           );
           if (sourceExists && targetExists) {
             let relationType = "family";
-            if (
-              maestroRelations.some(
-                (relation) =>
-                  relation.Virtuose_id === character.id &&
-                  relation.maestro_id === relativeId
-              )
-            ) {
-              relationType = "work";
-            } else if (
-              mecenatiRelations.some(
-                (relation) =>
-                  relation.Virtuose_id === character.id &&
-                  relation.mecenati_id === relativeId
-              )
-            ) {
-              relationType = "work";
+            const maestro = maestroData.find((m) => m.id === relativeId);
+            const mecenati = mecenatiData.find((m) => m.id === relativeId);
+            if (maestro) {
+              relationType = "maestro";
+            } else if (mecenati) {
+              relationType = "mecenati";
             }
             edges.push({
               data: {
@@ -1093,10 +1138,7 @@ export default {
       this.popupInfo = info;
       this.showPopup = true;
 
-      const logoSrc =
-        info.virtuosa
-          ? `/img/logo_r.png`
-          : "";
+      const logoSrc = info.virtuosa ? `/img/logo_r.png` : "";
       const imageSrc =
         info.icona !== null
           ? `http://95.110.132.24:8071/assets/${info.icona}`
@@ -1112,11 +1154,15 @@ export default {
       //     ? `${info.luogo_nascita}`
       //     : "";
       const pseudonimo =
-        info.pseudonimo !== null
-          ? `<p><i>${info.pseudonimo}</i></p>`
+        info.pseudonimo !== null ? `<p><i>${info.pseudonimo}</i></p>` : "";
+      const nascita =
+        info.data_nascita !== null
+          ? `<p><b>Data di nascita: </b>${info.data_nascita}</p>`
           : "";
-          const nascita = info.data_nascita !== null ? `<p><b>Data di nascita: </b>${info.data_nascita}</p>`: "";
-          const morte = info.data_morte !== null ? `<p><b>Data di morte: </b>${info.data_morte}</p>`: "";
+      const morte =
+        info.data_morte !== null
+          ? `<p><b>Data di morte: </b>${info.data_morte}</p>`
+          : "";
       const fatherSection =
         relations.father !== null
           ? `<p><b>Padre:</b> ${this.getCharacterName(relations.father)}</p>`
@@ -1125,53 +1171,57 @@ export default {
         relations.mother !== null
           ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
           : "";
-          const padrinoSection =
+      const padrinoSection =
         info.padrino !== null
           ? `<p><b>Padrino:</b> ${this.getCharacterName(info.padrino)}</p>`
           : "";
-          const madrinaSection =
+      const madrinaSection =
         info.padrino !== null
           ? `<p><b>Madrina:</b> ${this.getCharacterName(info.madrina)}</p>`
           : "";
       const spouseSection =
         relations.spouse !== null
           ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
-            relations.spouse
-          )}</p>`
+              relations.spouse
+            )}</p>`
           : "";
       const childrenSection =
         relations.children && relations.children.length > 0
           ? `<p><b>Figli/Figlie:</b> ${relations.children
-            .map((childId) => this.getCharacterName(childId))
-            .join(", ")}</p>`
+              .map((childId) => this.getCharacterName(childId))
+              .join(", ")}</p>`
           : "";
       const maestroSection =
-        relations.maestro && relations.maestro.length > 0
-          ? `<p><b>Maestro:</b> ${relations.maestro
-            .map((maestroId) => this.getCharacterName(maestroId))
-            .join(", ")}</p>`
+        info.maestro && info.maestro.length > 0
+          ? `<p><b>Maestro:</b> ${info.maestro
+              .map((maestroId) => this.getCharacterName(maestroId))
+              .join(", ")}</p>`
           : "";
       const mecenatiSection =
-        relations.mecenati && relations.mecenati.length > 0
-          ? `<p><b>Mecenati:</b> ${relations.mecenati
-            .map((mecenatiId) => this.getCharacterName(mecenatiId))
-            .join(", ")}</p>`
+        info.mecenati && info.mecenati.length > 0
+          ? `<p><b>Mecenati:</b> ${info.mecenati
+              .map((mecenatiId) => this.getCharacterName(mecenatiId))
+              .join(", ")}</p>`
           : "";
 
       // Construct the popup content
       popup.innerHTML = `
         <div id="content">
           
-          ${imageSrc !== ""
-          ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;" alt="Icona" id="picture">`
-          : ""
-        }
+          ${
+            imageSrc !== ""
+              ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;" alt="Icona" id="picture">`
+              : ""
+          }
           
             <div id="chInfo">
-              <h3 style="margin-left:10px"><b><i>${info.nome_scelto}, ${info.id}</i></b>${logoSrc !== ""
+              <h3 style="margin-left:10px"><b><i>${info.nome_scelto}, ${
+        info.id
+      }</i></b>${
+        logoSrc !== ""
           ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
           : ""
-        }</h3>
+      }</h3>
         <h4 style="margin-left:10px">${pseudonimo}</h4>
         <br>
                 ${nascita}
@@ -1216,9 +1266,9 @@ export default {
 
       setTimeout(() => {
         // Show the popup
-        if(info.virtuosa){
-          popup.style.border = "solid 2px rgb(120, 38, 46)"
-        } else{
+        if (info.virtuosa) {
+          popup.style.border = "solid 2px rgb(120, 38, 46)";
+        } else {
           popup.style.border = "solid 1px grey";
         }
         popup.style.width = "500px";
@@ -1256,18 +1306,19 @@ export default {
       popup.style.opacity = "0";
       document.getElementById("cy").appendChild(popup);
 
-      
-      //dividir en maestro y mecenati las relaciones
+      //++sostengo economic
 
       //kkkkkkkkkkkk
+      // this.cy.nodes().forEach((node) => {
+      //   if (node.connectedEdges().length === 0) {
+      //     node.hide();
+      //   }
+      // });
+
       this.cy.nodes().forEach((node) => {
-        if (node.connectedEdges().length === 0) {
-          node.hide();
-        } else {
-          const size = this.getNodeSize(node);
-          node.style("width", size);
-          node.style("height", size);
-        }
+        const size = this.getNodeSize(node);
+        node.style("width", size);
+        node.style("height", size);
       });
 
       // Disable built-in panning
