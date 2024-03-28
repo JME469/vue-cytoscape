@@ -795,6 +795,9 @@ export default {
     },
     // Function to update character data with maestro relations
     updateCharacterMaestroRelations(combinedMaestroData) {
+      this.charactersData.forEach((character) => {
+        character.maestro = [];
+      });
       combinedMaestroData.forEach(({ relation, maestro }) => {
         const character = this.charactersData.find(
           (char) => char.id === relation.Virtuose_id
@@ -810,6 +813,9 @@ export default {
       });
     },
     updateCharacterMecenatiRelations(combinedMecenatiData) {
+      this.charactersData.forEach((character) => {
+        character.mecenati = [];
+      });
       combinedMecenatiData.forEach(({ relation, mecenati }) => {
         const character = this.charactersData.find(
           (char) => char.id === relation.Virtuose_id
@@ -956,15 +962,36 @@ export default {
           const targetExists = charactersData.some(
             (char) => char.id === relativeId
           );
+
           if (sourceExists && targetExists) {
             let relationType = "family";
-            const maestro = maestroData.find((m) => m.id === relativeId);
-            const mecenati = mecenatiData.find((m) => m.id === relativeId);
+
+            const maestro = maestroData.find((m) => m.maestro === relativeId);
             if (maestro) {
-              relationType = "maestro";
-            } else if (mecenati) {
-              relationType = "mecenati";
+              if (
+                maestroRelations.some(
+                  (relation) =>
+                    relation.Virtuose_id === character.id &&
+                    maestro.maestro === relativeId
+                )
+              ) {
+                relationType = "maestro";
+              }
+            } else {
+              const mecenati = mecenatiData.find((m) => m.mecenate === relativeId);
+              if (mecenati) {
+                if (
+                  mecenatiRelations.some(
+                    (relation) =>
+                      relation.Virtuose_id === character.id &&
+                      mecenati.mecenate === relativeId
+                  )
+                ) {
+                  relationType = "mecenati";
+                }
+              }
             }
+            
             edges.push({
               data: {
                 id: `${character.id}-${relativeId}`,
@@ -1171,38 +1198,38 @@ export default {
         relations.mother !== null
           ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
           : "";
-      const padrinoSection =
-        info.padrino !== null
-          ? `<p><b>Padrino:</b> ${this.getCharacterName(info.padrino)}</p>`
-          : "";
-      const madrinaSection =
-        info.padrino !== null
-          ? `<p><b>Madrina:</b> ${this.getCharacterName(info.madrina)}</p>`
-          : "";
-      const spouseSection =
-        relations.spouse !== null
-          ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
-              relations.spouse
-            )}</p>`
-          : "";
-      const childrenSection =
-        relations.children && relations.children.length > 0
-          ? `<p><b>Figli/Figlie:</b> ${relations.children
-              .map((childId) => this.getCharacterName(childId))
-              .join(", ")}</p>`
-          : "";
-      const maestroSection =
-        info.maestro && info.maestro.length > 0
-          ? `<p><b>Maestro:</b> ${info.maestro
-              .map((maestroId) => this.getCharacterName(maestroId))
-              .join(", ")}</p>`
-          : "";
-      const mecenatiSection =
-        info.mecenati && info.mecenati.length > 0
-          ? `<p><b>Mecenati:</b> ${info.mecenati
-              .map((mecenatiId) => this.getCharacterName(mecenatiId))
-              .join(", ")}</p>`
-          : "";
+      // const padrinoSection =
+      //   info.padrino !== null
+      //     ? `<p><b>Padrino:</b> ${this.getCharacterName(info.padrino)}</p>`
+      //     : "";
+      // const madrinaSection =
+      //   info.padrino !== null
+      //     ? `<p><b>Madrina:</b> ${this.getCharacterName(info.madrina)}</p>`
+      //     : "";
+      // const spouseSection =
+      //   relations.spouse !== null
+      //     ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
+      //         relations.spouse
+      //       )}</p>`
+      //     : "";
+      // const childrenSection =
+      //   relations.children && relations.children.length > 0
+      //     ? `<p><b>Figli/Figlie:</b> ${relations.children
+      //         .map((childId) => this.getCharacterName(childId))
+      //         .join(", ")}</p>`
+      //     : "";
+      // const maestroSection =
+      //   info.maestro && info.maestro.length > 0
+      //     ? `<p><b>Maestro:</b> ${info.maestro
+      //         .map((maestroId) => this.getCharacterName(maestroId))
+      //         .join(", ")}</p>`
+      //     : "";
+      // const mecenatiSection =
+      //   info.mecenati && info.mecenati.length > 0
+      //     ? `<p><b>Mecenati:</b> ${info.mecenati
+      //         .map((mecenatiId) => this.getCharacterName(mecenatiId))
+      //         .join(", ")}</p>`
+      //     : "";
 
       // Construct the popup content
       popup.innerHTML = `
@@ -1228,17 +1255,18 @@ export default {
                 ${morte}        
                 ${fatherSection}
                 ${motherSection}
-                ${spouseSection}
-                ${childrenSection}
-                ${padrinoSection}
-                ${madrinaSection}
                 ${noteSection}
 
-                ${maestroSection}
-                ${mecenatiSection}
             </div>
         </div>
     `;
+      // ${spouseSection}
+      // ${childrenSection}
+      // ${padrinoSection}
+      // ${madrinaSection}
+      // ${maestroSection}
+      // ${mecenatiSection}
+
       var position = event.target.renderedPosition();
       // console.log("Position: ", position);
       var cyContainer = document.getElementById("cy");
@@ -1309,11 +1337,11 @@ export default {
       //++sostengo economic
 
       //kkkkkkkkkkkk
-      // this.cy.nodes().forEach((node) => {
-      //   if (node.connectedEdges().length === 0) {
-      //     node.hide();
-      //   }
-      // });
+      this.cy.nodes().forEach((node) => {
+        if (node.connectedEdges().length === 0) {
+          node.hide();
+        }
+      });
 
       this.cy.nodes().forEach((node) => {
         const size = this.getNodeSize(node);
