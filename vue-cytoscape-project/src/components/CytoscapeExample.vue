@@ -76,6 +76,7 @@
                 class="nav-button dd-content btn-text filters"
                 v-for="event in eventsData"
                 :key="event.id"
+                @click="selectEvent(event)"
               >
                 <div class="btn-text filters">
                   {{ event.data }}, {{ event.luogo }}
@@ -85,6 +86,19 @@
           </div>
         </li>
       </ul>
+    </div>
+    <div id="searchBar-container">
+      <div class="search-container">
+        <input
+          type="text"
+          v-model="searchQuery"
+          @keyup.enter="searchCharacter"
+          placeholder="Cerca una virtuosa..."
+        />
+      </div>
+      <div>
+        <button @click="searchCharacter">Cerca</button>
+      </div>
     </div>
     <!-- <select
       class="select"
@@ -273,6 +287,39 @@ li {
   overflow: visible;
 }
 
+#searchBar-container{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+#searchBar-container > div > button{
+  padding: 10px;
+  background: none;
+  border: solid 2px rgb(100, 9, 18);
+  color: rgb(76, 76, 76);
+  font-family: Montserrat;
+  font-weight: 600;
+  transition: all 0.5s ease-out;
+  cursor: pointer;
+}
+
+#searchBar-container > div > button:hover{
+  background-color: rgb(120, 38, 46);
+  color: aliceblue;
+}
+
+.search-container{
+  margin-right: 15px;
+}
+
+.search-container > input{
+  padding: 10px;
+  min-width: 180px;
+  border: solid 2px rgb(100, 9, 18);
+}
+
 #events {
   padding-bottom: 50px;
   padding-top: 40px;
@@ -447,6 +494,7 @@ export default {
       showDropdown: false,
       dropdownLabel: "Eventi",
       selectedEvent: null,
+      searchQuery: "",
     };
   },
   mounted() {
@@ -469,12 +517,74 @@ export default {
       }
     },
     toggleDropdown() {
-      this.showDropdown = !this.showDropdown; // Toggle the dropdown menu
+      this.showDropdown = !this.showDropdown;
     },
     selectEvent(event) {
-      this.selectedEvent = event.id; // Set the selected event
-      this.toggleDropdown(); // Hide the dropdown after selecting an event
-      this.filterGraph(); // You can call your filterGraph method here or perform any other action
+      this.selectedEvent = event.id;
+      this.toggleDropdown();
+      this.filterGraphByEvent();
+    },
+    isNodeRelatedToEvent(node, selectedEventId) {
+      return node.data().info.eventi.includes(selectedEventId);
+    },
+    filterGraphByEvent() {
+      // Iterate over all nodes in the graph
+      this.showAllNodes();
+      this.cy.nodes().forEach((node) => {
+        const related = this.isNodeRelatedToEvent(node, this.selectedEvent);
+        if (!related) {
+          node.hide();
+        }
+      });
+    },
+    filterGraph(character) {
+      const characterId = character.id;
+
+      // Hide all nodes and edges in the graph
+      this.cy.elements().hide();
+
+      // Show the selected character node and its edges
+      const characterNode = this.cy.getElementById(characterId);
+      if (characterNode.length > 0) {
+        characterNode.show();
+
+        // Show related nodes and their edges
+        this.cy.edges().forEach((edge) => {
+          const sourceId = edge.source().id();
+          const targetId = edge.target().id();
+
+          console.log("Source:", sourceId, "Target:", targetId, "CharID: ", characterId);
+
+          if (sourceId == characterId || targetId == characterId) {
+            edge.show();
+
+            // Show source and target nodes of the edge
+            this.cy.getElementById(sourceId).show();
+            this.cy.getElementById(targetId).show();
+          }
+        });
+      }
+    },
+    searchCharacter() {
+      const query = this.searchQuery.toLowerCase().trim();
+      if (!query) {
+        this.showAllNodes();
+        return;
+      }
+      const character = this.charactersData.find(
+        (char) => char.nome_scelto.toLowerCase().includes(query)
+      );
+      if (character) {
+        // If the character is found, filter the graph to show only the selected character and its related nodes
+        this.filterGraph(character);
+      } else {
+        // If the character is not found, clear the graph display
+        this.clearGraph();
+      }
+    },
+    showAllNodes() {
+      // Show all nodes in the graph
+      this.cy.nodes().show();
     },
     hidePopupOutside(event) {
       var popup = document.getElementById("popup");
@@ -646,6 +756,11 @@ export default {
           this.updateCharacterMecenatiRelations(combinedMecenatiData);
         }
 
+        this.updateCharacterEvents(
+          charactersData,
+          await this.retrieveEventRelations()
+        );
+
         this.combineData();
 
         this.cyData = this.formatDataForCytoscape(
@@ -791,6 +906,18 @@ export default {
           relation,
           mecenati: mecenati.mecenate,
         };
+      });
+    },
+    updateCharacterEvents(charactersData, eventRelationsData) {
+      charactersData.forEach((character) => {
+        character.eventi = character.eventi
+          .map((relationId) => {
+            const eventRelation = eventRelationsData.find(
+              (rel) => rel.id === relationId
+            );
+            return eventRelation ? eventRelation.eventi_id : null;
+          })
+          .filter((eventId) => eventId !== null);
       });
     },
     // Function to update character data with maestro relations
@@ -978,7 +1105,9 @@ export default {
                 relationType = "maestro";
               }
             } else {
-              const mecenati = mecenatiData.find((m) => m.mecenate === relativeId);
+              const mecenati = mecenatiData.find(
+                (m) => m.mecenate === relativeId
+              );
               if (mecenati) {
                 if (
                   mecenatiRelations.some(
@@ -991,7 +1120,7 @@ export default {
                 }
               }
             }
-            
+
             edges.push({
               data: {
                 id: `${character.id}-${relativeId}`,
@@ -1337,11 +1466,11 @@ export default {
       //++sostengo economic
 
       //kkkkkkkkkkkk
-      this.cy.nodes().forEach((node) => {
-        if (node.connectedEdges().length === 0) {
-          node.hide();
-        }
-      });
+      // this.cy.nodes().forEach((node) => {
+      //   if (node.connectedEdges().length === 0) {
+      //     node.hide();
+      //   }
+      // });
 
       this.cy.nodes().forEach((node) => {
         const size = this.getNodeSize(node);
