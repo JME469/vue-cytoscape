@@ -39,67 +39,6 @@
       <option value="work">La rete dei maestri e dei mecenati</option>
       <option value="all">Il network</option>
     </select> -->
-    <div id="nav-container">
-      <ul id="nav">
-        <li>
-          <button
-            id="family"
-            class="nav-button"
-            @click="toggleFilter('family')"
-          >
-            <div class="btn-text filters">Famiglia</div>
-          </button>
-        </li>
-        <li>
-          <button id="work" class="nav-button" @click="toggleFilter('work')">
-            <div class="btn-text filters">Lavoro</div>
-          </button>
-        </li>
-        <li>
-          <button id="all" class="nav-button" @click="toggleFilter('all')">
-            <div class="btn-text filters">Network</div>
-          </button>
-        </li>
-        <li>
-          <div class="dropdown">
-            <button
-              class="nav-button dropbtn btn-text filters"
-              @click="toggleDropdown"
-            >
-              {{ dropdownLabel }}
-            </button>
-            <div
-              class="dropdown-content btn-text filters"
-              v-show="showDropdown"
-            >
-              <button
-                class="nav-button dd-content btn-text filters"
-                v-for="event in eventsData"
-                :key="event.id"
-                @click="selectEvent(event)"
-              >
-                <div class="btn-text filters">
-                  {{ event.data }}, {{ event.luogo }}
-                </div>
-              </button>
-            </div>
-          </div>
-        </li>
-      </ul>
-    </div>
-    <div id="searchBar-container">
-      <div class="search-container">
-        <input
-          type="text"
-          v-model="searchQuery"
-          @keyup.enter="searchCharacter"
-          placeholder="Cerca una virtuosa..."
-        />
-      </div>
-      <div>
-        <button @click="searchCharacter">Cerca</button>
-      </div>
-    </div>
     <!-- <select
       class="select"
       v-model="selectedEvent"
@@ -113,6 +52,77 @@
       </option>
     </select> -->
     <div id="container">
+      <div id="filter-menu">
+        <div id="searchBar-container">
+          <div class="search-container">
+            <input
+              type="text"
+              v-model="searchQuery"
+              @keyup.enter="searchCharacter"
+              placeholder="Cerca una virtuosa..."
+            />
+          </div>
+          <div>
+            <button @click="searchCharacter">Cerca</button>
+          </div>
+        </div>
+        <div id="nav-container" class="nav-container2">
+          <ul id="nav2">
+            <li>
+              <button
+                id="family"
+                class="nav-button nav-button2"
+                @click="toggleFilter('family')"
+              >
+                <div class="btn-text filters">Famiglia</div>
+              </button>
+            </li>
+            <li>
+              <button
+                id="work"
+                class="nav-button nav-button2"
+                @click="toggleFilter('work')"
+              >
+                <div class="btn-text filters">Lavoro</div>
+              </button>
+            </li>
+            <li>
+              <button
+                id="all"
+                class="nav-button nav-button2"
+                @click="toggleFilter('all')"
+              >
+                <div class="btn-text filters">Network</div>
+              </button>
+            </li>
+            <li>
+              <div class="dropdown">
+                <button
+                  class="nav-button nav-button2 dropbtn btn-text filters"
+                  @click="toggleDropdown"
+                >
+                  {{ dropdownLabel }}
+                </button>
+                <div
+                  class="dropdown-content btn-text filters"
+                  v-show="showDropdown"
+                >
+                  <button
+                    class="nav-button nav-button2 dd-content btn-text filters"
+                    v-for="event in eventsData"
+                    :key="event.id"
+                    @click="selectEvent(event)"
+                  >
+                    <div class="btn-text filters">
+                      {{ event.data }}, {{ event.luogo }}
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
       <div id="cy"></div>
     </div>
   </div>
@@ -177,18 +187,28 @@ hr {
   position: absolute;
 }
 
-#circle {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: none;
-  border: solid 2px red;
+#filter-menu{
+  position: absolute;
+  left: 10px;
+  background-color: rgb(255, 255, 255);
+  border: solid 2px rgb(120, 38, 46);
+  z-index: 1000;
+  padding: 20px;
+  margin-left: 10px;
+  margin-top: 15px;
 }
 
 #nav-container {
   display: flex;
   text-align: center;
   align-items: center;
+  justify-content: center;
+}
+
+.nav-container2 {
+  display: flex;
+  text-align: center;
+  align-items: start !important;
   justify-content: center;
 }
 
@@ -203,6 +223,16 @@ hr {
   margin-bottom: 20px;
 }
 
+#nav2 {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  list-style-type: none;
+  background-color: rgb(255, 255, 255);
+  z-index: 1000;
+  left: 40px;
+}
+
 li {
   height: 100%;
 }
@@ -211,11 +241,12 @@ li {
   display: flex;
   flex-direction: row;
   align-items: center;
+  text-align: center;
   height: 100%;
   width: auto;
   padding: 20px;
   margin: 0;
-  font-size: larger;
+  font-size: large;
   border: none;
   cursor: pointer;
   background-color: rgb(255, 255, 255);
@@ -223,8 +254,17 @@ li {
   transition: all 0.5s ease-out;
 }
 
+.nav-button2 {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
 .filters {
   font-weight: 500 !important;
+  text-align: center;
 }
 
 .nav-button:hover {
@@ -254,6 +294,7 @@ li {
   font-family: Montserrat;
   font-weight: 600;
   transition: all 0.5s ease-out;
+  text-align: center;
 }
 
 .dropdown {
@@ -287,14 +328,15 @@ li {
   overflow: visible;
 }
 
-#searchBar-container{
+#searchBar-container {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
+  margin-bottom: 15px;
 }
 
-#searchBar-container > div > button{
+#searchBar-container > div > button {
   padding: 10px;
   background: none;
   border: solid 2px rgb(100, 9, 18);
@@ -305,16 +347,16 @@ li {
   cursor: pointer;
 }
 
-#searchBar-container > div > button:hover{
+#searchBar-container > div > button:hover {
   background-color: rgb(120, 38, 46);
   color: aliceblue;
 }
 
-.search-container{
+.search-container {
   margin-right: 15px;
 }
 
-.search-container > input{
+.search-container > input {
   padding: 10px;
   min-width: 180px;
   border: solid 2px rgb(100, 9, 18);
@@ -553,7 +595,14 @@ export default {
           const sourceId = edge.source().id();
           const targetId = edge.target().id();
 
-          console.log("Source:", sourceId, "Target:", targetId, "CharID: ", characterId);
+          console.log(
+            "Source:",
+            sourceId,
+            "Target:",
+            targetId,
+            "CharID: ",
+            characterId
+          );
 
           if (sourceId == characterId || targetId == characterId) {
             edge.show();
@@ -563,6 +612,7 @@ export default {
             this.cy.getElementById(targetId).show();
           }
         });
+        this.cy.fit(characterNode, 420);
       }
     },
     searchCharacter() {
@@ -571,8 +621,8 @@ export default {
         this.showAllNodes();
         return;
       }
-      const character = this.charactersData.find(
-        (char) => char.nome_scelto.toLowerCase().includes(query)
+      const character = this.charactersData.find((char) =>
+        char.nome_scelto.toLowerCase().includes(query)
       );
       if (character) {
         // If the character is found, filter the graph to show only the selected character and its related nodes
