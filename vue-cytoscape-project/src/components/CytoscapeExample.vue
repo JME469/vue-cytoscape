@@ -71,6 +71,7 @@
             <li>
               <button
                 id="family"
+                :class="{ selected: selectedFilter === 'family' }"
                 class="nav-button nav-button2"
                 @click="toggleFilter('family')"
               >
@@ -80,6 +81,7 @@
             <li>
               <button
                 id="work"
+                :class="{ selected: selectedFilter === 'work' }"
                 class="nav-button nav-button2"
                 @click="toggleFilter('work')"
               >
@@ -89,6 +91,7 @@
             <li>
               <button
                 id="all"
+                :class="{ selected: selectedFilter === 'all' }"
                 class="nav-button nav-button2"
                 @click="toggleFilter('all')"
               >
@@ -126,12 +129,33 @@
       <div id="cy"></div>
     </div>
   </div>
+  <!-- TO DO: Complete / add functions for event list -->
   <div id="events" v-show="showEventList">
     <h1>Eventi</h1>
     <div v-for="event in eventsData" :key="event.id" :value="event.id">
       <div id="event">
         <h2>{{ event.data }}, {{ event.luogo }}</h2>
-        <p v-if="event.note !== null">{{ event.note }}</p>
+        <div id="event-info">
+          <p v-if="event.note !== null">{{ event.note }}</p>
+          <div class="accordion" v-if="hasCharactersForEvent(event.id)">
+            <button class="accordion-btn" @click="toggleAccordion(event.id)">
+              {{
+                isAccordionOpen(event.id)
+                  ? "Hide Characters"
+                  : "Show Characters"
+              }}
+            </button>
+            <div class="accordion-content" v-show="isAccordionOpen(event.id)">
+              <!-- List of characters related to this event -->
+              <p
+                v-for="character in getCharactersForEvent(event.id)"
+                :key="character.id"
+              >
+                {{ character.name }}
+              </p>
+            </div>
+          </div>
+        </div>
         <hr />
       </div>
     </div>
@@ -139,6 +163,7 @@
 </template>
 
 <style scoped>
+
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Syne:wght@400..800&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap");
@@ -187,7 +212,7 @@ hr {
   position: absolute;
 }
 
-#filter-menu{
+#filter-menu {
   position: absolute;
   left: 10px;
   background-color: rgb(255, 255, 255);
@@ -259,6 +284,7 @@ li {
   flex-direction: row;
   align-items: center;
   text-align: center;
+  justify-content: center;
   width: 100%;
 }
 
@@ -300,6 +326,11 @@ li {
 .dropdown {
   position: relative;
   display: inline-block;
+  min-width: 100%;
+}
+
+.droptbtn {
+  width: 100%;
 }
 
 .dropdown-content {
@@ -307,7 +338,7 @@ li {
   left: 0;
   top: 100%;
   z-index: 1000;
-  max-height: 500px;
+  max-height: 380px;
   overflow-y: scroll;
 }
 
@@ -386,6 +417,33 @@ li {
   font-family: "Source Sans 3";
   margin: 20px;
 }
+
+.accordion {
+  margin-top: 10px;
+}
+
+.accordion-btn {
+  cursor: pointer;
+  background-color: #f1f1f1;
+  color: #333;
+  padding: 10px;
+  border: none;
+  width: 150px;
+  text-align: center;
+}
+
+.accordion-btn:hover {
+  background-color: #ddd;
+}
+
+.accordion-content {
+  display: none;
+}
+
+.accordion-content p {
+  margin: 5px 0;
+}
+
 
 #app {
   height: auto;
@@ -536,6 +594,7 @@ export default {
       showDropdown: false,
       dropdownLabel: "Eventi",
       selectedEvent: null,
+      selectedFilter: "family",
       searchQuery: "",
     };
   },
@@ -555,6 +614,7 @@ export default {
     async toggleFilter(filterValue) {
       if (this.filter !== filterValue) {
         this.filter = filterValue;
+        this.selectedFilter = filterValue;
         await this.fetchDataAndPopulateNodes();
       }
     },
@@ -570,7 +630,6 @@ export default {
       return node.data().info.eventi.includes(selectedEventId);
     },
     filterGraphByEvent() {
-      // Iterate over all nodes in the graph
       this.showAllNodes();
       this.cy.nodes().forEach((node) => {
         const related = this.isNodeRelatedToEvent(node, this.selectedEvent);
@@ -578,6 +637,12 @@ export default {
           node.hide();
         }
       });
+      const relatedNodes = this.cy.nodes().filter((node) => {
+        return this.isNodeRelatedToEvent(node, this.selectedEvent);
+      });
+      if (relatedNodes.length > 0) {
+        this.cy.fit(relatedNodes, 420);
+      }
     },
     filterGraph(character) {
       const characterId = character.id;
@@ -594,15 +659,6 @@ export default {
         this.cy.edges().forEach((edge) => {
           const sourceId = edge.source().id();
           const targetId = edge.target().id();
-
-          console.log(
-            "Source:",
-            sourceId,
-            "Target:",
-            targetId,
-            "CharID: ",
-            characterId
-          );
 
           if (sourceId == characterId || targetId == characterId) {
             edge.show();
@@ -634,7 +690,12 @@ export default {
     },
     showAllNodes() {
       // Show all nodes in the graph
-      this.cy.nodes().show();
+      this.cy.nodes().forEach((node) => {
+        if (node.connectedEdges().length !== 0) {
+          node.show();
+        }
+      });
+      this.cy.edges().show();
     },
     hidePopupOutside(event) {
       var popup = document.getElementById("popup");
@@ -1513,14 +1574,11 @@ export default {
       popup.style.opacity = "0";
       document.getElementById("cy").appendChild(popup);
 
-      //++sostengo economic
-
-      //kkkkkkkkkkkk
-      // this.cy.nodes().forEach((node) => {
-      //   if (node.connectedEdges().length === 0) {
-      //     node.hide();
-      //   }
-      // });
+      this.cy.nodes().forEach((node) => {
+        if (node.connectedEdges().length === 0) {
+          node.hide();
+        }
+      });
 
       this.cy.nodes().forEach((node) => {
         const size = this.getNodeSize(node);
