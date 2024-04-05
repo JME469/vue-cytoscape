@@ -33,26 +33,13 @@
     </ul>
   </div>
   <hr />
+
+  <!-- GRAPH AND FUNCTIONALITIES -->
+
   <div v-show="showCytoscape">
-    <!-- <select class="select" v-model="filter" @change="toggleFilter" id="filter">
-      <option value="family">La rete della famiglia</option>
-      <option value="work">La rete dei maestri e dei mecenati</option>
-      <option value="all">Il network</option>
-    </select> -->
-    <!-- <select
-      class="select"
-      v-model="selectedEvent"
-      @change="filterGraph"
-      id="filters"
-      v-show="eventFilter"
-    >
-      <option value="" selected>Filtrare per eventi</option>
-      <option v-for="event in eventsData" :key="event.id" :value="event.id">
-        {{ event.data }}, {{ event.luogo }}
-      </option>
-    </select> -->
     <div id="container">
       <div id="filter-menu">
+        <!-- Search bar -->
         <div id="searchBar-container">
           <div class="search-container">
             <input
@@ -77,6 +64,7 @@
             <button @click="searchCharacter">Cerca</button>
           </div>
         </div>
+        <!-- Filters -->
         <div id="nav-container" class="nav-container2">
           <ul id="nav2">
             <li>
@@ -137,9 +125,13 @@
           </ul>
         </div>
       </div>
+      <!-- Cytoscape graph-->
       <div id="cy"></div>
     </div>
   </div>
+
+  <!-- EVENTS PAGE -->
+
   <div id="events" v-show="showEventList">
     <h1>Eventi</h1>
     <div v-for="event in eventsData" :key="event.id" :value="event.id">
@@ -676,6 +668,10 @@ export default {
     toggleDropdown() {
       this.showDropdown = !this.showDropdown;
     },
+    
+
+/* EVENT FILTERING LOGIC */
+
     hasCharactersForEvent(eventId) {
       const characters = this.charactersData.filter(function (character) {
         return character.eventi.includes(eventId);
@@ -692,9 +688,9 @@ export default {
     // Toggle the visibility of the accordion for the given event
     toggleAccordion(eventId) {
       if (this.isAccordionOpen(eventId)) {
-        this.accordionState[eventId] = false; // Close the accordion
+        this.accordionState[eventId] = false;
       } else {
-        this.accordionState[eventId] = true; // Open the accordion
+        this.accordionState[eventId] = true;
       }
     },
     // Check if the accordion for the given event is open
@@ -724,10 +720,14 @@ export default {
         this.cy.fit(relatedNodes, 420);
       }
     },
+
+
+/* CHARACTER SEARCH LOGIC */
+
+    //Shows the searched character and related nodes
     filterGraph(character) {
       const characterId = character.id;
 
-      // Hide all nodes and edges in the graph
       this.cy.elements().hide();
 
       // Show the selected character node and its edges
@@ -795,6 +795,8 @@ export default {
       });
       this.cy.edges().show();
     },
+
+/* Extra functionalities */
     hidePopupOutside(event) {
       var popup = document.getElementById("popup");
       if (
@@ -833,6 +835,8 @@ export default {
       });
       localStorage.setItem("savedPositions", JSON.stringify(positions));
     },
+
+/* CREATE CYTOSCAPE GRAPH */
     loadLayout() {
       var savedPositions = JSON.parse(localStorage.getItem("savedPositions"));
       if (savedPositions) {
@@ -924,7 +928,9 @@ export default {
         });
       }
     },
-    // kkkkkkkk
+
+/* MAIN FUNCTION */
+//It calls the relevant functions in order to retrieve data and create the graph
     async fetchDataAndPopulateNodes() {
       try {
         const charactersData = await this.retrieveData();
@@ -988,6 +994,8 @@ export default {
         console.error("Error fetching data and populating nodes: ", error);
       }
     },
+
+/* DATA RETRIEVING */
     async retrieveData() {
       const response = await fetch(
         "http://95.110.132.24:8071/items/Virtuose?filter[pubblicato][_eq]=1"
@@ -1082,6 +1090,9 @@ export default {
         throw error;
       }
     },
+
+/* DATA HANDLING */
+//They translate the references to the corresponding characters
     combineData() {
       // Merge relationships data with characters data
       this.charactersData.forEach((character) => {
@@ -1089,7 +1100,7 @@ export default {
         const relatedCharacters = this.relationsData.filter((relation) =>
           figliFiglieIds.includes(relation.id)
         );
-        // Replace figli_figlie IDs with related character IDs
+        // Replace figli_figlie relation IDs with corresponding character IDs
         character.figli_figlie = relatedCharacters.map(
           (relation) => relation.related_Virtuose_id
         );
@@ -1129,7 +1140,6 @@ export default {
           .filter((eventId) => eventId !== null);
       });
     },
-    // Function to update character data with maestro relations
     updateCharacterMaestroRelations(combinedMaestroData) {
       this.charactersData.forEach((character) => {
         character.maestro = [];
@@ -1139,7 +1149,6 @@ export default {
           (char) => char.id === relation.Virtuose_id
         );
         if (character) {
-          // Update character's maestro relations
           if (!character.maestro) {
             character.maestro = [];
           }
@@ -1169,6 +1178,8 @@ export default {
       const character = this.charactersData.find((char) => char.id === id);
       return character ? character.nome_scelto : "Non conosciuto";
     },
+
+    //Transforms characters data into cytoscape format
     formatDataForCytoscape(
       charactersData,
       maestroRelations,
@@ -1220,6 +1231,8 @@ export default {
       this.updateRelationships(nodes, edges);
       return { nodes, edges };
     },
+
+    //Organizes all relations
     extractRelatives(
       character,
       maestroRelations,
@@ -1275,6 +1288,7 @@ export default {
       }
       return relatives;
     },
+    //Creates edges from the organized relations
     extractEdgesFromCharacters(
       charactersData,
       maestroRelations,
@@ -1343,6 +1357,7 @@ export default {
       });
       return edges;
     },
+    //Ables bi-directional relations info
     updateRelationships(nodes, edges) {
       edges.forEach((edge) => {
         const sourceId = edge.data.source;
@@ -1419,6 +1434,9 @@ export default {
         }
       });
     },
+
+/* GRAPH ACTIONS HANDLING */
+//Such as zoom, dragging, node interacion, etc.
     removeCytoscapeEventListeners() {
       const cyContainer = document.getElementById("cy");
 
@@ -1491,6 +1509,7 @@ export default {
       });
       event.preventDefault();
     },
+    //Info popup handling
     handleNodeClick(event) {
       const popup = document.getElementById("popup");
 
@@ -1666,6 +1685,7 @@ export default {
       this.cy.on("grab", "node", this.handleNodeGrab);
       this.cy.on("click", "node", this.handleNodeClick);
     },
+    //Other functionalities
     populateCytoscapeGraph() {
       var popup = document.createElement("div");
       popup.id = "popup";
