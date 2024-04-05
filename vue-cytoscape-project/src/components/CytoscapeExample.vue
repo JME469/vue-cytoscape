@@ -585,6 +585,7 @@ export default {
       nodeClicked: false,
       popupInfo: {},
       clickedNode: null,
+      hoverTimeout: null,
 
       charactersData: [],
       relationsData: [],
@@ -668,9 +669,8 @@ export default {
     toggleDropdown() {
       this.showDropdown = !this.showDropdown;
     },
-    
 
-/* EVENT FILTERING LOGIC */
+    /* EVENT FILTERING LOGIC */
 
     hasCharactersForEvent(eventId) {
       const characters = this.charactersData.filter(function (character) {
@@ -721,8 +721,7 @@ export default {
       }
     },
 
-
-/* CHARACTER SEARCH LOGIC */
+    /* CHARACTER SEARCH LOGIC */
 
     //Shows the searched character and related nodes
     filterGraph(character) {
@@ -796,7 +795,7 @@ export default {
       this.cy.edges().show();
     },
 
-/* Extra functionalities */
+    /* Extra functionalities */
     hidePopupOutside(event) {
       var popup = document.getElementById("popup");
       if (
@@ -836,7 +835,7 @@ export default {
       localStorage.setItem("savedPositions", JSON.stringify(positions));
     },
 
-/* CREATE CYTOSCAPE GRAPH */
+    /* CREATE CYTOSCAPE GRAPH */
     loadLayout() {
       var savedPositions = JSON.parse(localStorage.getItem("savedPositions"));
       if (savedPositions) {
@@ -929,8 +928,8 @@ export default {
       }
     },
 
-/* MAIN FUNCTION */
-//It calls the relevant functions in order to retrieve data and create the graph
+    /* MAIN FUNCTION */
+    //It calls the relevant functions in order to retrieve data and create the graph
     async fetchDataAndPopulateNodes() {
       try {
         const charactersData = await this.retrieveData();
@@ -995,7 +994,7 @@ export default {
       }
     },
 
-/* DATA RETRIEVING */
+    /* DATA RETRIEVING */
     async retrieveData() {
       const response = await fetch(
         "http://95.110.132.24:8071/items/Virtuose?filter[pubblicato][_eq]=1"
@@ -1091,8 +1090,8 @@ export default {
       }
     },
 
-/* DATA HANDLING */
-//They translate the references to the corresponding characters
+    /* DATA HANDLING */
+    //They translate the references to the corresponding characters
     combineData() {
       // Merge relationships data with characters data
       this.charactersData.forEach((character) => {
@@ -1435,8 +1434,8 @@ export default {
       });
     },
 
-/* GRAPH ACTIONS HANDLING */
-//Such as zoom, dragging, node interacion, etc.
+    /* GRAPH ACTIONS HANDLING */
+    //Such as zoom, dragging, node interacion, etc.
     removeCytoscapeEventListeners() {
       const cyContainer = document.getElementById("cy");
 
@@ -1511,85 +1510,86 @@ export default {
     },
     //Info popup handling
     handleNodeClick(event) {
-      const popup = document.getElementById("popup");
+      this.hoverTimeout = setTimeout(() => {
+        const popup = document.getElementById("popup");
 
-      var node = event.target;
-      var info = node.data("info");
-      var relations = node.data("relationships");
-      // console.log(relations);
-      this.clickedNode = node;
+        var node = event.target;
+        var info = node.data("info");
+        var relations = node.data("relationships");
+        // console.log(relations);
+        this.clickedNode = node;
 
-      this.popupInfo = info;
-      this.showPopup = true;
+        this.popupInfo = info;
+        this.showPopup = true;
 
-      const logoSrc = info.virtuosa ? `/img/logo_r.png` : "";
-      const imageSrc =
-        info.icona !== null
-          ? `http://95.110.132.24:8071/assets/${info.icona}`
-          : "";
+        const logoSrc = info.virtuosa ? `/img/logo_r.png` : "";
+        const imageSrc =
+          info.icona !== null
+            ? `http://95.110.132.24:8071/assets/${info.icona}`
+            : "";
 
-      // const virtuoseLogo = info.virtuosa
-      //   ? `${this.baseUrl}/assets/logo_r.png`
-      //   : "";
+        // const virtuoseLogo = info.virtuosa
+        //   ? `${this.baseUrl}/assets/logo_r.png`
+        //   : "";
 
-      const noteSection = info.note ? `<p><b>Info:</b> ${info.note}</p>` : "";
-      // const birthPlace =
-      //   info.luogo_nascita === "Roma" || info.luogo_nascita === "Firenze"
-      //     ? `${info.luogo_nascita}`
-      //     : "";
-      const pseudonimo =
-        info.pseudonimo !== null ? `<p><i>${info.pseudonimo}</i></p>` : "";
-      const nascita =
-        info.data_nascita !== null
-          ? `<p><b>Data di nascita: </b>${info.data_nascita}</p>`
-          : "";
-      const morte =
-        info.data_morte !== null
-          ? `<p><b>Data di morte: </b>${info.data_morte}</p>`
-          : "";
-      const fatherSection =
-        relations.father !== null
-          ? `<p><b>Padre:</b> ${this.getCharacterName(relations.father)}</p>`
-          : "";
-      const motherSection =
-        relations.mother !== null
-          ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
-          : "";
-      // const padrinoSection =
-      //   info.padrino !== null
-      //     ? `<p><b>Padrino:</b> ${this.getCharacterName(info.padrino)}</p>`
-      //     : "";
-      // const madrinaSection =
-      //   info.padrino !== null
-      //     ? `<p><b>Madrina:</b> ${this.getCharacterName(info.madrina)}</p>`
-      //     : "";
-      // const spouseSection =
-      //   relations.spouse !== null
-      //     ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
-      //         relations.spouse
-      //       )}</p>`
-      //     : "";
-      // const childrenSection =
-      //   relations.children && relations.children.length > 0
-      //     ? `<p><b>Figli/Figlie:</b> ${relations.children
-      //         .map((childId) => this.getCharacterName(childId))
-      //         .join(", ")}</p>`
-      //     : "";
-      // const maestroSection =
-      //   info.maestro && info.maestro.length > 0
-      //     ? `<p><b>Maestro:</b> ${info.maestro
-      //         .map((maestroId) => this.getCharacterName(maestroId))
-      //         .join(", ")}</p>`
-      //     : "";
-      // const mecenatiSection =
-      //   info.mecenati && info.mecenati.length > 0
-      //     ? `<p><b>Mecenati:</b> ${info.mecenati
-      //         .map((mecenatiId) => this.getCharacterName(mecenatiId))
-      //         .join(", ")}</p>`
-      //     : "";
+        const noteSection = info.note ? `<p><b>Info:</b> ${info.note}</p>` : "";
+        // const birthPlace =
+        //   info.luogo_nascita === "Roma" || info.luogo_nascita === "Firenze"
+        //     ? `${info.luogo_nascita}`
+        //     : "";
+        const pseudonimo =
+          info.pseudonimo !== null ? `<p><i>${info.pseudonimo}</i></p>` : "";
+        const nascita =
+          info.data_nascita !== null
+            ? `<p><b>Data di nascita: </b>${info.data_nascita}</p>`
+            : "";
+        const morte =
+          info.data_morte !== null
+            ? `<p><b>Data di morte: </b>${info.data_morte}</p>`
+            : "";
+        const fatherSection =
+          relations.father !== null
+            ? `<p><b>Padre:</b> ${this.getCharacterName(relations.father)}</p>`
+            : "";
+        const motherSection =
+          relations.mother !== null
+            ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
+            : "";
+        // const padrinoSection =
+        //   info.padrino !== null
+        //     ? `<p><b>Padrino:</b> ${this.getCharacterName(info.padrino)}</p>`
+        //     : "";
+        // const madrinaSection =
+        //   info.padrino !== null
+        //     ? `<p><b>Madrina:</b> ${this.getCharacterName(info.madrina)}</p>`
+        //     : "";
+        // const spouseSection =
+        //   relations.spouse !== null
+        //     ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
+        //         relations.spouse
+        //       )}</p>`
+        //     : "";
+        // const childrenSection =
+        //   relations.children && relations.children.length > 0
+        //     ? `<p><b>Figli/Figlie:</b> ${relations.children
+        //         .map((childId) => this.getCharacterName(childId))
+        //         .join(", ")}</p>`
+        //     : "";
+        // const maestroSection =
+        //   info.maestro && info.maestro.length > 0
+        //     ? `<p><b>Maestro:</b> ${info.maestro
+        //         .map((maestroId) => this.getCharacterName(maestroId))
+        //         .join(", ")}</p>`
+        //     : "";
+        // const mecenatiSection =
+        //   info.mecenati && info.mecenati.length > 0
+        //     ? `<p><b>Mecenati:</b> ${info.mecenati
+        //         .map((mecenatiId) => this.getCharacterName(mecenatiId))
+        //         .join(", ")}</p>`
+        //     : "";
 
-      // Construct the popup content
-      popup.innerHTML = `
+        // Construct the popup content
+        popup.innerHTML = `
         <div id="content">
           
           ${
@@ -1600,12 +1600,12 @@ export default {
           
             <div id="chInfo">
               <h3 style="margin-left:10px"><b><i>${info.nome_scelto}, ${
-        info.id
-      }</i></b>${
-        logoSrc !== ""
-          ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
-          : ""
-      }</h3>
+          info.id
+        }</i></b>${
+          logoSrc !== ""
+            ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
+            : ""
+        }</h3>
         <h4 style="margin-left:10px">${pseudonimo}</h4>
         <br>
                 ${nascita}
@@ -1617,55 +1617,60 @@ export default {
             </div>
         </div>
     `;
-      // ${spouseSection}
-      // ${childrenSection}
-      // ${padrinoSection}
-      // ${madrinaSection}
-      // ${maestroSection}
-      // ${mecenatiSection}
+        // ${spouseSection}
+        // ${childrenSection}
+        // ${padrinoSection}
+        // ${madrinaSection}
+        // ${maestroSection}
+        // ${mecenatiSection}
 
-      var position = event.target.renderedPosition();
-      // console.log("Position: ", position);
-      var cyContainer = document.getElementById("cy");
-      var popupHeight = popup.offsetHeight;
-      var popupWidth = popup.offsetWidth;
+        var position = event.target.renderedPosition();
+        // console.log("Position: ", position);
+        var cyContainer = document.getElementById("cy");
+        var popupHeight = popup.offsetHeight;
+        var popupWidth = popup.offsetWidth;
 
-      var popupOffsetX = -550;
-      var popupOffsetY = -900;
-      if (position.y > 750) {
-        popupOffsetY = popupOffsetY - popupHeight;
-      }
-      if (position.x < 500) {
-        popupOffsetX = popupOffsetX + popupWidth;
-      }
-      var popupPositionX = Math.min(
-        position.x + popupOffsetX,
-        cyContainer.offsetWidth - popup.offsetWidth
-      );
-      var popupPositionY = Math.min(
-        position.y + popupOffsetY,
-        cyContainer.offsetHeight - popup.offsetHeight
-      );
-
-      popup.style.transform = `translate(${popupPositionX}px, ${popupPositionY}px)`;
-
-      setTimeout(() => {
-        // Show the popup
-        if (info.virtuosa) {
-          popup.style.border = "solid 2px rgb(120, 38, 46)";
-        } else {
-          popup.style.border = "solid 1px grey";
+        var popupOffsetX = -550;
+        var popupOffsetY = -900;
+        if (position.y > 750) {
+          popupOffsetY = popupOffsetY - popupHeight;
         }
-        popup.style.width = "500px";
-        popup.style.height = "auto";
-        popup.style.opacity = "1";
-        popup.style.zIndex = "999";
+        if (position.x < 500) {
+          popupOffsetX = popupOffsetX + popupWidth;
+        }
+        var popupPositionX = Math.min(
+          position.x + popupOffsetX,
+          cyContainer.offsetWidth - popup.offsetWidth
+        );
+        var popupPositionY = Math.min(
+          position.y + popupOffsetY,
+          cyContainer.offsetHeight - popup.offsetHeight
+        );
 
-        // Add event listener to hide the popup when clicking outside of it
-        document.addEventListener("click", this.hidePopupOutside);
-      }, 200);
+        popup.style.transform = `translate(${popupPositionX}px, ${popupPositionY}px)`;
 
-      event.stopPropagation();
+        setTimeout(() => {
+          // Show the popup
+          if (info.virtuosa) {
+            popup.style.border = "solid 2px rgb(120, 38, 46)";
+          } else {
+            popup.style.border = "solid 1px grey";
+          }
+          popup.style.width = "500px";
+          popup.style.height = "auto";
+          popup.style.opacity = "1";
+          popup.style.zIndex = "999";
+
+          // Add event listener to hide the popup when clicking outside of it
+          document.addEventListener("click", this.hidePopupOutside);
+        }, 200);
+
+        event.stopPropagation();
+      }, 750);
+    },
+    handleNodeLeave() {
+      // Clear the timeout if the mouse leaves the node before the delay
+      clearTimeout(this.hoverTimeout);
     },
     handleNodeGrab(event) {
       this.nodeClicked = true;
@@ -1683,7 +1688,8 @@ export default {
       cyContainer.addEventListener("wheel", this.handleWheel);
 
       this.cy.on("grab", "node", this.handleNodeGrab);
-      this.cy.on("click", "node", this.handleNodeClick);
+      this.cy.on("mouseover", "node", this.handleNodeClick);
+      this.cy.on("mouseout", "node", this.handleNodeLeave);
     },
     //Other functionalities
     populateCytoscapeGraph() {
