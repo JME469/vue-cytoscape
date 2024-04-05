@@ -58,9 +58,20 @@
             <input
               type="text"
               v-model="searchQuery"
+              @input="updateAutocomplete"
               @keyup.enter="searchCharacter"
               placeholder="Cerca una virtuosa..."
             />
+            <ul v-if="showAutocomplete" id="autocomplete">
+              <li
+                v-for="character in filteredCharacters"
+                :key="character.id"
+                @click="selectCharacter(character)"
+                class="character"
+              >
+                {{ character.nome_scelto }}
+              </li>
+            </ul>
           </div>
           <div>
             <button @click="searchCharacter">Cerca</button>
@@ -129,7 +140,6 @@
       <div id="cy"></div>
     </div>
   </div>
-  <!-- TO DO: Complete / add functions for event list -->
   <div id="events" v-show="showEventList">
     <h1>Eventi</h1>
     <div v-for="event in eventsData" :key="event.id" :value="event.id">
@@ -141,8 +151,8 @@
             <button class="accordion-btn" @click="toggleAccordion(event.id)">
               {{
                 isAccordionOpen(event.id)
-                  ? "Hide Characters"
-                  : "Show Characters"
+                  ? "Non mostrare"
+                  : "Mostra le virtuose"
               }}
             </button>
             <div class="accordion-content" v-show="isAccordionOpen(event.id)">
@@ -151,7 +161,7 @@
                 v-for="character in getCharactersForEvent(event.id)"
                 :key="character.id"
               >
-                {{ character.name }}
+                {{ character.nome_scelto }}
               </p>
             </div>
           </div>
@@ -163,7 +173,6 @@
 </template>
 
 <style scoped>
-
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Syne:wght@400..800&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap");
@@ -393,6 +402,31 @@ li {
   border: solid 2px rgb(100, 9, 18);
 }
 
+#autocomplete {
+  position: absolute;
+  list-style: none;
+  max-height: 200px;
+  max-width: 230px;
+  overflow-y: scroll;
+  background-color: #fafafa;
+  border: solid 2px rgb(100, 9, 18);
+  margin-top: 5px;
+  z-index: 1002;
+}
+
+.character {
+  cursor: pointer;
+  padding: 10px;
+  font-family: Montserrat;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.character:hover {
+  background-color: rgb(100, 9, 18);
+  color: aliceblue;
+}
+
 #events {
   padding-bottom: 50px;
   padding-top: 40px;
@@ -413,13 +447,22 @@ li {
   margin: 20px;
 }
 
-#event > p {
+#event-info > p {
   font-family: "Source Sans 3";
+  max-width: 50%;
+}
+
+#event-info {
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
   margin: 20px;
 }
 
 .accordion {
-  margin-top: 10px;
+  border: solid 2px rgb(100, 9, 18);
+  min-width: 200px;
+  height: fit-content;
 }
 
 .accordion-btn {
@@ -428,7 +471,7 @@ li {
   color: #333;
   padding: 10px;
   border: none;
-  width: 150px;
+  width: 100%;
   text-align: center;
 }
 
@@ -437,13 +480,19 @@ li {
 }
 
 .accordion-content {
-  display: none;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .accordion-content p {
-  margin: 5px 0;
+  margin: 10px 0;
+  font-family: Montserrat;
+  font-weight: 500;
+  font-size: small;
 }
-
 
 #app {
   height: auto;
@@ -528,17 +577,9 @@ li {
 
 <script>
 import cytoscape from "cytoscape";
-import dagre from "cytoscape-dagre";
 import fcose from "cytoscape-fcose";
-import cola from "cytoscape-cola";
-import springy from "cytoscape-springy";
-import coseBilkent from "cytoscape-cose-bilkent";
 
-cytoscape.use(dagre);
 cytoscape.use(fcose);
-cytoscape.use(cola);
-cytoscape.use(springy);
-cytoscape.use(coseBilkent);
 
 export default {
   data() {
@@ -596,11 +637,25 @@ export default {
       selectedEvent: null,
       selectedFilter: "family",
       searchQuery: "",
+      showAutocomplete: false,
+      accordionState: {},
     };
   },
   mounted() {
     this.fetchDataAndPopulateNodes();
     document.addEventListener("click", this.hidePopupOutside.bind(this));
+  },
+  computed: {
+    filteredCharacters() {
+      const query = this.searchQuery.toLowerCase().trim();
+      return this.charactersData
+        .filter((character) =>
+          character.nome_scelto.toLowerCase().includes(query)
+        )
+        .sort((a, b) => {
+          return a.nome_scelto.localeCompare(b.nome_scelto); // Sort alphabetically by character name
+        });
+    },
   },
   methods: {
     displayGraph() {
@@ -620,6 +675,31 @@ export default {
     },
     toggleDropdown() {
       this.showDropdown = !this.showDropdown;
+    },
+    hasCharactersForEvent(eventId) {
+      const characters = this.charactersData.filter(function (character) {
+        return character.eventi.includes(eventId);
+      });
+      return characters.length > 0;
+    },
+    // Get the list of characters related to the given event
+    getCharactersForEvent(eventId) {
+      const characters = this.charactersData.filter((character) =>
+        character.eventi.includes(eventId)
+      );
+      return characters;
+    },
+    // Toggle the visibility of the accordion for the given event
+    toggleAccordion(eventId) {
+      if (this.isAccordionOpen(eventId)) {
+        this.accordionState[eventId] = false; // Close the accordion
+      } else {
+        this.accordionState[eventId] = true; // Open the accordion
+      }
+    },
+    // Check if the accordion for the given event is open
+    isAccordionOpen(eventId) {
+      return !!this.accordionState[eventId];
     },
     selectEvent(event) {
       this.selectedEvent = event.id;
@@ -670,6 +750,24 @@ export default {
         });
         this.cy.fit(characterNode, 420);
       }
+    },
+    updateAutocomplete() {
+      if (this.searchQuery == "") {
+        this.showAutocomplete = false;
+      } else {
+        const matchingCharacters = this.getMatchingCharacters();
+        this.showAutocomplete = matchingCharacters.length > 0;
+      }
+    },
+    getMatchingCharacters() {
+      const query = this.searchQuery.toLowerCase().trim();
+      return this.charactersData.filter((character) =>
+        character.nome_scelto.toLowerCase().includes(query)
+      );
+    },
+    selectCharacter(character) {
+      this.searchQuery = character.nome_scelto;
+      this.showAutocomplete = false;
     },
     searchCharacter() {
       const query = this.searchQuery.toLowerCase().trim();
