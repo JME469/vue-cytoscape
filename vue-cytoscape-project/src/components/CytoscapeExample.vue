@@ -127,6 +127,7 @@
       </div>
       <!-- Cytoscape graph-->
       <div id="cy"></div>
+      <div id="aside" v-show="showAside"></div>
     </div>
   </div>
 
@@ -504,7 +505,7 @@ li {
 
 #cy {
   width: 100%;
-  height: 900px;
+  height: 1100px;
   background-color: rgb(252, 252, 252);
 }
 
@@ -564,6 +565,24 @@ li {
 
 #popup:hover {
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+#aside{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  position: absolute;
+  float: right;
+  right: 0;
+  min-width: 350px;
+  max-width: 400px;
+  height: 100%;
+
+  background-color: white;
+  border: solid 2px rgb(100, 9, 18);
+  font-family: "Source Sans 3";
+  padding: 30px;
 }
 </style>
 
@@ -632,6 +651,7 @@ export default {
       searchQuery: "",
       showAutocomplete: false,
       accordionState: {},
+      showAside: false,
     };
   },
   mounted() {
@@ -1509,7 +1529,7 @@ export default {
       event.preventDefault();
     },
     //Info popup handling
-    handleNodeClick(event) {
+    handleNodeHover(event) {
       this.hoverTimeout = setTimeout(() => {
         const popup = document.getElementById("popup");
 
@@ -1631,7 +1651,7 @@ export default {
         var popupWidth = popup.offsetWidth;
 
         var popupOffsetX = -550;
-        var popupOffsetY = -900;
+        var popupOffsetY = -1100;
         if (position.y > 750) {
           popupOffsetY = popupOffsetY - popupHeight;
         }
@@ -1672,6 +1692,107 @@ export default {
       // Clear the timeout if the mouse leaves the node before the delay
       clearTimeout(this.hoverTimeout);
     },
+    handleNodeClick(event) {
+      // Show detailed info about the clicked node in the aside section
+      const node = event.target;
+      const info = node.data("info");
+      const relations = node.data("relationships");
+
+      const aside = document.getElementById("aside");
+
+      const logoSrc = info.virtuosa ? `/img/logo_r.png` : "";
+      const imageSrc =
+        info.icona !== null
+          ? `http://95.110.132.24:8071/assets/${info.icona}`
+          : "";
+
+      // Construct the content for the aside section
+      const content = `
+    <div id="content">
+      ${
+        imageSrc !== ""
+          ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;" alt="Icona" id="picture">`
+          : ""
+      }
+      <div id="chInfo">
+        <h3 style="margin-left:10px"><b><i>${info.nome_scelto}, ${
+        info.id
+      }</i></b>${
+        logoSrc !== ""
+          ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
+          : ""
+      }</h3>
+        <h4 style="margin-left:10px">${
+          info.pseudonimo !== null ? `<p><i>${info.pseudonimo}</i></p>` : ""
+        }</h4>
+        <br>
+        ${
+          info.data_nascita !== null
+            ? `<p><b>Data di nascita: </b>${info.data_nascita}</p>`
+            : ""
+        }
+        ${
+          info.data_morte !== null
+            ? `<p><b>Data di morte: </b>${info.data_morte}</p>`
+            : ""
+        }
+        ${
+          relations.father !== null
+            ? `<p><b>Padre:</b> ${this.getCharacterName(relations.father)}</p>`
+            : ""
+        }
+        ${
+          relations.mother !== null
+            ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
+            : ""
+        }
+        ${
+          relations.spouse !== null
+             ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
+                 relations.spouse
+               )}</p>`
+             : ""
+        }
+        ${
+          relations.children && relations.children.length > 0
+             ? `<p><b>Figli/Figlie:</b> ${relations.children
+                 .map((childId) => this.getCharacterName(childId))
+                 .join(", ")}</p>`
+             : ""
+        }
+        ${
+          info.padrino !== null
+             ? `<p><b>Padrino:</b> ${this.getCharacterName(info.padrino)}</p>`
+             : ""
+        }
+        ${
+          info.madrina !== null
+             ? `<p><b>Madrina:</b> ${this.getCharacterName(info.madrina)}</p>`
+             : ""
+        }<br><br>
+        ${
+          info.maestro && info.maestro.length > 0
+             ? `<p><b>Maestro:</b> ${info.maestro
+                 .map((maestroId) => this.getCharacterName(maestroId))
+                 .join(", ")}</p>`
+             : ""
+        }
+        ${
+          info.mecenati && info.mecenati.length > 0
+             ? `<p><b>Mecenati:</b> ${info.mecenati
+                 .map((mecenatiId) => this.getCharacterName(mecenatiId))
+                 .join(", ")}</p>`
+             : ""
+        }
+        ${info.note ? `<p><b>Info:</b> ${info.note}</p>` : ""}
+      </div>
+    </div>
+  `;
+
+      // Show the aside section
+      aside.innerHTML = content;
+      this.showAside = true;
+    },
     handleNodeGrab(event) {
       this.nodeClicked = true;
       this.isPanning = false;
@@ -1688,7 +1809,8 @@ export default {
       cyContainer.addEventListener("wheel", this.handleWheel);
 
       this.cy.on("grab", "node", this.handleNodeGrab);
-      this.cy.on("mouseover", "node", this.handleNodeClick);
+      this.cy.on("click", "node", this.handleNodeClick);
+      this.cy.on("mouseover", "node", this.handleNodeHover);
       this.cy.on("mouseout", "node", this.handleNodeLeave);
     },
     //Other functionalities
