@@ -567,10 +567,9 @@ li {
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
-#aside{
+#aside {
   display: flex;
   flex-direction: column;
-  align-items: center;
 
   position: absolute;
   float: right;
@@ -958,37 +957,30 @@ export default {
         const eventsData = await this.retrieveEvents();
         this.eventsData = eventsData;
 
-        if (this.filter === "family" || this.filter === "all") {
-          this.eventFilter = false;
-          const relationsData = await this.retrieveRelations();
-          this.relationsData = relationsData;
-        }
+        const relationsData = await this.retrieveRelations();
+        this.relationsData = relationsData;
 
-        if (this.filter === "work" || this.filter === "all") {
-          this.eventFilter = true;
+        const maestroRelations = await this.retrieveMaestroRelations();
+        this.maestroRelations = maestroRelations;
+        const mecenatiRelations = await this.retrieveMecenatiRelations();
+        this.mecenatiRelations = mecenatiRelations;
 
-          const maestroRelations = await this.retrieveMaestroRelations();
-          this.maestroRelations = maestroRelations;
-          const mecenatiRelations = await this.retrieveMecenatiRelations();
-          this.mecenatiRelations = mecenatiRelations;
+        const maestroData = await this.retrieveMaestroData();
+        this.maestroData = maestroData;
+        const mecenatiData = await this.retrieveMecenatiData();
+        this.mecenatiData = mecenatiData;
 
-          const maestroData = await this.retrieveMaestroData();
-          this.maestroData = maestroData;
-          const mecenatiData = await this.retrieveMecenatiData();
-          this.mecenatiData = mecenatiData;
+        const combinedMaestroData = this.combineMaestroData(
+          maestroRelations,
+          maestroData
+        );
+        const combinedMecenatiData = this.combineMecenatiData(
+          mecenatiRelations,
+          mecenatiData
+        );
 
-          const combinedMaestroData = this.combineMaestroData(
-            maestroRelations,
-            maestroData
-          );
-          const combinedMecenatiData = this.combineMecenatiData(
-            mecenatiRelations,
-            mecenatiData
-          );
-
-          this.updateCharacterMaestroRelations(combinedMaestroData);
-          this.updateCharacterMecenatiRelations(combinedMecenatiData);
-        }
+        this.updateCharacterMaestroRelations(combinedMaestroData);
+        this.updateCharacterMecenatiRelations(combinedMecenatiData);
 
         this.updateCharacterEvents(
           charactersData,
@@ -1195,7 +1187,7 @@ export default {
     },
     getCharacterName(id) {
       const character = this.charactersData.find((char) => char.id === id);
-      return character ? character.nome_scelto : "Non conosciuto";
+      return character ? character.nome_scelto : `"Non conosciuto"`;
     },
 
     //Transforms characters data into cytoscape format
@@ -1748,41 +1740,53 @@ export default {
         }
         ${
           relations.spouse !== null
-             ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
-                 relations.spouse
-               )}</p>`
-             : ""
+            ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
+                relations.spouse
+              )}</p>`
+            : ""
         }
         ${
           relations.children && relations.children.length > 0
-             ? `<p><b>Figli/Figlie:</b> ${relations.children
-                 .map((childId) => this.getCharacterName(childId))
-                 .join(", ")}</p>`
-             : ""
+            ? `<p><b>Figli/Figlie:</b> ${relations.children
+                .map((childId) => this.getCharacterName(childId))
+                .join(", ")}</p>`
+            : ""
         }
         ${
           info.padrino !== null
-             ? `<p><b>Padrino:</b> ${this.getCharacterName(info.padrino)}</p>`
-             : ""
+            ? `<p><b>Padrino:</b> ${this.getCharacterName(info.padrino)}</p>`
+            : ""
         }
         ${
           info.madrina !== null
-             ? `<p><b>Madrina:</b> ${this.getCharacterName(info.madrina)}</p>`
-             : ""
+            ? `<p><b>Madrina:</b> ${this.getCharacterName(info.madrina)}</p>`
+            : ""
         }<br><br>
         ${
           info.maestro && info.maestro.length > 0
-             ? `<p><b>Maestro:</b> ${info.maestro
-                 .map((maestroId) => this.getCharacterName(maestroId))
-                 .join(", ")}</p>`
-             : ""
+            ? `<p><b>Maestro:</b> ${info.maestro
+                .map((maestroId) => this.getCharacterName(maestroId))
+                .join(", ")}</p>`
+            : ""
         }
         ${
           info.mecenati && info.mecenati.length > 0
-             ? `<p><b>Mecenati:</b> ${info.mecenati
-                 .map((mecenatiId) => this.getCharacterName(mecenatiId))
-                 .join(", ")}</p>`
-             : ""
+            ? `<p><b>Mecenati:</b> ${info.mecenati
+                .map((mecenatiId) => this.getCharacterName(mecenatiId))
+                .join(", ")}</p>`
+            : ""
+        }<br>
+        ${
+          info.eventi && info.eventi.length > 0
+            ? `<p><b>Eventi:</b> ${info.eventi
+                .map((eventId) => {
+                  const event = this.eventsData.find(
+                    (event) => event.id === eventId
+                  );
+                  return event ? `${event.data} - ${event.luogo}` : "";
+                })
+                .join(" | ")}</p>`
+            : ""
         }
         ${info.note ? `<p><b>Info:</b> ${info.note}</p>` : ""}
       </div>
