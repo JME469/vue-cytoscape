@@ -1,8 +1,4 @@
 <template>
-  <div id="banner">
-    <img src="../assets/vidimus_r.png" alt="" height="100px" />
-    <div id="title">VIdiMUS - <i>Le Virtuose di musica</i></div>
-  </div>
   <hr />
   <div id="nav-container">
     <ul id="nav">
@@ -246,7 +242,6 @@ hr {
   list-style: none;
   list-style-type: none;
   height: 100%;
-  background-color: rgb(255, 255, 255);
   margin-bottom: 20px;
 }
 
@@ -276,7 +271,7 @@ li {
   font-size: large;
   border: none;
   cursor: pointer;
-  background-color: rgb(255, 255, 255);
+  background-color: transparent;
   color: rgb(76, 76, 76);
   transition: all 0.5s ease-out;
 }
@@ -539,7 +534,13 @@ li {
 #chInfo > h4 {
   font-weight: lighter;
   font-size: small;
+  font-family: 'Source Sans 3' !important;
 
+  color: rgb(67, 67, 67);
+}
+
+#chInfo > h3 {
+  font-family: 'Source Sans 3' !important;
   color: rgb(67, 67, 67);
 }
 
@@ -1707,9 +1708,7 @@ export default {
           : ""
       }
       <div id="chInfo">
-        <h3 style="margin-left:10px"><b><i>${info.nome_scelto}, ${
-        info.id
-      }</i></b>${
+        <h3 style="margin-left:10px"><b><i>${info.nome_scelto}</i></b>${
         logoSrc !== ""
           ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
           : ""
