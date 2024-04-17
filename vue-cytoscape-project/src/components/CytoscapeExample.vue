@@ -1,32 +1,27 @@
 <template>
-  <div id="banner">
-    <img src="../assets/vidimus_r.png" alt="" height="100px" />
-    <div id="title">VIdiMUS - <i>Le Virtuose di musica</i></div>
-  </div>
-  <hr />
   <div id="nav-container">
     <ul id="nav">
       <li>
         <button class="nav-button" @click="displayGraph()">
-          <img src="../assets/network_149181.png" alt="" width="40px" />
+          <img src="/wordpress/wp-content/themes/astra/assets/dist/img/network_149181.png" alt="" width="40px" />
           <div class="btn-text">LE VIRTUOSE</div>
         </button>
       </li>
       <li>
         <button class="nav-button" @click="displayEvents()">
-          <img src="../assets/calendar_2838779.png" alt="" width="40px" />
+          <img src="/wordpress/wp-content/themes/astra/assets/dist/img/calendar_2838779.png" alt="" width="40px" />
           <div class="btn-text">EVENTI</div>
         </button>
       </li>
       <li>
         <button class="nav-button">
-          <img src="../assets/guitar_96421.png" alt="" width="40px" />
+          <img src="/wordpress/wp-content/themes/astra/assets/dist/img/guitar_96421.png" alt="" width="40px" />
           <div class="btn-text">REPERTORIO</div>
         </button>
       </li>
       <li>
         <button class="nav-button">
-          <img src="../assets/searching_6898982.png" alt="" width="40px" />
+          <img src="/wordpress/wp-content/themes/astra/assets/dist/img/searching_6898982.png" alt="" width="40px" />
           <div class="btn-text">FONTI</div>
         </button>
       </li>
@@ -195,7 +190,6 @@ hr {
   display: flex;
   min-height: 170px;
   text-align: center;
-  background-color: rgb(255, 255, 255);
   color: rgb(120, 38, 46);
   justify-content: center;
   align-items: center;
@@ -230,6 +224,7 @@ hr {
   text-align: center;
   align-items: center;
   justify-content: center;
+  margin-top: 50px;
 }
 
 .nav-container2 {
@@ -237,16 +232,16 @@ hr {
   text-align: center;
   align-items: start !important;
   justify-content: center;
+  margin-top: 20px;
 }
 
 #nav {
   display: flex;
-  flex-direction: row;
+  flex-direction: row !important;
   gap: 30px;
-  list-style: none;
-  list-style-type: none;
+  list-style: none !important;
+  list-style-type: none !important;
   height: 100%;
-  background-color: rgb(255, 255, 255);
   margin-bottom: 20px;
 }
 
@@ -276,7 +271,7 @@ li {
   font-size: large;
   border: none;
   cursor: pointer;
-  background-color: rgb(255, 255, 255);
+  background: none;
   color: rgb(76, 76, 76);
   transition: all 0.5s ease-out;
 }
@@ -296,12 +291,12 @@ li {
 }
 
 .nav-button:hover {
-  background-color: rgb(120, 38, 46);
+  background: rgb(120, 38, 46);
   color: aliceblue;
 }
 
 .selected {
-  background-color: rgb(120, 38, 46);
+  background: rgb(120, 38, 46);
   color: aliceblue;
 }
 
@@ -515,6 +510,10 @@ li {
   gap: 0;
 }
 
+#content img{
+  margin-bottom: 15px;
+}
+
 #picture {
   grid-row: 1 / span 2;
   border-radius: 10px;
@@ -536,10 +535,13 @@ li {
   justify-content: center;
 }
 
-#chInfo > h4 {
-  font-weight: lighter;
-  font-size: small;
+#chInfo h3, #chInfo h4{
+  font-family: 'Source Sans 3' !important;
+  font-size: medium !important;
+}
 
+#chInfo h4 {
+  font-weight: lighter;
   color: rgb(67, 67, 67);
 }
 
@@ -563,6 +565,11 @@ li {
   transition: opacity 0.4s ease, box-shadow 0.35s ease, transform 0.5s ease;
 }
 
+#popup h3, h4{
+  font-family: 'Source Sans 3' !important;
+  font-size: medium !important;
+}
+
 #popup:hover {
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
@@ -575,13 +582,20 @@ li {
   float: right;
   right: 0;
   min-width: 350px;
-  max-width: 400px;
-  height: 100%;
+  max-width: 500px;
+  min-height: 700px;
+  max-height: 1000px;
+  overflow-y: scroll;
 
   background-color: white;
   border: solid 2px rgb(100, 9, 18);
   font-family: "Source Sans 3";
   padding: 30px;
+}
+
+#aside h3, h4{
+  font-family: 'Source Sans 3' !important;
+  font-size: medium !important;
 }
 </style>
 
@@ -1534,7 +1548,7 @@ export default {
         this.popupInfo = info;
         this.showPopup = true;
 
-        const logoSrc = info.virtuosa ? `/img/logo_r.png` : "";
+        const logoSrc = info.virtuosa ? `/wordpress/wp-content/themes/astra/assets/dist/img/logo_r.png` : "";
         const imageSrc =
           info.icona !== null
             ? `http://95.110.132.24:8071/assets/${info.icona}`
@@ -1611,9 +1625,7 @@ export default {
           }
           
             <div id="chInfo">
-              <h3 style="margin-left:10px"><b><i>${info.nome_scelto}, ${
-          info.id
-        }</i></b>${
+              <h3 style="margin-left:10px"><b><i>${info.nome_scelto}</i></b>${
           logoSrc !== ""
             ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
             : ""
@@ -1668,7 +1680,7 @@ export default {
           } else {
             popup.style.border = "solid 1px grey";
           }
-          popup.style.width = "500px";
+          popup.style.width = "550px";
           popup.style.height = "auto";
           popup.style.opacity = "1";
           popup.style.zIndex = "999";
@@ -1679,6 +1691,10 @@ export default {
 
         event.stopPropagation();
       }, 750);
+    },
+    closeAside(){
+      document.getElementById("aside").removeEventListener("click", this.closeAside);
+      this.showAside = false;
     },
     handleNodeLeave() {
       // Clear the timeout if the mouse leaves the node before the delay
@@ -1692,7 +1708,7 @@ export default {
 
       const aside = document.getElementById("aside");
 
-      const logoSrc = info.virtuosa ? `/img/logo_r.png` : "";
+      const logoSrc = info.virtuosa ? `/wordpress/wp-content/themes/astra/assets/dist/img/logo_r.png` : "";
       const imageSrc =
         info.icona !== null
           ? `http://95.110.132.24:8071/assets/${info.icona}`
@@ -1701,15 +1717,20 @@ export default {
       // Construct the content for the aside section
       const content = `
     <div id="content">
+      <button 
+        id="closeAside"
+        class="nav-button nav-button2"
+        style="height:30px"
+      >
+        Chiudi
+      </button><br>
       ${
         imageSrc !== ""
-          ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;" alt="Icona" id="picture">`
+          ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;margin-bottom:15px" alt="Icona" id="picture">`
           : ""
       }
       <div id="chInfo">
-        <h3 style="margin-left:10px"><b><i>${info.nome_scelto}, ${
-        info.id
-      }</i></b>${
+        <h3 style="margin-left:10px"><b><i>${info.nome_scelto}</i></b>${
         logoSrc !== ""
           ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
           : ""
@@ -1793,8 +1814,9 @@ export default {
     </div>
   `;
 
-      // Show the aside section
       aside.innerHTML = content;
+      document.getElementById("closeAside").addEventListener("click", this.closeAside);
+      // Show the aside section
       this.showAside = true;
     },
     handleNodeGrab(event) {
