@@ -555,6 +555,7 @@ li {
 }
 
 #popup {
+  max-width: 500px;
   position: relative;
   background-color: white;
   border-radius: 15px;
@@ -1664,12 +1665,14 @@ export default {
 
         setTimeout(() => {
           // Show the popup
+
           if (info.virtuosa) {
             popup.style.border = "solid 2px rgb(120, 38, 46)";
           } else {
             popup.style.border = "solid 1px grey";
           }
-          popup.style.width = "500px";
+          
+          popup.style.width = "550px";
           popup.style.height = "auto";
           popup.style.opacity = "1";
           popup.style.zIndex = "999";
