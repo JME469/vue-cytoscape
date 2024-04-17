@@ -1,160 +1,134 @@
 <template>
-  <div id="nav-container">
-    <ul id="nav">
-      <li>
-        <button class="nav-button" @click="displayGraph()">
-          <img src="/wordpress/wp-content/themes/astra/assets/dist/img/network_149181.png" alt="" width="40px" />
-          <div class="btn-text">LE VIRTUOSE</div>
-        </button>
-      </li>
-      <li>
-        <button class="nav-button" @click="displayEvents()">
-          <img src="/wordpress/wp-content/themes/astra/assets/dist/img/calendar_2838779.png" alt="" width="40px" />
-          <div class="btn-text">EVENTI</div>
-        </button>
-      </li>
-      <li>
-        <button class="nav-button">
-          <img src="/wordpress/wp-content/themes/astra/assets/dist/img/guitar_96421.png" alt="" width="40px" />
-          <div class="btn-text">REPERTORIO</div>
-        </button>
-      </li>
-      <li>
-        <button class="nav-button">
-          <img src="/wordpress/wp-content/themes/astra/assets/dist/img/searching_6898982.png" alt="" width="40px" />
-          <div class="btn-text">FONTI</div>
-        </button>
-      </li>
-    </ul>
-  </div>
-  <hr />
-
-  <!-- GRAPH AND FUNCTIONALITIES -->
-
-  <div v-show="showCytoscape">
-    <div id="container">
-      <div id="filter-menu">
-        <!-- Search bar -->
-        <div id="searchBar-container">
-          <div class="search-container">
-            <input
-              type="text"
-              v-model="searchQuery"
-              @input="updateAutocomplete"
-              @keyup.enter="searchCharacter"
-              placeholder="Cerca una virtuosa..."
-            />
-            <ul v-if="showAutocomplete" id="autocomplete">
-              <li
-                v-for="character in filteredCharacters"
-                :key="character.id"
-                @click="selectCharacter(character)"
-                class="character"
-              >
-                {{ character.nome_scelto }}
-              </li>
-            </ul>
-          </div>
-          <div>
-            <button @click="searchCharacter">Cerca</button>
-          </div>
-        </div>
-        <!-- Filters -->
-        <div id="nav-container" class="nav-container2">
-          <ul id="nav2">
-            <li>
-              <button
-                id="family"
-                :class="{ selected: selectedFilter === 'family' }"
-                class="nav-button nav-button2"
-                @click="toggleFilter('family')"
-              >
-                <div class="btn-text filters">Famiglia</div>
-              </button>
-            </li>
-            <li>
-              <button
-                id="work"
-                :class="{ selected: selectedFilter === 'work' }"
-                class="nav-button nav-button2"
-                @click="toggleFilter('work')"
-              >
-                <div class="btn-text filters">Lavoro</div>
-              </button>
-            </li>
-            <li>
-              <button
-                id="all"
-                :class="{ selected: selectedFilter === 'all' }"
-                class="nav-button nav-button2"
-                @click="toggleFilter('all')"
-              >
-                <div class="btn-text filters">Network</div>
-              </button>
-            </li>
-            <li>
-              <div class="dropdown">
-                <button
-                  class="nav-button nav-button2 dropbtn btn-text filters"
-                  @click="toggleDropdown"
-                >
-                  {{ dropdownLabel }}
-                </button>
-                <div
-                  class="dropdown-content btn-text filters"
-                  v-show="showDropdown"
-                >
-                  <button
-                    class="nav-button nav-button2 dd-content btn-text filters"
-                    v-for="event in eventsData"
-                    :key="event.id"
-                    @click="selectEvent(event)"
-                  >
-                    <div class="btn-text filters">
-                      {{ event.data }}, {{ event.luogo }}
-                    </div>
-                  </button>
-                </div>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <!-- Cytoscape graph-->
-      <div id="cy"></div>
-      <div id="aside" v-show="showAside"></div>
-    </div>
-  </div>
-
-  <!-- EVENTS PAGE -->
-
-  <div id="events" v-show="showEventList">
-    <h1>Eventi</h1>
-    <div v-for="event in eventsData" :key="event.id" :value="event.id">
-      <div id="event">
-        <h2>{{ event.data }}, {{ event.luogo }}</h2>
-        <div id="event-info">
-          <p v-if="event.note !== null">{{ event.note }}</p>
-          <div class="accordion" v-if="hasCharactersForEvent(event.id)">
-            <button class="accordion-btn" @click="toggleAccordion(event.id)">
-              {{
-                isAccordionOpen(event.id)
-                  ? "Non mostrare"
-                  : "Mostra le virtuose"
-              }}
+  <div id="outer-container">
+    <div id="nav-container" class="nav-container2">
+      <ul id="nav2">
+        <li>
+          <button
+            id="family"
+            :class="{ selected: selectedFilter === 'family' }"
+            class="nav-button nav-button2"
+            @click="toggleFilter('family')"
+          >
+            <div class="btn-text filters">Famiglia</div>
+          </button>
+        </li>
+        <li>
+          <button
+            id="work"
+            :class="{ selected: selectedFilter === 'work' }"
+            class="nav-button nav-button2"
+            @click="toggleFilter('work')"
+          >
+            <div class="btn-text filters">Lavoro</div>
+          </button>
+        </li>
+        <li>
+          <button
+            id="all"
+            :class="{ selected: selectedFilter === 'all' }"
+            class="nav-button nav-button2"
+            @click="toggleFilter('all')"
+          >
+            <div class="btn-text filters">Network</div>
+          </button>
+        </li>
+        <li>
+          <div class="dropdown">
+            <button
+              class="nav-button nav-button2 dropbtn btn-text filters"
+              @click="toggleDropdown"
+            >
+              {{ dropdownLabel }}
             </button>
-            <div class="accordion-content" v-show="isAccordionOpen(event.id)">
-              <!-- List of characters related to this event -->
-              <p
-                v-for="character in getCharactersForEvent(event.id)"
-                :key="character.id"
+            <div
+              class="dropdown-content btn-text filters"
+              v-show="showDropdown"
+            >
+              <button
+                class="nav-button nav-button2 dd-content btn-text filters"
+                v-for="event in eventsData"
+                :key="event.id"
+                @click="selectEvent(event)"
               >
-                {{ character.nome_scelto }}
-              </p>
+                <div class="btn-text filters">
+                  {{ event.data }}, {{ event.luogo }}
+                </div>
+              </button>
             </div>
           </div>
+        </li>
+      </ul>
+    </div>
+    <hr />
+
+    <!-- GRAPH AND FUNCTIONALITIES -->
+
+    <div v-show="showCytoscape">
+      <div id="container">
+        <div id="filter-menu">
+          <!-- Search bar -->
+          <div id="searchBar-container">
+            <div class="search-container">
+              <input
+                type="text"
+                v-model="searchQuery"
+                @input="updateAutocomplete"
+                @keyup.enter="searchCharacter"
+                placeholder="Cerca una virtuosa..."
+              />
+              <ul v-if="showAutocomplete" id="autocomplete">
+                <li
+                  v-for="character in filteredCharacters"
+                  :key="character.id"
+                  @click="selectCharacter(character)"
+                  class="character"
+                >
+                  {{ character.nome_scelto }}
+                </li>
+              </ul>
+            </div>
+            <div>
+              <button @click="searchCharacter">Cerca</button>
+            </div>
+          </div>
+          <!-- Filters -->
         </div>
-        <hr />
+        <!-- Cytoscape graph-->
+        <div id="cy"></div>
+        <div id="aside" v-show="showAside"></div>
+      </div>
+    </div>
+
+    <!-- EVENTS PAGE -->
+
+    <div id="events" v-show="showEventList">
+      <h1>Eventi</h1>
+      <div v-for="event in eventsData" :key="event.id" :value="event.id">
+        <div id="event">
+          <h2>{{ event.data }}, {{ event.luogo }}</h2>
+          <div id="event-info">
+            <p v-if="event.note !== null">{{ event.note }}</p>
+            <div class="accordion" v-if="hasCharactersForEvent(event.id)">
+              <button class="accordion-btn" @click="toggleAccordion(event.id)">
+                {{
+                  isAccordionOpen(event.id)
+                    ? "Non mostrare"
+                    : "Mostra le virtuose"
+                }}
+              </button>
+              <div class="accordion-content" v-show="isAccordionOpen(event.id)">
+                <!-- List of characters related to this event -->
+                <p
+                  v-for="character in getCharactersForEvent(event.id)"
+                  :key="character.id"
+                >
+                  {{ character.nome_scelto }}
+                </p>
+              </div>
+            </div>
+          </div>
+          <hr />
+        </div>
       </div>
     </div>
   </div>
@@ -210,7 +184,7 @@ hr {
 
 #filter-menu {
   position: absolute;
-  left: 10px;
+  left: 50px;
   background-color: rgb(255, 255, 255);
   border: solid 2px rgb(120, 38, 46);
   z-index: 1000;
@@ -237,22 +211,22 @@ hr {
 
 #nav {
   display: flex;
-  flex-direction: row !important;
-  gap: 30px;
-  list-style: none !important;
-  list-style-type: none !important;
-  height: 100%;
+  flex-direction: row;
+  gap: 20px;
+  list-style: none;
+  list-style-type: none;
   margin-bottom: 20px;
 }
 
 #nav2 {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  gap: 20px;
   list-style: none;
   list-style-type: none;
   background-color: rgb(255, 255, 255);
   z-index: 1000;
-  left: 40px;
+  margin-bottom: 30px;
 }
 
 li {
@@ -455,7 +429,7 @@ li {
 
 .accordion-btn {
   cursor: pointer;
-  background-color: #f1f1f1;
+  background-color: #fafafa;
   color: #333;
   padding: 10px;
   border: none;
@@ -493,7 +467,7 @@ li {
 
 #container {
   margin-top: 50px;
-  background-color: rgb(252, 252, 252);
+  background-color: rgb(255, 255, 255);
   display: flex;
   justify-content: center;
 }
@@ -501,7 +475,7 @@ li {
 #cy {
   width: 100%;
   height: 1100px;
-  background-color: rgb(252, 252, 252);
+  background-color: rgb(255, 255, 255);
 }
 
 #content {
@@ -510,7 +484,7 @@ li {
   gap: 0;
 }
 
-#content img{
+#content img {
   margin-bottom: 15px;
 }
 
@@ -535,8 +509,9 @@ li {
   justify-content: center;
 }
 
-#chInfo h3, #chInfo h4{
-  font-family: 'Source Sans 3' !important;
+#chInfo h3,
+#chInfo h4 {
+  font-family: "Source Sans 3" !important;
   font-size: medium !important;
 }
 
@@ -565,8 +540,9 @@ li {
   transition: opacity 0.4s ease, box-shadow 0.35s ease, transform 0.5s ease;
 }
 
-#popup h3, h4{
-  font-family: 'Source Sans 3' !important;
+#popup h3,
+h4 {
+  font-family: "Source Sans 3" !important;
   font-size: medium !important;
 }
 
@@ -593,8 +569,9 @@ li {
   padding: 30px;
 }
 
-#aside h3, h4{
-  font-family: 'Source Sans 3' !important;
+#aside h3,
+h4 {
+  font-family: "Source Sans 3" !important;
   font-size: medium !important;
 }
 </style>
@@ -1548,7 +1525,9 @@ export default {
         this.popupInfo = info;
         this.showPopup = true;
 
-        const logoSrc = info.virtuosa ? `/wordpress/wp-content/themes/astra/assets/dist/img/logo_r.png` : "";
+        const logoSrc = info.virtuosa
+          ? `/wordpress/wp-content/themes/astra/assets/dist/img/logo_r.png`
+          : "";
         const imageSrc =
           info.icona !== null
             ? `http://95.110.132.24:8071/assets/${info.icona}`
@@ -1692,8 +1671,10 @@ export default {
         event.stopPropagation();
       }, 750);
     },
-    closeAside(){
-      document.getElementById("aside").removeEventListener("click", this.closeAside);
+    closeAside() {
+      document
+        .getElementById("aside")
+        .removeEventListener("click", this.closeAside);
       this.showAside = false;
     },
     handleNodeLeave() {
@@ -1708,7 +1689,9 @@ export default {
 
       const aside = document.getElementById("aside");
 
-      const logoSrc = info.virtuosa ? `/wordpress/wp-content/themes/astra/assets/dist/img/logo_r.png` : "";
+      const logoSrc = info.virtuosa
+        ? `/wordpress/wp-content/themes/astra/assets/dist/img/logo_r.png`
+        : "";
       const imageSrc =
         info.icona !== null
           ? `http://95.110.132.24:8071/assets/${info.icona}`
@@ -1815,7 +1798,9 @@ export default {
   `;
 
       aside.innerHTML = content;
-      document.getElementById("closeAside").addEventListener("click", this.closeAside);
+      document
+        .getElementById("closeAside")
+        .addEventListener("click", this.closeAside);
       // Show the aside section
       this.showAside = true;
     },

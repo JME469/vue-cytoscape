@@ -14,24 +14,6 @@ body{
     overflow-x: hidden;
 }
 
-#banner{
-    display: flex;
-    min-height: 100px;
-    text-align: left;
-    background-color: rgb(255, 235, 206);
-    justify-content: start;
-    align-items: center;
-    width: 100%;
-    max-width: 100%;
-}
-
-#banner>h1{
-    text-align: center;
-    font-family: Syne;
-    font-weight: 500;
-    margin: 25px;
-}
-
 #nav-container{
     display: flex;
     text-align: center;
@@ -69,4 +51,9 @@ li{
 
 #app{
     height: auto;
+    background-color: white;
+}
+
+#outer-container{
+    background-color: white;
 }
