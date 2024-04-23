@@ -1,64 +1,5 @@
 <template>
   <div id="outer-container">
-    <div id="nav-container" class="nav-container2">
-      <ul id="nav2">
-        <li>
-          <button
-            id="family"
-            :class="{ selected: selectedFilter === 'family' }"
-            class="nav-button nav-button2"
-            @click="toggleFilter('family')"
-          >
-            <div class="btn-text filters">Famiglia</div>
-          </button>
-        </li>
-        <li>
-          <button
-            id="work"
-            :class="{ selected: selectedFilter === 'work' }"
-            class="nav-button nav-button2"
-            @click="toggleFilter('work')"
-          >
-            <div class="btn-text filters">Lavoro</div>
-          </button>
-        </li>
-        <li>
-          <button
-            id="all"
-            :class="{ selected: selectedFilter === 'all' }"
-            class="nav-button nav-button2"
-            @click="toggleFilter('all')"
-          >
-            <div class="btn-text filters">Network</div>
-          </button>
-        </li>
-        <li>
-          <div class="dropdown">
-            <button
-              class="nav-button nav-button2 dropbtn btn-text filters"
-              @click="toggleDropdown"
-            >
-              {{ dropdownLabel }}
-            </button>
-            <div
-              class="dropdown-content btn-text filters"
-              v-show="showDropdown"
-            >
-              <button
-                class="nav-button nav-button2 dd-content btn-text filters"
-                v-for="event in eventsData"
-                :key="event.id"
-                @click="selectEvent(event)"
-              >
-                <div class="btn-text filters">
-                  {{ event.data }}, {{ event.luogo }}
-                </div>
-              </button>
-            </div>
-          </div>
-        </li>
-      </ul>
-    </div>
     <hr />
 
     <!-- GRAPH AND FUNCTIONALITIES -->
@@ -603,7 +544,7 @@ cytoscape.use(fcose);
 export default {
   data() {
     return {
-      showCytoscape: true,
+      showCytoscape: false,
       showEventList: false,
       showPopup: false,
 
@@ -1010,6 +951,7 @@ export default {
         this.loadLayout();
         this.populateCytoscapeGraph();
         this.addCytoscapeEventListeners();
+        setTimeout(this.showEventList = true, 300);
       } catch (error) {
         console.error("Error fetching data and populating nodes: ", error);
       }

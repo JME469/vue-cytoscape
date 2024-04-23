@@ -1,68 +1,37 @@
 <template>
   <div id="outer-container">
-    <div id="nav-container" class="nav-container2">
-      <ul id="nav2">
-        <li>
-          <button
-            id="family"
-            :class="{ selected: selectedFilter === 'family' }"
-            class="nav-button nav-button2"
-            @click="toggleFilter('family')"
-          >
-            <div class="btn-text filters">Famiglia</div>
-          </button>
-        </li>
-        <li>
-          <button
-            id="work"
-            :class="{ selected: selectedFilter === 'work' }"
-            class="nav-button nav-button2"
-            @click="toggleFilter('work')"
-          >
-            <div class="btn-text filters">Lavoro</div>
-          </button>
-        </li>
-        <li>
-          <button
-            id="all"
-            :class="{ selected: selectedFilter === 'all' }"
-            class="nav-button nav-button2"
-            @click="toggleFilter('all')"
-          >
-            <div class="btn-text filters">Network</div>
-          </button>
-        </li>
-        <li>
-          <div class="dropdown">
-            <button
-              class="nav-button nav-button2 dropbtn btn-text filters"
-              @click="toggleDropdown"
-            >
-              {{ dropdownLabel }}
-            </button>
-            <div
-              class="dropdown-content btn-text filters"
-              v-show="showDropdown"
-            >
-              <button
-                class="nav-button nav-button2 dd-content btn-text filters"
-                v-for="event in eventsData"
-                :key="event.id"
-                @click="selectEvent(event)"
-              >
-                <div class="btn-text filters">
-                  {{ event.data }}, {{ event.luogo }}
-                </div>
+    <!-- EVENTS PAGE -->
+
+    <div id="events" v-show="showEventList">
+      <div v-for="(song, index) in repertorioData" :key="song.id" :value="song.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
+        <div id="event">
+          <h2>{{ song.titolo }}</h2>
+          <div id="event-info">
+            <h3 v-if="song.data !== null">Data: {{ song.data }}</h3>
+            <p v-if="song.genere !== null">Genere: {{ song.genere }}</p>
+
+            <div class="accordion">
+              <button class="accordion-btn" @click="toggleAccordion(song.id)">
+                {{
+                  isAccordionOpen(song.id)
+                    ? "Non mostrare"
+                    : "Mostra le virtuose"
+                }}
               </button>
+              <div class="accordion-content" v-show="isAccordionOpen(song.id)">
+                <!-- List of characters related to this event -->
+                <p
+                  v-for="character in song.relatedCharacters"
+                  :key="character.characterId"
+                >
+                  {{ getCharacterName(character.characterId) }}
+                </p>
+              </div>
             </div>
           </div>
-        </li>
-      </ul>
+        </div>
+      </div>
     </div>
-    <hr />
-
-    <!-- GRAPH AND FUNCTIONALITIES -->
-
     <div v-show="showCytoscape">
       <div id="container">
         <div id="filter-menu">
@@ -103,39 +72,6 @@
         </div>
       </div>
     </div>
-
-    <!-- EVENTS PAGE -->
-
-    <div id="events" v-show="showEventList">
-      <h1>Eventi</h1>
-      <div v-for="event in eventsData" :key="event.id" :value="event.id">
-        <div id="event">
-          <h2>{{ event.data }}, {{ event.luogo }}</h2>
-          <div id="event-info">
-            <p v-if="event.note !== null">{{ event.note }}</p>
-            <div class="accordion" v-if="hasCharactersForEvent(event.id)">
-              <button class="accordion-btn" @click="toggleAccordion(event.id)">
-                {{
-                  isAccordionOpen(event.id)
-                    ? "Non mostrare"
-                    : "Mostra le virtuose"
-                }}
-              </button>
-              <div class="accordion-content" v-show="isAccordionOpen(event.id)">
-                <!-- List of characters related to this event -->
-                <p
-                  v-for="character in getCharactersForEvent(event.id)"
-                  :key="character.id"
-                >
-                  {{ character.nome_scelto }}
-                </p>
-              </div>
-            </div>
-          </div>
-          <hr />
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -155,6 +91,7 @@ body {
   height: 100vh;
   width: 100%;
   max-width: 100vw;
+  margin: 0;
 }
 
 hr {
@@ -396,10 +333,10 @@ li {
 #events {
   padding-bottom: 50px;
   padding-top: 40px;
+  margin: 0;
 }
 
 #events > h1 {
-  font-family: Montserrat;
   text-align: center;
   color: rgb(100, 9, 18);
 }
@@ -409,7 +346,7 @@ li {
 }
 
 #event > h2 {
-  font-family: "Source Sans 3";
+  font-size: 26px;
   margin: 20px;
 }
 
@@ -418,11 +355,27 @@ li {
   max-width: 50%;
 }
 
+#event-info > h3 {
+  font-family: "Source Sans 3";
+  max-width: 50%;
+}
+
 #event-info {
   display: flex;
-  flex-direction: row;
-  gap: 40px;
+  flex-direction: column;
+  gap: 20px;
   margin: 20px;
+}
+
+.light-grey{
+  background-color: lightgray;
+  color: black;
+  padding: 10px;
+}
+
+.white{
+  background-color: white;
+  color: black;
 }
 
 .accordion {
@@ -603,7 +556,7 @@ cytoscape.use(fcose);
 export default {
   data() {
     return {
-      showCytoscape: true,
+      showCytoscape: false,
       showEventList: false,
       showPopup: false,
 
@@ -621,6 +574,8 @@ export default {
       maestroData: [],
       mecenatiData: [],
       eventsData: [],
+      repertorioData: [],
+      repertorioRelations: [],
 
       cy: null,
       cyData: null,
@@ -969,6 +924,11 @@ export default {
         const relationsData = await this.retrieveRelations();
         this.relationsData = relationsData;
 
+        const repertorioRelations = await this.retrieveRepertorioRelations();
+        this.repertorioRelations = repertorioRelations;
+        const repertorioData = await this.retrieveRepertorioData();
+        this.repertorioData = repertorioData;
+
         const maestroRelations = await this.retrieveMaestroRelations();
         this.maestroRelations = maestroRelations;
         const mecenatiRelations = await this.retrieveMecenatiRelations();
@@ -1010,6 +970,7 @@ export default {
         this.loadLayout();
         this.populateCytoscapeGraph();
         this.addCytoscapeEventListeners();
+        setTimeout((this.showEventList = true), 300);
       } catch (error) {
         console.error("Error fetching data and populating nodes: ", error);
       }
@@ -1030,6 +991,36 @@ export default {
       );
       const responseData = await response.json();
       const data = responseData.data;
+      return data;
+    },
+    async retrieveRepertorioRelations() {
+      const response = await fetch(
+        "http://95.110.132.24:8071/items/Virtuose_repertorio"
+      );
+      const responseData = await response.json();
+      const data = responseData.data;
+      return data;
+    },
+    async retrieveRepertorioData() {
+      const response = await fetch(
+        "http://95.110.132.24:8071/items/repertorio?filter[pubblicato][_eq]=1"
+      );
+      const responseData = await response.json();
+      const data = responseData.data;
+
+      for (const song of data) {
+        // Initialize an array to store related characters
+        song.relatedCharacters = [];
+
+        // Find corresponding relation in repertorioRelations
+        const relation = this.repertorioRelations.find(
+          (rel) => rel.repertorio_id === song.id
+        );
+        if (relation) {
+          // Get the character ID from the relation and add it to the song's relatedCharacters array
+          song.relatedCharacters.push({ characterId: relation.Virtuose_id });
+        }
+      }
       return data;
     },
     async retrieveEvents() {

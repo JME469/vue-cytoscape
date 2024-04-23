@@ -1,20 +1,24 @@
 <template>
   <div id="app">
-    <CytoscapeExample />
+    <repertorioComponent />
   </div>
 </template>
 
 <script>
-import CytoscapeExample from "./components/CytoscapeExample.vue";
+import repertorioComponent from "./components/repertorioComponent.vue";
 
 export default {
   components: {
-    CytoscapeExample,
+    repertorioComponent,
   },
 };
 </script>
 
 <style>
+body{
+  margin: 0px;
+}
+
 #cy {
   width: 100%;
   height: 600px;
