@@ -3,30 +3,29 @@
     <!-- EVENTS PAGE -->
 
     <div id="events" v-show="showEventList">
-      <div v-for="(song, index) in repertorioData" :key="song.id" :value="song.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
+      <div
+        v-for="(song, index) in repertorioData"
+        :key="song.id"
+        :value="song.id"
+        :class="[index % 2 === 0 ? 'light-grey' : 'white']"
+      >
         <div id="event">
-          <h2>{{ song.titolo }}</h2>
-          <div id="event-info">
-            <h3 v-if="song.data !== null">Data: {{ song.data }}</h3>
-            <p v-if="song.genere !== null">Genere: {{ song.genere }}</p>
-
-            <div class="accordion">
-              <button class="accordion-btn" @click="toggleAccordion(song.id)">
-                {{
-                  isAccordionOpen(song.id)
-                    ? "Non mostrare"
-                    : "Mostra le virtuose"
-                }}
-              </button>
-              <div class="accordion-content" v-show="isAccordionOpen(song.id)">
-                <!-- List of characters related to this event -->
-                <p
-                  v-for="character in song.relatedCharacters"
-                  :key="character.characterId"
-                >
-                  {{ getCharacterName(character.characterId) }}
-                </p>
-              </div>
+          <div id="event-content">
+            <div class="block">
+              <h2>{{ song.titolo }}</h2>
+              <h3 v-if="song.data !== null">Data: {{ song.data }}</h3>
+              Autore:
+              <p
+                v-for="character in song.relatedCharacters"
+                :key="character.characterId"
+              >
+                {{ getCharacterName(character.characterId) }}
+              </p>
+            </div>
+            <div class="block" style="margin-top:30px">
+              <p v-if="song.genere !== null">Genere: {{ song.genere }}</p>
+              <p>{{ getFontType(song.fonte_repertorio) }}</p>
+              <p v-if="song.note !== null">{{ song.note }}</p>
             </div>
           </div>
         </div>
@@ -331,6 +330,9 @@ li {
 }
 
 #events {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   padding-bottom: 50px;
   padding-top: 40px;
   margin: 0;
@@ -341,76 +343,52 @@ li {
   color: rgb(100, 9, 18);
 }
 
-#event {
-  margin: 60px;
-}
-
 #event > h2 {
   font-size: 26px;
   margin: 20px;
 }
 
+#event {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 35%;
+}
+
 #event-info > p {
   font-family: "Source Sans 3";
-  max-width: 50%;
+  max-width: 100%;
 }
 
 #event-info > h3 {
   font-family: "Source Sans 3";
-  max-width: 50%;
+  max-width: 100%;
 }
 
-#event-info {
+#event-content {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  flex-direction: row;
+  gap: 25px;
   margin: 20px;
 }
 
-.light-grey{
-  background-color: lightgray;
-  color: black;
-  padding: 10px;
-}
-
-.white{
-  background-color: white;
-  color: black;
-}
-
-.accordion {
-  border: solid 2px rgb(100, 9, 18);
-  min-width: 200px;
-  height: fit-content;
-}
-
-.accordion-btn {
-  cursor: pointer;
-  background-color: #fafafa;
-  color: #333;
-  padding: 10px;
-  border: none;
-  width: 100%;
-  text-align: center;
-}
-
-.accordion-btn:hover {
-  background-color: #ddd;
-}
-
-.accordion-content {
-  z-index: 1001;
+.block{
+  max-width: 50%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  gap: 10px;
 }
 
-.accordion-content p {
-  margin: 10px 0;
-  font-family: Montserrat;
-  font-weight: 500;
-  font-size: small;
+.light-grey {
+  background-color: #f5f5f5;
+  color: black;
+  padding: 10px;
+}
+
+.white {
+  background-color: white;
+  color: black;
+  padding: 10px;
 }
 
 #app {
@@ -667,6 +645,17 @@ export default {
         character.eventi.includes(eventId)
       );
       return characters;
+    },
+    getFontType(fonte) {
+      if (fonte[0] == 1) {
+        return "Fonte musicale";
+      } else if (fonte[0] == 2) {
+        return "Fonte archivistiche";
+      } else if (fonte[0] == 3) {
+        return "Fonte letterarie";
+      } else {
+        return "";
+      }
     },
     // Toggle the visibility of the accordion for the given event
     toggleAccordion(eventId) {

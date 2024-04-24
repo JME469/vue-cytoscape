@@ -1,15 +1,15 @@
 <template>
   <div id="app">
-    <repertorioComponent />
+    <graphComponent />
   </div>
 </template>
 
 <script>
-import repertorioComponent from "./components/repertorioComponent.vue";
+import graphComponent from "./components/CytoscapeExample.vue";
 
 export default {
   components: {
-    repertorioComponent,
+    graphComponent,
   },
 };
 </script>

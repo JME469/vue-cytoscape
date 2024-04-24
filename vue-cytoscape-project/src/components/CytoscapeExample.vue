@@ -33,40 +33,6 @@
           </button>
         </li>
         <li>
-          <div class="dropdown">
-            <button
-              class="nav-button nav-button2 dropbtn btn-text filters"
-              @click="toggleDropdown"
-            >
-              {{ dropdownLabel }}
-            </button>
-            <div
-              class="dropdown-content btn-text filters"
-              v-show="showDropdown"
-            >
-              <button
-                class="nav-button nav-button2 dd-content btn-text filters"
-                v-for="event in eventsData"
-                :key="event.id"
-                @click="selectEvent(event)"
-              >
-                <div class="btn-text filters">
-                  {{ event.data }}, {{ event.luogo }}
-                </div>
-              </button>
-            </div>
-          </div>
-        </li>
-      </ul>
-    </div>
-    <hr />
-
-    <!-- GRAPH AND FUNCTIONALITIES -->
-
-    <div v-show="showCytoscape">
-      <div id="container">
-        <div id="filter-menu">
-          <!-- Search bar -->
           <div id="searchBar-container">
             <div class="search-container">
               <input
@@ -91,8 +57,15 @@
               <button @click="searchCharacter">Cerca</button>
             </div>
           </div>
-          <!-- Filters -->
-        </div>
+        </li>
+      </ul>
+    </div>
+    <hr />
+
+    <!-- GRAPH AND FUNCTIONALITIES -->
+
+    <div v-show="showCytoscape">
+      <div id="container">
         <!-- Cytoscape graph-->
         <div id="cy"></div>
         <div id="aside" v-show="showAside">
@@ -104,38 +77,6 @@
       </div>
     </div>
 
-    <!-- EVENTS PAGE -->
-
-    <div id="events" v-show="showEventList">
-      <h1>Eventi</h1>
-      <div v-for="event in eventsData" :key="event.id" :value="event.id">
-        <div id="event">
-          <h2>{{ event.data }}, {{ event.luogo }}</h2>
-          <div id="event-info">
-            <p v-if="event.note !== null">{{ event.note }}</p>
-            <div class="accordion" v-if="hasCharactersForEvent(event.id)">
-              <button class="accordion-btn" @click="toggleAccordion(event.id)">
-                {{
-                  isAccordionOpen(event.id)
-                    ? "Non mostrare"
-                    : "Mostra le virtuose"
-                }}
-              </button>
-              <div class="accordion-content" v-show="isAccordionOpen(event.id)">
-                <!-- List of characters related to this event -->
-                <p
-                  v-for="character in getCharactersForEvent(event.id)"
-                  :key="character.id"
-                >
-                  {{ character.nome_scelto }}
-                </p>
-              </div>
-            </div>
-          </div>
-          <hr />
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -232,10 +173,13 @@ hr {
   background-color: rgb(255, 255, 255);
   z-index: 1000;
   margin-bottom: 30px;
+  align-items: center;
 }
 
 li {
   height: 100%;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-button {
@@ -339,7 +283,7 @@ li {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  margin-bottom: 15px;
+  height: 100%;
 }
 
 #searchBar-container > div > button {
