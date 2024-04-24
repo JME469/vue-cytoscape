@@ -1,15 +1,15 @@
 <template>
   <div id="app">
-    <graphComponent />
+    <fontiComponent />
   </div>
 </template>
 
 <script>
-import graphComponent from "./components/CytoscapeExample.vue";
+import fontiComponent from "./components/fontiComponent.vue";
 
 export default {
   components: {
-    graphComponent,
+    fontiComponent,
   },
 };
 </script>
