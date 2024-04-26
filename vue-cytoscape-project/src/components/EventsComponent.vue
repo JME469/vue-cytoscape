@@ -1,79 +1,21 @@
 <template>
   <div id="outer-container">
-    <hr />
-
-    <!-- GRAPH AND FUNCTIONALITIES -->
-
-    <div v-show="showCytoscape">
-      <div id="container">
-        <div id="filter-menu">
-          <!-- Search bar -->
-          <div id="searchBar-container">
-            <div class="search-container">
-              <input
-                type="text"
-                v-model="searchQuery"
-                @input="updateAutocomplete"
-                @keyup.enter="searchCharacter"
-                placeholder="Cerca una virtuosa..."
-              />
-              <ul v-if="showAutocomplete" id="autocomplete">
-                <li
-                  v-for="character in filteredCharacters"
-                  :key="character.id"
-                  @click="selectCharacter(character)"
-                  class="character"
-                >
-                  {{ character.nome_scelto }}
-                </li>
-              </ul>
-            </div>
-            <div>
-              <button @click="searchCharacter">Cerca</button>
-            </div>
-          </div>
-          <!-- Filters -->
-        </div>
-        <!-- Cytoscape graph-->
-        <div id="cy"></div>
-        <div id="aside" v-show="showAside">
-          <button id="closeAside" class="nav-button nav-button2">
-            <div class="btn-text filters">Chiudi</div>
-          </button>
-          <div id="aside-content"></div>
-        </div>
-      </div>
-    </div>
-
     <!-- EVENTS PAGE -->
 
     <div id="events" v-show="showEventList">
       <h1>Eventi</h1>
-      <div v-for="event in eventsData" :key="event.id" :value="event.id">
+      <div v-for="(event, index) in eventsData" :key="event.id" :value="event.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
         <div id="event">
           <h2>{{ event.data }}, {{ event.luogo }}</h2>
           <div id="event-info">
             <p v-if="event.note !== null">{{ event.note }}</p>
-            <div class="accordion" v-if="hasCharactersForEvent(event.id)">
-              <button class="accordion-btn" @click="toggleAccordion(event.id)">
-                {{
-                  isAccordionOpen(event.id)
-                    ? "Non mostrare"
-                    : "Mostra le virtuose"
-                }}
-              </button>
-              <div class="accordion-content" v-show="isAccordionOpen(event.id)">
-                <!-- List of characters related to this event -->
-                <p
+            <p
                   v-for="character in getCharactersForEvent(event.id)"
                   :key="character.id"
                 >
                   {{ character.nome_scelto }}
                 </p>
-              </div>
-            </div>
           </div>
-          <hr />
         </div>
       </div>
     </div>
@@ -98,240 +40,8 @@ body {
   max-width: 100vw;
 }
 
-hr {
-  width: 100%;
-  margin-bottom: 20px;
-  border: none;
-  height: 3px;
-  background-color: rgb(120, 38, 46);
-}
-
-#banner {
-  display: flex;
-  min-height: 170px;
-  text-align: center;
-  color: rgb(120, 38, 46);
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  max-width: 100%;
-}
-
-#title {
-  font-family: Montaga;
-  font-size: 60px;
-  margin-top: 70px;
-}
-
-#banner > img {
-  left: 30px;
-  position: absolute;
-}
-
-#filter-menu {
-  position: absolute;
-  left: 50px;
-  background-color: rgb(255, 255, 255);
-  border: solid 2px rgb(120, 38, 46);
-  z-index: 1000;
-  padding: 20px;
-  margin-left: 10px;
-  margin-top: 15px;
-}
-
-#nav-container {
-  display: flex;
-  text-align: center;
-  align-items: center;
-  justify-content: center;
-  margin-top: 50px;
-}
-
-.nav-container2 {
-  display: flex;
-  text-align: center;
-  align-items: start !important;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-#nav {
-  display: flex;
-  flex-direction: row;
-  gap: 20px;
-  list-style: none;
-  list-style-type: none;
-  margin-bottom: 20px;
-}
-
-#nav2 {
-  display: flex;
-  flex-direction: row;
-  gap: 20px;
-  list-style: none;
-  list-style-type: none;
-  background-color: rgb(255, 255, 255);
-  z-index: 1000;
-  margin-bottom: 30px;
-}
-
 li {
   height: 100%;
-}
-
-.nav-button {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  text-align: center;
-  height: 100%;
-  width: auto;
-  padding: 20px;
-  margin: 0;
-  font-size: large;
-  border: none;
-  cursor: pointer;
-  background: none;
-  color: rgb(76, 76, 76);
-  transition: all 0.5s ease-out;
-}
-
-.nav-button2 {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  text-align: center;
-  justify-content: center;
-}
-
-.filters {
-  font-weight: 500 !important;
-  text-align: center;
-}
-
-.nav-button:hover {
-  background: rgb(120, 38, 46);
-  color: aliceblue;
-}
-
-.selected {
-  background: rgb(120, 38, 46);
-  color: aliceblue;
-}
-
-.nav-button:hover img {
-  filter: invert(100%);
-}
-
-.nav-button:hover .btn-text {
-  color: white;
-}
-
-.nav-button > img {
-  margin-right: 15px;
-  transition: all 0.5s ease-out;
-}
-
-.btn-text {
-  font-family: Montserrat;
-  font-weight: 600;
-  transition: all 0.5s ease-out;
-  text-align: center;
-}
-
-.dropdown {
-  position: relative;
-  display: inline-block;
-  min-width: 100%;
-}
-
-.droptbtn {
-  width: 100%;
-}
-
-.dropdown-content {
-  position: absolute;
-  left: 0;
-  top: 100%;
-  z-index: 1000;
-  max-height: 380px;
-  overflow-y: scroll;
-}
-
-.dd-content {
-  font-size: medium;
-  min-width: 200px;
-  text-align: center;
-}
-
-.select {
-  max-width: 240px;
-  padding: 10px 20px;
-  border: solid 1px rgb(120, 38, 46);
-  border-radius: 10px;
-  background-color: rgb(244, 244, 244);
-  margin: 20px;
-  z-index: 999;
-  overflow: visible;
-}
-
-#searchBar-container {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 15px;
-}
-
-#searchBar-container > div > button {
-  padding: 10px;
-  background: none;
-  border: solid 2px rgb(100, 9, 18);
-  color: rgb(76, 76, 76);
-  font-family: Montserrat;
-  font-weight: 600;
-  transition: all 0.5s ease-out;
-  cursor: pointer;
-}
-
-#searchBar-container > div > button:hover {
-  background-color: rgb(120, 38, 46);
-  color: aliceblue;
-}
-
-.search-container {
-  margin-right: 15px;
-}
-
-.search-container > input {
-  padding: 10px;
-  min-width: 180px;
-  border: solid 2px rgb(100, 9, 18);
-}
-
-#autocomplete {
-  position: absolute;
-  list-style: none;
-  max-height: 200px;
-  max-width: 230px;
-  overflow-y: scroll;
-  background-color: #fafafa;
-  border: solid 2px rgb(100, 9, 18);
-  margin-top: 5px;
-  z-index: 1002;
-}
-
-.character {
-  cursor: pointer;
-  padding: 10px;
-  font-family: Montserrat;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.character:hover {
-  background-color: rgb(100, 9, 18);
-  color: aliceblue;
 }
 
 #events {
@@ -366,43 +76,20 @@ li {
   margin: 20px;
 }
 
-.accordion {
-  border: solid 2px rgb(100, 9, 18);
-  min-width: 200px;
-  height: fit-content;
-}
-
-.accordion-btn {
-  cursor: pointer;
-  background-color: #fafafa;
-  color: #333;
-  padding: 10px;
-  border: none;
-  width: 100%;
-  text-align: center;
-}
-
-.accordion-btn:hover {
-  background-color: #ddd;
-}
-
-.accordion-content {
-  z-index: 1001;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.accordion-content p {
-  margin: 10px 0;
-  font-family: Montserrat;
-  font-weight: 500;
-  font-size: small;
-}
-
 #app {
   height: auto;
+}
+
+.light-grey {
+  background-color: #f5f5f5;
+  color: black;
+  padding: 10px;
+}
+
+.white {
+  background-color: white;
+  color: black;
+  padding: 10px;
 }
 
 .color {
@@ -417,122 +104,6 @@ li {
   justify-content: center;
 }
 
-#cy {
-  width: 100%;
-  height: 1100px;
-  background-color: rgb(255, 255, 255);
-  border: solid 2px rgb(100, 9, 18);
-}
-
-#content {
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: 0;
-}
-
-#content img {
-  margin-bottom: 15px;
-}
-
-#picture {
-  grid-row: 1 / span 2;
-  border-radius: 10px;
-  margin: 15px;
-}
-
-.logo {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  float: right;
-}
-
-#chInfo {
-  grid-column: 2;
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-  justify-content: center;
-}
-
-#chInfo h3,
-#chInfo h4 {
-  font-family: "Source Sans 3" !important;
-  font-size: medium !important;
-}
-
-#chInfo h4 {
-  font-weight: lighter;
-  color: rgb(67, 67, 67);
-}
-
-.birthPlace {
-  margin: 0 0 10px 0;
-  margin-left: 20px;
-
-  font-weight: lighter;
-  font-size: small;
-
-  color: rgb(67, 67, 67);
-}
-
-#popup {
-  position: relative;
-  background-color: white;
-  border-radius: 15px;
-  border: 1px solid #ccc;
-  font-family: "Source Sans 3";
-  padding: 20px;
-  transition: opacity 0.4s ease, box-shadow 0.35s ease, transform 0.5s ease;
-}
-
-#popup h3,
-h4 {
-  font-family: "Source Sans 3" !important;
-  font-size: medium !important;
-}
-
-#popup:hover {
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-}
-
-#aside {
-  display: flex;
-  flex-direction: column;
-
-  position: absolute;
-  float: right;
-  right: 0;
-  min-width: 350px;
-  max-width: 500px;
-  min-height: 700px;
-  max-height: 1000px;
-  overflow-y: scroll;
-
-  background-color: white;
-  border: solid 2px rgb(100, 9, 18);
-  font-family: "Source Sans 3";
-  padding: 30px;
-}
-
-#closeAside {
-  background-color: rgb(100, 9, 18) !important;
-  color: aliceblue !important;
-  padding: 10px !important;
-  font-family: Montserrat !important;
-  font-weight: 500 !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
-
-  max-width: 150px;
-}
-
-#aside h3,
-h4 {
-  font-family: "Source Sans 3" !important;
-  font-size: medium !important;
-}
 </style>
 
 <script>
@@ -620,21 +191,6 @@ export default {
     },
   },
   methods: {
-    displayGraph() {
-      this.showEventList = false;
-      this.showCytoscape = true;
-    },
-    displayEvents() {
-      this.showCytoscape = false;
-      this.showEventList = true;
-    },
-    async toggleFilter(filterValue) {
-      if (this.filter !== filterValue) {
-        this.filter = filterValue;
-        this.selectedFilter = filterValue;
-        await this.fetchDataAndPopulateNodes();
-      }
-    },
     toggleDropdown() {
       this.showDropdown = !this.showDropdown;
     },
@@ -948,9 +504,9 @@ export default {
         );
 
         //console.log(cyData);
-        this.loadLayout();
-        this.populateCytoscapeGraph();
-        this.addCytoscapeEventListeners();
+        //this.loadLayout();
+        //this.populateCytoscapeGraph();
+        //this.addCytoscapeEventListeners();
         setTimeout(this.showEventList = true, 300);
       } catch (error) {
         console.error("Error fetching data and populating nodes: ", error);

@@ -4,8 +4,8 @@
       <ul id="nav2">
         <li>
           <button
-            id="family"
-            :class="{ selected: selectedFilter === 'family' }"
+            id="musicale"
+            :class="{ selected: selectedFilter === 'musicale' }"
             class="nav-button nav-button2"
             @click="toggleFilter('musicale')"
           >
@@ -14,8 +14,8 @@
         </li>
         <li>
           <button
-            id="work"
-            :class="{ selected: selectedFilter === 'work' }"
+            id="archivistiche"
+            :class="{ selected: selectedFilter === 'archivistiche' }"
             class="nav-button nav-button2"
             @click="toggleFilter('archivistiche')"
           >
@@ -24,39 +24,13 @@
         </li>
         <li>
           <button
-            id="all"
-            :class="{ selected: selectedFilter === 'all' }"
+            id="letterarie"
+            :class="{ selected: selectedFilter === 'letterarie' }"
             class="nav-button nav-button2"
             @click="toggleFilter('letterarie')"
           >
             <div class="btn-text filters">Letterarie</div>
           </button>
-        </li>
-        <li>
-          <div id="searchBar-container">
-            <div class="search-container">
-              <input
-                type="text"
-                v-model="searchQuery"
-                @input="updateAutocomplete"
-                @keyup.enter="searchCharacter"
-                placeholder="Cerca una virtuosa..."
-              />
-              <ul v-if="showAutocomplete" id="autocomplete">
-                <li
-                  v-for="character in filteredCharacters"
-                  :key="character.id"
-                  @click="selectCharacter(character)"
-                  class="character"
-                >
-                  {{ character.nome_scelto }}
-                </li>
-              </ul>
-            </div>
-            <div>
-              <button @click="searchCharacter">Cerca</button>
-            </div>
-          </div>
         </li>
       </ul>
     </div>
@@ -66,10 +40,12 @@
 
     <div v-show="musicale">
       <div class="container">
-        <h2>Fonti Musicali</h2>
-        <div class="font-container" v-for="fonti in fontiMusicali" :key="fonti.id" :value="fonti.id">
+        <div class="title-container">
+          <h2>Fonti musicali</h2>
+        </div>
+        <div class="font-container" v-for="(fonti, index) in fontiMusicali" :key="fonti.id" :value="fonti.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
             <div>
-                <img v-if="fonti.icona !== null" src="" alt="">
+                <img class="font-img" v-if="fonti.icona !== null" :src="'http://95.110.132.24:8071/assets/'+fonti.icona" alt="">
             </div>
             <div>
                 <h3>{{ fonti.titolo }}</h3>
@@ -77,46 +53,51 @@
                 <p>Segnatura: {{ fonti.segnatura }}</p>
             </div>
             <div>
-                <p v-if="fonti.note !== null">{{ fonti.note }}</p>
-                <a v-if="fonti.link !== null" href="">{{ fonti.link }}</a>
+                <p v-if="fonti.note !== null">{{ fonti.note }}</p><br>
+                <a v-if="fonti.link !== null" :href="fonti.link">Link</a>
             </div>
         </div>
       </div>
     </div>
     <div v-show="archivistiche">
         <div class="container">
-            <h2>Fonti Musicali</h2>
-            <div class="font-container" v-for="fonti in fontiArchivistiche" :key="fonti.id" :value="fonti.id">
+          <div class="title-container">
+            <h2>Fonti archivistiche</h2>
+          </div>
+            <div class="font-container" v-for="(fonti, index) in fontiArchivistiche" :key="fonti.id" :value="fonti.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
                 <div>
-                    <img v-if="fonti.icona !== null" src="" alt="">
+                    <img class="font-img" v-if="fonti.icona !== null" :src="'http://95.110.132.24:8071/assets/'+fonti.icona" alt="">
                 </div>
                 <div>
-                    <h3>{{ fonti.titolo }}</h3>
-                    <h4 v-if="fonti.data !== null">{{ fonti.data }}</h4>
-                    <p>Segnatura: {{ fonti.segnatura }}</p>
+                    <h3>{{ fonti.archivio }}</h3>
+                    <h4 v-if="fonti.titolo !== null">{{ fonti.titolo }}</h4>
+                    <p v-if="fonti.fondo !== null">Fondo: {{ fonti.fondo }}</p>
                 </div>
-                <div>
-                    <p v-if="fonti.note !== null">{{ fonti.note }}</p>
-                    <a v-if="fonti.link !== null" href="">{{ fonti.link }}</a>
+                <div style="max-width:80%">
+                    <p v-if="fonti.descrizione !== null">{{ fonti.descrizione }}</p>
+                    <p v-if="fonti.trascrizione !== null">{{ fonti.trascrizione }}</p>
                 </div>
             </div>
           </div>
     </div>
     <div v-show="letterarie">
         <div class="container">
-            <h2>Fonti Musicali</h2>
-            <div class="font-container" v-for="fonti in fontiLetterarie" :key="fonti.id" :value="fonti.id">
+          <div class="title-container">
+            <h2>Fonti letterarie</h2>
+          </div>
+            <div class="font-container" v-for="(fonti, index) in fontiLetterarie" :key="fonti.id" :value="fonti.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
                 <div>
-                    <img v-if="fonti.icona !== null" src="" alt="">
+                    <img class="font-img" v-if="fonti.icona !== null" :src="'http://95.110.132.24:8071/assets/'+fonti.icona" alt="">
                 </div>
                 <div>
                     <h3>{{ fonti.titolo }}</h3>
                     <h4 v-if="fonti.data !== null">{{ fonti.data }}</h4>
-                    <p>Segnatura: {{ fonti.segnatura }}</p>
+                    <p v-if="fonti.segnatura !== null">Segnatura: {{ fonti.segnatura }}</p>
                 </div>
-                <div>
+                <div style="max-width:75%">
                     <p v-if="fonti.note !== null">{{ fonti.note }}</p>
-                    <a v-if="fonti.link !== null" href="">{{ fonti.link }}</a>
+                    <p v-if="fonti.trascrizione !== null">{{ fonti.trascrizione }}</p><br>
+                    <a v-if="fonti.link !== null" :href="fonti.link" style="max-width:100%">Link</a>
                 </div>
             </div>
           </div>
@@ -182,7 +163,6 @@ hr {
   gap: 20px;
   list-style: none;
   list-style-type: none;
-  background-color: rgb(255, 255, 255);
   z-index: 1000;
   margin-bottom: 30px;
 }
@@ -393,8 +373,19 @@ li {
     display: grid;
     grid-template-columns: 0.5fr 1fr 1fr;
     gap: 15px;
-    padding: 15px;
+    padding: 70px;
     margin: 5px;
+}
+
+.title-container{
+  min-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.font-img{
+  width: 80%;
 }
 
 #app {
@@ -639,6 +630,7 @@ export default {
         this.archivistiche = false;
         this.letterarie = true;
       }
+      this.selectedFilter = filterValue;
     },
     toggleDropdown() {
       this.showDropdown = !this.showDropdown;
@@ -1015,7 +1007,7 @@ export default {
     },
     async retrieveFontiLetterarie() {
       const response = await fetch(
-        "http://95.110.132.24:8071/items/fonti_letterarie"
+        "http://95.110.132.24:8071/items/Fonti_letterarie"
       );
       const responseData = await response.json();
       const data = responseData.data;
