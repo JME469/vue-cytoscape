@@ -5,16 +5,18 @@
     <div id="events" v-show="showEventList">
       <h1>Eventi</h1>
       <div v-for="(event, index) in eventsData" :key="event.id" :value="event.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
-        <div id="event">
+        <div class="event">
           <h2>{{ event.data }}, {{ event.luogo }}</h2>
-          <div id="event-info">
+          <div class="event-info">
             <p v-if="event.note !== null">{{ event.note }}</p>
-            <p
+            <div class="characters">
+              <p
                   v-for="character in getCharactersForEvent(event.id)"
                   :key="character.id"
                 >
                   {{ character.nome_scelto }}
                 </p>
+            </div>
           </div>
         </div>
       </div>
@@ -50,30 +52,37 @@ li {
 }
 
 #events > h1 {
-  font-family: Montserrat;
   text-align: center;
-  color: rgb(100, 9, 18);
-}
-
-#event {
-  margin: 60px;
-}
-
-#event > h2 {
-  font-family: "Source Sans 3";
   margin: 20px;
 }
 
-#event-info > p {
+.event {
+  position: relative;
+  left: 25%;
+  margin: 60px;
+  max-width: 75%;
+}
+
+.event > h2 {
+  margin: 20px;
+}
+
+.event-info > p {
   font-family: "Source Sans 3";
   max-width: 50%;
 }
 
-#event-info {
+.event-info {
   display: flex;
   flex-direction: row;
   gap: 40px;
   margin: 20px;
+}
+
+.characters{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 #app {

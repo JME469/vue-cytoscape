@@ -68,7 +68,7 @@
       <div id="container">
         <!-- Cytoscape graph-->
         <div id="cy"></div>
-        <div id="aside" v-show="showAside">
+        <div id="aside" v-show="showAside" style="display: flex">
           <button id="closeAside" class="nav-button nav-button2">
             <div class="btn-text filters">Chiudi</div>
           </button>
@@ -76,7 +76,6 @@
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -450,7 +449,7 @@ li {
   float: right;
 }
 
-#chInfo {
+.chInfo {
   grid-column: 2;
   display: flex;
   flex-direction: column;
@@ -458,15 +457,19 @@ li {
   justify-content: center;
 }
 
-#chInfo h3,
-#chInfo h4 {
+.chInfo h3,
+.chInfo h4 {
   font-family: "Source Sans 3" !important;
   font-size: medium !important;
 }
 
-#chInfo h4 {
+.chInfo h4 {
   font-weight: lighter;
   color: rgb(67, 67, 67);
+}
+
+.chInfo p{
+  margin-bottom: 0.75em !important;
 }
 
 .birthPlace {
@@ -514,8 +517,9 @@ h4 {
 
   background-color: white;
   border: solid 2px rgb(100, 9, 18);
-  font-family: "Source Sans 3";
   padding: 30px;
+
+  z-index: 1000;
 }
 
 #closeAside {
@@ -550,6 +554,7 @@ export default {
       showCytoscape: true,
       showEventList: false,
       showPopup: false,
+      showAside: false,
 
       isPanning: false,
       initialPointerPosition: { x: 0, y: 0 },
@@ -603,11 +608,12 @@ export default {
       searchQuery: "",
       showAutocomplete: false,
       accordionState: {},
-      showAside: false,
     };
   },
   mounted() {
-    this.fetchDataAndPopulateNodes();
+    setTimeout(() => {
+      this.fetchDataAndPopulateNodes();
+    }, 600);
     document.addEventListener("click", this.hidePopupOutside.bind(this));
   },
   computed: {
@@ -623,14 +629,6 @@ export default {
     },
   },
   methods: {
-    displayGraph() {
-      this.showEventList = false;
-      this.showCytoscape = true;
-    },
-    displayEvents() {
-      this.showCytoscape = false;
-      this.showEventList = true;
-    },
     async toggleFilter(filterValue) {
       if (this.filter !== filterValue) {
         this.filter = filterValue;
@@ -843,16 +841,6 @@ export default {
                     : "none";
                 },
                 "background-fit": "cover",
-                // "background-color": (node) => {
-                //   const info = node.data("info");
-                //   if (info.icona !== null) {
-                //     return "transparent";
-                //   } else {
-                //     return info.luogo_nascita === "Roma"
-                //       ? "rgb(78, 6, 105)"
-                //       : "rgb(36, 68, 196)";
-                //   }
-                // },
                 "background-color": "#96b8d2",
 
                 "border-width": (node) => {
@@ -1495,15 +1483,8 @@ export default {
             ? `http://95.110.132.24:8071/assets/${info.icona}`
             : "";
 
-        // const virtuoseLogo = info.virtuosa
-        //   ? `${this.baseUrl}/assets/logo_r.png`
-        //   : "";
-
         const noteSection = info.note ? `<p><b>Info:</b> ${info.note}</p>` : "";
-        // const birthPlace =
-        //   info.luogo_nascita === "Roma" || info.luogo_nascita === "Firenze"
-        //     ? `${info.luogo_nascita}`
-        //     : "";
+  
         const pseudonimo =
           info.pseudonimo !== null ? `<p><i>${info.pseudonimo}</i></p>` : "";
         const nascita =
@@ -1522,38 +1503,6 @@ export default {
           relations.mother !== null
             ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
             : "";
-        // const padrinoSection =
-        //   info.padrino !== null
-        //     ? `<p><b>Padrino:</b> ${this.getCharacterName(info.padrino)}</p>`
-        //     : "";
-        // const madrinaSection =
-        //   info.padrino !== null
-        //     ? `<p><b>Madrina:</b> ${this.getCharacterName(info.madrina)}</p>`
-        //     : "";
-        // const spouseSection =
-        //   relations.spouse !== null
-        //     ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
-        //         relations.spouse
-        //       )}</p>`
-        //     : "";
-        // const childrenSection =
-        //   relations.children && relations.children.length > 0
-        //     ? `<p><b>Figli/Figlie:</b> ${relations.children
-        //         .map((childId) => this.getCharacterName(childId))
-        //         .join(", ")}</p>`
-        //     : "";
-        // const maestroSection =
-        //   info.maestro && info.maestro.length > 0
-        //     ? `<p><b>Maestro:</b> ${info.maestro
-        //         .map((maestroId) => this.getCharacterName(maestroId))
-        //         .join(", ")}</p>`
-        //     : "";
-        // const mecenatiSection =
-        //   info.mecenati && info.mecenati.length > 0
-        //     ? `<p><b>Mecenati:</b> ${info.mecenati
-        //         .map((mecenatiId) => this.getCharacterName(mecenatiId))
-        //         .join(", ")}</p>`
-        //     : "";
 
         // Construct the popup content
         popup.innerHTML = `
@@ -1565,12 +1514,12 @@ export default {
               : ""
           }
           
-            <div id="chInfo">
-              <h3 style="margin-left:10px"><b><i>${info.nome_scelto}</i></b>${
+            <div class="chInfo">
+              <h3 style="margin-left:10px"><b>${info.nome_scelto}</b>${
           logoSrc !== ""
             ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
-            : ""
-        }</h3>
+            : ""}
+              </h3>
         <h4 style="margin-left:10px">${pseudonimo}</h4>
         <br>
                 ${nascita}
@@ -1582,12 +1531,6 @@ export default {
             </div>
         </div>
     `;
-        // ${spouseSection}
-        // ${childrenSection}
-        // ${padrinoSection}
-        // ${madrinaSection}
-        // ${maestroSection}
-        // ${mecenatiSection}
 
         var position = event.target.renderedPosition();
         // console.log("Position: ", position);
@@ -1634,8 +1577,9 @@ export default {
       }, 750);
     },
     closeAside() {
+      console.log("Close aside");
       document
-        .getElementById("aside")
+        .getElementById("closeAside")
         .removeEventListener("click", this.closeAside);
       this.showAside = false;
     },
@@ -1645,6 +1589,8 @@ export default {
     },
     handleNodeClick(event) {
       // Show detailed info about the clicked node in the aside section
+      console.log("function triggered");
+
       const node = event.target;
       const info = node.data("info");
       const relations = node.data("relationships");
@@ -1667,8 +1613,8 @@ export default {
           ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;margin-bottom:15px" alt="Icona" id="picture">`
           : ""
       }
-      <div id="chInfo">
-        <h3 style="margin-left:10px"><b><i>${info.nome_scelto}</i></b>${
+      <div class="chInfo">
+        <h3 style="margin-left:10px"><b>${info.nome_scelto}</b>${
         logoSrc !== ""
           ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
           : ""
@@ -1752,12 +1698,13 @@ export default {
     </div>
   `;
 
+      // Show the aside section
+      this.showAside = true;
       document
         .getElementById("closeAside")
         .addEventListener("click", this.closeAside);
-      // Show the aside section
-      this.showAside = true;
     },
+
     handleNodeGrab(event) {
       this.nodeClicked = true;
       this.isPanning = false;
