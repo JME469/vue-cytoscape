@@ -1,15 +1,15 @@
 <template>
   <div id="app">
-    <CytoscapeExample />
+    <EventsComponent />
   </div>
 </template>
 
 <script>
-import CytoscapeExample from "./components/CytoscapeExample.vue";
+import EventsComponent from "./components/EventsComponent.vue";
 
 export default {
   components: {
-    CytoscapeExample,
+    EventsComponent,
   },
 };
 </script>

@@ -1,8 +1,11 @@
 <template>
   <div id="outer-container">
     <!-- EVENTS PAGE -->
-
+    <div id="logo-container">
+      <img v-show="loading" id="loading" src="/wordpress/wp-content/themes/astra/assets/dist/img/vidimus_r.png" alt="Logo vidimus" width="500px">
+    </div>
     <div id="events" v-show="showEventList">
+      <h1>Repertorio</h1>
       <div
         v-for="(song, index) in repertorioData"
         :key="song.id"
@@ -28,46 +31,6 @@
               <p v-if="song.note !== null">{{ song.note }}</p>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-    <div v-show="showCytoscape">
-      <div id="container">
-        <div id="filter-menu">
-          <!-- Search bar -->
-          <div id="searchBar-container">
-            <div class="search-container">
-              <input
-                type="text"
-                v-model="searchQuery"
-                @input="updateAutocomplete"
-                @keyup.enter="searchCharacter"
-                placeholder="Cerca una virtuosa..."
-              />
-              <ul v-if="showAutocomplete" id="autocomplete">
-                <li
-                  v-for="character in filteredCharacters"
-                  :key="character.id"
-                  @click="selectCharacter(character)"
-                  class="character"
-                >
-                  {{ character.nome_scelto }}
-                </li>
-              </ul>
-            </div>
-            <div>
-              <button @click="searchCharacter">Cerca</button>
-            </div>
-          </div>
-          <!-- Filters -->
-        </div>
-        <!-- Cytoscape graph-->
-        <div id="cy"></div>
-        <div id="aside" v-show="showAside">
-          <button id="closeAside" class="nav-button nav-button2">
-            <div class="btn-text filters">Chiudi</div>
-          </button>
-          <div id="aside-content"></div>
         </div>
       </div>
     </div>
@@ -101,137 +64,28 @@ hr {
   background-color: rgb(120, 38, 46);
 }
 
-#banner {
-  display: flex;
-  min-height: 170px;
-  text-align: center;
-  color: rgb(120, 38, 46);
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  max-width: 100%;
+@keyframes loading {
+  0% {
+    opacity: 0%;
+  }
+  50% {
+    opacity: 100%
+  }
+  100% {
+    opacity: 0%;
+  }
 }
 
-#title {
-  font-family: Montaga;
-  font-size: 60px;
-  margin-top: 70px;
+#loading {
+  animation: loading 1.75s ease-in-out infinite;
 }
 
-#banner > img {
-  left: 30px;
-  position: absolute;
-}
-
-#filter-menu {
-  position: absolute;
-  left: 50px;
-  background-color: rgb(255, 255, 255);
-  border: solid 2px rgb(120, 38, 46);
-  z-index: 1000;
-  padding: 20px;
-  margin-left: 10px;
-  margin-top: 15px;
-}
-
-#nav-container {
-  display: flex;
-  text-align: center;
-  align-items: center;
-  justify-content: center;
-  margin-top: 50px;
-}
-
-.nav-container2 {
-  display: flex;
-  text-align: center;
-  align-items: start !important;
-  justify-content: center;
+#logo-container {
   margin-top: 20px;
-}
-
-#nav {
+  width: 100%;
   display: flex;
-  flex-direction: row;
-  gap: 20px;
-  list-style: none;
-  list-style-type: none;
-  margin-bottom: 20px;
-}
-
-#nav2 {
-  display: flex;
-  flex-direction: row;
-  gap: 20px;
-  list-style: none;
-  list-style-type: none;
-  background-color: rgb(255, 255, 255);
-  z-index: 1000;
-  margin-bottom: 30px;
-}
-
-li {
-  height: 100%;
-}
-
-.nav-button {
-  display: flex;
-  flex-direction: row;
   align-items: center;
-  text-align: center;
-  height: 100%;
-  width: auto;
-  padding: 20px;
-  margin: 0;
-  font-size: large;
-  border: none;
-  cursor: pointer;
-  background: none;
-  color: rgb(76, 76, 76);
-  transition: all 0.5s ease-out;
-}
-
-.nav-button2 {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  text-align: center;
   justify-content: center;
-}
-
-.filters {
-  font-weight: 500 !important;
-  text-align: center;
-}
-
-.nav-button:hover {
-  background: rgb(120, 38, 46);
-  color: aliceblue;
-}
-
-.selected {
-  background: rgb(120, 38, 46);
-  color: aliceblue;
-}
-
-.nav-button:hover img {
-  filter: invert(100%);
-}
-
-.nav-button:hover .btn-text {
-  color: white;
-}
-
-.nav-button > img {
-  margin-right: 15px;
-  transition: all 0.5s ease-out;
-}
-
-.btn-text {
-  font-family: Montserrat;
-  font-weight: 600;
-  transition: all 0.5s ease-out;
-  text-align: center;
 }
 
 .dropdown {
@@ -352,23 +206,21 @@ li {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding-left: 35%;
+  padding-left: 34%;
 }
 
 #event-info > p {
-  font-family: "Source Sans 3";
   max-width: 100%;
 }
 
 #event-info > h3 {
-  font-family: "Source Sans 3";
   max-width: 100%;
 }
 
 #event-content {
   display: flex;
-  flex-direction: row;
-  gap: 25px;
+  flex-direction: column;
+  gap: 15px;
   margin: 20px;
 }
 
@@ -537,6 +389,7 @@ export default {
       showCytoscape: false,
       showEventList: false,
       showPopup: false,
+      loading: true,
 
       isPanning: false,
       initialPointerPosition: { x: 0, y: 0 },
@@ -597,7 +450,6 @@ export default {
   },
   mounted() {
     this.fetchDataAndPopulateNodes();
-    document.addEventListener("click", this.hidePopupOutside.bind(this));
   },
   computed: {
     filteredCharacters() {
@@ -757,150 +609,6 @@ export default {
         this.clearGraph();
       }
     },
-    showAllNodes() {
-      // Show all nodes in the graph
-      this.cy.nodes().forEach((node) => {
-        if (node.connectedEdges().length !== 0) {
-          node.show();
-        }
-      });
-      this.cy.edges().show();
-    },
-
-    /* Extra functionalities */
-    hidePopupOutside(event) {
-      var popup = document.getElementById("popup");
-      if (
-        popup &&
-        popup.style.opacity === "1" &&
-        !popup.contains(event.target) &&
-        event.target !== this.clickedNode
-      ) {
-        popup.style.opacity = "0";
-        popup.style.zIndex = "-999";
-        this.clickedNode = null;
-        document.removeEventListener("click", this.hidePopupOutside);
-      }
-    },
-    getNodeSize(node) {
-      const connections = node.connectedEdges().length;
-      const baseSize = 35;
-      const sizeIncrement = 5;
-      const maxSize = 65;
-
-      // Calculate the size based on connections
-      let size = baseSize + connections * sizeIncrement;
-
-      // Limit the size to the maximum allowed size
-      size = Math.min(size, maxSize);
-
-      return size;
-    },
-    saveLayout() {
-      var positions = {};
-      this.cy.nodes().forEach(function (node) {
-        positions[node.id()] = {
-          x: node.position().x,
-          y: node.position().y,
-        };
-      });
-      localStorage.setItem("savedPositions", JSON.stringify(positions));
-    },
-
-    /* CREATE CYTOSCAPE GRAPH */
-    loadLayout() {
-      var savedPositions = JSON.parse(localStorage.getItem("savedPositions"));
-      if (savedPositions) {
-        Object.entries(savedPositions).forEach(([nodeId, position]) => {
-          const node = this.cy.getElementById(nodeId);
-          if (node) {
-            node.position(position);
-          }
-        });
-      } else {
-        if (this.filter === "all") {
-          this.layoutConfig = this.layout2;
-        } else {
-          this.layoutConfig = this.layout1;
-        }
-        this.cy = cytoscape({
-          container: document.getElementById("cy"),
-          elements: {
-            nodes: this.cyData.nodes,
-            edges: this.cyData.edges,
-          },
-
-          layout: this.layoutConfig,
-
-          style: [
-            {
-              selector: "node",
-              style: {
-                "background-image": (node) => {
-                  const info = node.data("info");
-                  return info.icona !== null
-                    ? `url(http://95.110.132.24:8071/assets/${info.icona})`
-                    : "none";
-                },
-                "background-fit": "cover",
-                // "background-color": (node) => {
-                //   const info = node.data("info");
-                //   if (info.icona !== null) {
-                //     return "transparent";
-                //   } else {
-                //     return info.luogo_nascita === "Roma"
-                //       ? "rgb(78, 6, 105)"
-                //       : "rgb(36, 68, 196)";
-                //   }
-                // },
-                "background-color": "#96b8d2",
-
-                "border-width": (node) => {
-                  const info = node.data("info");
-                  return info.virtuosa ? "6px" : "0";
-                },
-                "border-color": (node) => {
-                  const info = node.data("info");
-                  return info.virtuosa ? "rgb(120, 38, 46)" : "transparent";
-                },
-
-                //label: "data(id)",
-                "text-valign": "center",
-                "text-halign": "center",
-
-                width: "45px",
-                height: "45px",
-
-                color: "#ffffff",
-                "font-size": "12px",
-              },
-            },
-            {
-              selector: "edge",
-              style: {
-                width: 3,
-                "line-color": (edge) => {
-                  const relation = edge.data();
-                  if (relation.type === "maestro") {
-                    return "rgb(177, 80, 80)"; // Maestro relations
-                  } else if (relation.type === "mecenati") {
-                    return "rgb(45, 116, 59)"; // Mecenati relations
-                  } else {
-                    return "#96b8d2";
-                  }
-                },
-              },
-            },
-          ],
-          minZoom: 0.35,
-          maxZoom: 1.8,
-          pan: { x: 0, y: 0 },
-          boxSelectionEnabled: false,
-        });
-      }
-    },
-
-    /* MAIN FUNCTION */
     //It calls the relevant functions in order to retrieve data and create the graph
     async fetchDataAndPopulateNodes() {
       try {
@@ -947,19 +655,9 @@ export default {
 
         this.combineData();
 
-        this.cyData = this.formatDataForCytoscape(
-          charactersData,
-          this.maestroRelations,
-          this.mecenatiRelations,
-          this.maestroData,
-          this.mecenatiData
-        );
-
         //console.log(cyData);
-        this.loadLayout();
-        this.populateCytoscapeGraph();
-        this.addCytoscapeEventListeners();
-        setTimeout((this.showEventList = true), 300);
+        setTimeout((this.showEventList = true), 150);
+        this.loading = false;
       } catch (error) {
         console.error("Error fetching data and populating nodes: ", error);
       }
@@ -1179,59 +877,6 @@ export default {
       return character ? character.nome_scelto : `"Non conosciuto"`;
     },
 
-    //Transforms characters data into cytoscape format
-    formatDataForCytoscape(
-      charactersData,
-      maestroRelations,
-      mecenatiRelations,
-      maestroData,
-      mecenatiData
-    ) {
-      const nodes = charactersData.map((character) => ({
-        data: {
-          id: character.id,
-          label: character.nome_scelto,
-          info: character,
-          relationships: {
-            mother: null,
-            father: null,
-            children: [],
-            spouse: null,
-            maestro: [],
-            mecenati: [],
-          },
-        },
-      }));
-
-      maestroRelations.forEach((relation) => {
-        const node = nodes.find(
-          (node) => node.data.id === relation.Virtuose_id
-        );
-        if (node) {
-          node.data.relationships.maestro.push(relation.maestro_id);
-        }
-      });
-
-      mecenatiRelations.forEach((relation) => {
-        const node = nodes.find(
-          (node) => node.data.id === relation.Virtuose_id
-        );
-        if (node) {
-          node.data.relationships.mecenati.push(relation.mecenati_id);
-        }
-      });
-
-      const edges = this.extractEdgesFromCharacters(
-        charactersData,
-        maestroRelations,
-        mecenatiRelations,
-        maestroData,
-        mecenatiData
-      );
-      this.updateRelationships(nodes, edges);
-      return { nodes, edges };
-    },
-
     //Organizes all relations
     extractRelatives(
       character,
@@ -1287,76 +932,7 @@ export default {
         });
       }
       return relatives;
-    },
-    //Creates edges from the organized relations
-    extractEdgesFromCharacters(
-      charactersData,
-      maestroRelations,
-      mecenatiRelations,
-      maestroData,
-      mecenatiData
-    ) {
-      const edges = [];
-      charactersData.forEach((character) => {
-        const relatives = this.extractRelatives(
-          character,
-          maestroRelations,
-          mecenatiRelations,
-          maestroData,
-          mecenatiData
-        );
-        relatives.forEach((relativeId) => {
-          const sourceExists = charactersData.some(
-            (char) => char.id === character.id
-          );
-          const targetExists = charactersData.some(
-            (char) => char.id === relativeId
-          );
-
-          if (sourceExists && targetExists) {
-            let relationType = "family";
-
-            const maestro = maestroData.find((m) => m.maestro === relativeId);
-            if (maestro) {
-              if (
-                maestroRelations.some(
-                  (relation) =>
-                    relation.Virtuose_id === character.id &&
-                    maestro.maestro === relativeId
-                )
-              ) {
-                relationType = "maestro";
-              }
-            } else {
-              const mecenati = mecenatiData.find(
-                (m) => m.mecenate === relativeId
-              );
-              if (mecenati) {
-                if (
-                  mecenatiRelations.some(
-                    (relation) =>
-                      relation.Virtuose_id === character.id &&
-                      mecenati.mecenate === relativeId
-                  )
-                ) {
-                  relationType = "mecenati";
-                }
-              }
-            }
-
-            edges.push({
-              data: {
-                id: `${character.id}-${relativeId}`,
-                source: character.id,
-                target: relativeId,
-                type: relationType,
-              },
-            });
-          }
-        });
-      });
-      return edges;
-    },
+    },  
     //Ables bi-directional relations info
     updateRelationships(nodes, edges) {
       edges.forEach((edge) => {
@@ -1432,415 +1008,6 @@ export default {
             }
           }
         }
-      });
-    },
-
-    /* GRAPH ACTIONS HANDLING */
-    //Such as zoom, dragging, node interacion, etc.
-    removeCytoscapeEventListeners() {
-      const cyContainer = document.getElementById("cy");
-
-      cyContainer.removeEventListener("mousedown", this.handleMouseDown);
-      cyContainer.removeEventListener("mousemove", this.handleMouseMove);
-      cyContainer.removeEventListener("mouseup", this.handleMouseUp);
-      cyContainer.removeEventListener("wheel", this.handleWheel);
-
-      this.cy.off("click", "node", this.handleNodeClick);
-      this.cy.off("grab", "node", this.handleNodeGrab);
-    },
-    handleMouseDown(event) {
-      if (this.nodeClicked) {
-        this.isPanning = false;
-      } else {
-        this.isPanning = true;
-        this.initialPointerPosition = { x: event.clientX, y: event.clientY };
-      }
-    },
-    handleMouseMove(event) {
-      const cyContainer = document.getElementById("cy");
-      if (this.isPanning === true) {
-        var deltaX = event.clientX - this.initialPointerPosition.x;
-        var deltaY = event.clientY - this.initialPointerPosition.y;
-        var currentPan = this.cy.pan();
-
-        const maxX = cyContainer.offsetWidth;
-        const maxY = cyContainer.offsetHeight;
-        const minX = -cyContainer.offsetWidth * 0.5;
-        const minY = -cyContainer.offsetHeight * 0.5;
-
-        const limitedPan = {
-          x: Math.min(Math.max(currentPan.x + deltaX, minX), maxX), // Adjust the panning boundaries as needed
-          y: Math.min(Math.max(currentPan.y + deltaY, minY), maxY),
-        };
-
-        this.cy.pan(limitedPan);
-        this.initialPointerPosition = { x: event.clientX, y: event.clientY };
-      }
-    },
-    handleMouseUp() {
-      if (this.nodeClicked) {
-        this.nodeClicked = false;
-      }
-      this.isPanning = false;
-    },
-    handleWheel(event) {
-      const cyContainer = document.getElementById("cy");
-      let cursorX = event.clientX;
-      let cursorY = event.clientY;
-      const containerRect = cyContainer.getBoundingClientRect();
-      const containerWidth = containerRect.width;
-      const containerHeight = containerRect.height;
-      if (event.ctrlKey || event.metaKey) {
-        return; // Let the default zoom behavior handle it
-      }
-      const zoomAmount = event.deltaY > 0 ? -0.1 : 0.1; // Change the zoom amount as needed
-      //const containerRect = cyContainer.getBoundingClientRect();
-
-      let cyRelativePosition = {
-        x: cursorX - containerWidth / 2,
-        y: cursorY - containerHeight / 2,
-      };
-
-      // console.log(cyRelativePosition);
-
-      this.cy.zoom({
-        level: this.cy.zoom() + zoomAmount,
-        position: cyRelativePosition,
-      });
-      event.preventDefault();
-    },
-    //Info popup handling
-    handleNodeHover(event) {
-      this.hoverTimeout = setTimeout(() => {
-        const popup = document.getElementById("popup");
-
-        var node = event.target;
-        var info = node.data("info");
-        var relations = node.data("relationships");
-        // console.log(relations);
-        this.clickedNode = node;
-
-        this.popupInfo = info;
-        this.showPopup = true;
-
-        const logoSrc = info.virtuosa
-          ? `/wordpress/wp-content/themes/astra/assets/dist/img/logo_r.png`
-          : "";
-        const imageSrc =
-          info.icona !== null
-            ? `http://95.110.132.24:8071/assets/${info.icona}`
-            : "";
-
-        // const virtuoseLogo = info.virtuosa
-        //   ? `${this.baseUrl}/assets/logo_r.png`
-        //   : "";
-
-        const noteSection = info.note ? `<p><b>Info:</b> ${info.note}</p>` : "";
-        // const birthPlace =
-        //   info.luogo_nascita === "Roma" || info.luogo_nascita === "Firenze"
-        //     ? `${info.luogo_nascita}`
-        //     : "";
-        const pseudonimo =
-          info.pseudonimo !== null ? `<p><i>${info.pseudonimo}</i></p>` : "";
-        const nascita =
-          info.data_nascita !== null
-            ? `<p><b>Data di nascita: </b>${info.data_nascita}</p>`
-            : "";
-        const morte =
-          info.data_morte !== null
-            ? `<p><b>Data di morte: </b>${info.data_morte}</p>`
-            : "";
-        const fatherSection =
-          relations.father !== null
-            ? `<p><b>Padre:</b> ${this.getCharacterName(relations.father)}</p>`
-            : "";
-        const motherSection =
-          relations.mother !== null
-            ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
-            : "";
-        // const padrinoSection =
-        //   info.padrino !== null
-        //     ? `<p><b>Padrino:</b> ${this.getCharacterName(info.padrino)}</p>`
-        //     : "";
-        // const madrinaSection =
-        //   info.padrino !== null
-        //     ? `<p><b>Madrina:</b> ${this.getCharacterName(info.madrina)}</p>`
-        //     : "";
-        // const spouseSection =
-        //   relations.spouse !== null
-        //     ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
-        //         relations.spouse
-        //       )}</p>`
-        //     : "";
-        // const childrenSection =
-        //   relations.children && relations.children.length > 0
-        //     ? `<p><b>Figli/Figlie:</b> ${relations.children
-        //         .map((childId) => this.getCharacterName(childId))
-        //         .join(", ")}</p>`
-        //     : "";
-        // const maestroSection =
-        //   info.maestro && info.maestro.length > 0
-        //     ? `<p><b>Maestro:</b> ${info.maestro
-        //         .map((maestroId) => this.getCharacterName(maestroId))
-        //         .join(", ")}</p>`
-        //     : "";
-        // const mecenatiSection =
-        //   info.mecenati && info.mecenati.length > 0
-        //     ? `<p><b>Mecenati:</b> ${info.mecenati
-        //         .map((mecenatiId) => this.getCharacterName(mecenatiId))
-        //         .join(", ")}</p>`
-        //     : "";
-
-        // Construct the popup content
-        popup.innerHTML = `
-        <div id="content">
-          
-          ${
-            imageSrc !== ""
-              ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;" alt="Icona" id="picture">`
-              : ""
-          }
-          
-            <div id="chInfo">
-              <h3 style="margin-left:10px"><b><i>${info.nome_scelto}</i></b>${
-          logoSrc !== ""
-            ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
-            : ""
-        }</h3>
-        <h4 style="margin-left:10px">${pseudonimo}</h4>
-        <br>
-                ${nascita}
-                ${morte}        
-                ${fatherSection}
-                ${motherSection}
-                ${noteSection}
-
-            </div>
-        </div>
-    `;
-        // ${spouseSection}
-        // ${childrenSection}
-        // ${padrinoSection}
-        // ${madrinaSection}
-        // ${maestroSection}
-        // ${mecenatiSection}
-
-        var position = event.target.renderedPosition();
-        // console.log("Position: ", position);
-        var cyContainer = document.getElementById("cy");
-        var popupHeight = popup.offsetHeight;
-        var popupWidth = popup.offsetWidth;
-
-        var popupOffsetX = -550;
-        var popupOffsetY = -1100;
-        if (position.y > 750) {
-          popupOffsetY = popupOffsetY - popupHeight;
-        }
-        if (position.x < 500) {
-          popupOffsetX = popupOffsetX + popupWidth;
-        }
-        var popupPositionX = Math.min(
-          position.x + popupOffsetX,
-          cyContainer.offsetWidth - popup.offsetWidth
-        );
-        var popupPositionY = Math.min(
-          position.y + popupOffsetY,
-          cyContainer.offsetHeight - popup.offsetHeight
-        );
-
-        popup.style.transform = `translate(${popupPositionX}px, ${popupPositionY}px)`;
-
-        setTimeout(() => {
-          // Show the popup
-          if (info.virtuosa) {
-            popup.style.border = "solid 2px rgb(120, 38, 46)";
-          } else {
-            popup.style.border = "solid 1px grey";
-          }
-          popup.style.width = "550px";
-          popup.style.height = "auto";
-          popup.style.opacity = "1";
-          popup.style.zIndex = "999";
-
-          // Add event listener to hide the popup when clicking outside of it
-          document.addEventListener("click", this.hidePopupOutside);
-        }, 200);
-
-        event.stopPropagation();
-      }, 750);
-    },
-    closeAside() {
-      document
-        .getElementById("aside")
-        .removeEventListener("click", this.closeAside);
-      this.showAside = false;
-    },
-    handleNodeLeave() {
-      // Clear the timeout if the mouse leaves the node before the delay
-      clearTimeout(this.hoverTimeout);
-    },
-    handleNodeClick(event) {
-      // Show detailed info about the clicked node in the aside section
-      const node = event.target;
-      const info = node.data("info");
-      const relations = node.data("relationships");
-
-      const content = document.getElementById("aside-content");
-
-      const logoSrc = info.virtuosa
-        ? `/wordpress/wp-content/themes/astra/assets/dist/img/logo_r.png`
-        : "";
-      const imageSrc =
-        info.icona !== null
-          ? `http://95.110.132.24:8071/assets/${info.icona}`
-          : "";
-
-      // Construct the content for the aside section
-      content.innerHTML = `
-    <div id="content"><br>
-      ${
-        imageSrc !== ""
-          ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;margin-bottom:15px" alt="Icona" id="picture">`
-          : ""
-      }
-      <div id="chInfo">
-        <h3 style="margin-left:10px"><b><i>${info.nome_scelto}</i></b>${
-        logoSrc !== ""
-          ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
-          : ""
-      }</h3>
-        <h4 style="margin-left:10px">${
-          info.pseudonimo !== null ? `<p><i>${info.pseudonimo}</i></p>` : ""
-        }</h4>
-        <br>
-        ${
-          info.data_nascita !== null
-            ? `<p><b>Data di nascita: </b>${info.data_nascita}</p>`
-            : ""
-        }
-        ${
-          info.data_morte !== null
-            ? `<p><b>Data di morte: </b>${info.data_morte}</p>`
-            : ""
-        }
-        ${
-          relations.father !== null
-            ? `<p><b>Padre:</b> ${this.getCharacterName(relations.father)}</p>`
-            : ""
-        }
-        ${
-          relations.mother !== null
-            ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
-            : ""
-        }
-        ${
-          relations.spouse !== null
-            ? `<p><b>Marito/Moglie:</b> ${this.getCharacterName(
-                relations.spouse
-              )}</p>`
-            : ""
-        }
-        ${
-          relations.children && relations.children.length > 0
-            ? `<p><b>Figli/Figlie:</b> ${relations.children
-                .map((childId) => this.getCharacterName(childId))
-                .join(", ")}</p>`
-            : ""
-        }
-        ${
-          info.padrino !== null
-            ? `<p><b>Padrino:</b> ${this.getCharacterName(info.padrino)}</p>`
-            : ""
-        }
-        ${
-          info.madrina !== null
-            ? `<p><b>Madrina:</b> ${this.getCharacterName(info.madrina)}</p>`
-            : ""
-        }<br><br>
-        ${
-          info.maestro && info.maestro.length > 0
-            ? `<p><b>Maestro:</b> ${info.maestro
-                .map((maestroId) => this.getCharacterName(maestroId))
-                .join(", ")}</p>`
-            : ""
-        }
-        ${
-          info.mecenati && info.mecenati.length > 0
-            ? `<p><b>Mecenati:</b> ${info.mecenati
-                .map((mecenatiId) => this.getCharacterName(mecenatiId))
-                .join(", ")}</p>`
-            : ""
-        }<br>
-        ${
-          info.eventi && info.eventi.length > 0
-            ? `<p><b>Eventi:</b> ${info.eventi
-                .map((eventId) => {
-                  const event = this.eventsData.find(
-                    (event) => event.id === eventId
-                  );
-                  return event ? `${event.data} - ${event.luogo}` : "";
-                })
-                .join(" | ")}</p>`
-            : ""
-        }
-        ${info.note ? `<p><b>Info:</b> ${info.note}</p>` : ""}
-      </div>
-    </div>
-  `;
-
-      document
-        .getElementById("closeAside")
-        .addEventListener("click", this.closeAside);
-      // Show the aside section
-      this.showAside = true;
-    },
-    handleNodeGrab(event) {
-      this.nodeClicked = true;
-      this.isPanning = false;
-
-      // Prevent event propagation to the DOM
-      event.stopPropagation();
-    },
-    addCytoscapeEventListeners() {
-      const cyContainer = document.getElementById("cy");
-
-      cyContainer.addEventListener("mousedown", this.handleMouseDown);
-      cyContainer.addEventListener("mousemove", this.handleMouseMove);
-      cyContainer.addEventListener("mouseup", this.handleMouseUp);
-      cyContainer.addEventListener("wheel", this.handleWheel);
-
-      this.cy.on("grab", "node", this.handleNodeGrab);
-      this.cy.on("click", "node", this.handleNodeClick);
-      this.cy.on("mouseover", "node", this.handleNodeHover);
-      this.cy.on("mouseout", "node", this.handleNodeLeave);
-    },
-    //Other functionalities
-    populateCytoscapeGraph() {
-      var popup = document.createElement("div");
-      popup.id = "popup";
-      popup.style.opacity = "0";
-      document.getElementById("cy").appendChild(popup);
-
-      this.cy.nodes().forEach((node) => {
-        if (node.connectedEdges().length === 0) {
-          node.hide();
-        }
-      });
-
-      this.cy.nodes().forEach((node) => {
-        const size = this.getNodeSize(node);
-        node.style("width", size);
-        node.style("height", size);
-      });
-
-      // Disable built-in panning
-
-      this.cy.userPanningEnabled(false);
-
-      // Add mouse event listeners for custom panning
-
-      this.cy.ready(() => {
-        this.cy.zoom(0.55);
       });
     },
   },

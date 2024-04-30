@@ -1,7 +1,9 @@
 <template>
   <div id="outer-container">
     <!-- EVENTS PAGE -->
-
+    <div id="logo-container">
+      <img v-show="loading" id="loading" src="/wordpress/wp-content/themes/astra/assets/dist/img/vidimus_r.png" alt="Logo vidimus" width="500px">
+    </div>
     <div id="events" v-show="showEventList">
       <h1>Eventi</h1>
       <div v-for="(event, index) in eventsData" :key="event.id" :value="event.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
@@ -42,6 +44,30 @@ body {
   max-width: 100vw;
 }
 
+@keyframes loading {
+  0% {
+    opacity: 0%;
+  }
+  50% {
+    opacity: 100%
+  }
+  100% {
+    opacity: 0%;
+  }
+}
+
+#loading {
+  animation: loading 1.75s ease-in-out infinite;
+}
+
+#logo-container {
+  margin-top: 20px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 li {
   height: 100%;
 }
@@ -74,15 +100,19 @@ li {
 
 .event-info {
   display: flex;
-  flex-direction: row;
-  gap: 40px;
+  flex-direction: column;
+  gap: 20px;
   margin: 20px;
 }
 
 .characters{
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 5px;
+}
+
+.characters p{
+  font-weight: bold;
 }
 
 #app {
@@ -127,6 +157,7 @@ export default {
       showCytoscape: false,
       showEventList: false,
       showPopup: false,
+      loading: true,
 
       isPanning: false,
       initialPointerPosition: { x: 0, y: 0 },
@@ -185,7 +216,6 @@ export default {
   },
   mounted() {
     this.fetchDataAndPopulateNodes();
-    document.addEventListener("click", this.hidePopupOutside.bind(this));
   },
   computed: {
     filteredCharacters() {
@@ -516,7 +546,8 @@ export default {
         //this.loadLayout();
         //this.populateCytoscapeGraph();
         //this.addCytoscapeEventListeners();
-        setTimeout(this.showEventList = true, 300);
+        setTimeout(this.showEventList = true, 150);
+        this.loading = false;
       } catch (error) {
         console.error("Error fetching data and populating nodes: ", error);
       }
