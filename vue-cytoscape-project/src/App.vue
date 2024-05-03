@@ -1,15 +1,15 @@
 <template>
   <div id="app">
-    <EventsComponent />
+    <fontiComponent />
   </div>
 </template>
 
 <script>
-import EventsComponent from "./components/EventsComponent.vue";
+import fontiComponent from "./components/fontiComponent.vue";
 
 export default {
   components: {
-    EventsComponent,
+    fontiComponent,
   },
 };
 </script>

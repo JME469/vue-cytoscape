@@ -130,7 +130,6 @@ hr {
 #filter-menu {
   position: absolute;
   left: 50px;
-  background-color: rgb(255, 255, 255);
   border: solid 2px rgb(120, 38, 46);
   z-index: 1000;
   padding: 20px;
@@ -169,7 +168,6 @@ hr {
   gap: 20px;
   list-style: none;
   list-style-type: none;
-  background-color: rgb(255, 255, 255);
   z-index: 1000;
   margin-bottom: 30px;
   align-items: center;
@@ -1415,10 +1413,10 @@ export default {
         var deltaY = event.clientY - this.initialPointerPosition.y;
         var currentPan = this.cy.pan();
 
-        const maxX = cyContainer.offsetWidth;
-        const maxY = cyContainer.offsetHeight;
-        const minX = -cyContainer.offsetWidth * 0.5;
-        const minY = -cyContainer.offsetHeight * 0.5;
+        const maxX = cyContainer.offsetWidth + 150;
+        const maxY = cyContainer.offsetHeight + 150;
+        const minX = -cyContainer.offsetWidth * 0.95;
+        const minY = -cyContainer.offsetHeight * 0.95;
 
         const limitedPan = {
           x: Math.min(Math.max(currentPan.x + deltaX, minX), maxX), // Adjust the panning boundaries as needed
@@ -1751,7 +1749,7 @@ export default {
       // Add mouse event listeners for custom panning
 
       this.cy.ready(() => {
-        this.cy.zoom(0.55);
+        this.cy.zoom(0.75);
       });
     },
   },

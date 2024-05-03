@@ -37,18 +37,20 @@
     <hr />
 
     <!-- GRAPH AND FUNCTIONALITIES -->
-
+    <div id="logo-container">
+      <img v-show="loading" id="loading" src="/wordpress/wp-content/themes/astra/assets/dist/img/vidimus_r.png" alt="Logo vidimus" width="500px">
+    </div>
     <div v-show="musicale">
       <div class="container">
         <div class="title-container">
           <h2>Fonti musicali</h2>
         </div>
-        <div class="font-container" v-for="(fonti, index) in fontiMusicali" :key="fonti.id" :value="fonti.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
+        <div id="musicale-font-container" class="font-container" v-for="(fonti, index) in fontiMusicali" :key="fonti.id" :value="fonti.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
             <div>
                 <img class="font-img" v-if="fonti.icona !== null" :src="'http://95.110.132.24:8071/assets/'+fonti.icona" alt="">
             </div>
             <div>
-                <h3>{{ fonti.titolo }}</h3>
+                <h3 class="font-title">{{ fonti.titolo }}</h3>
                 <h4 v-if="fonti.data !== null">{{ fonti.data }}</h4>
                 <p>Segnatura: {{ fonti.segnatura }}</p>
             </div>
@@ -70,7 +72,7 @@
                 </div>
                 <div>
                     <h3>{{ fonti.archivio }}</h3>
-                    <h4 v-if="fonti.titolo !== null">{{ fonti.titolo }}</h4>
+                    <h4 class="font-title" v-if="fonti.titolo !== null" style="font-size:larger;font-weight:bold;">Titolo: {{ fonti.titolo }}</h4>
                     <p v-if="fonti.fondo !== null">Fondo: {{ fonti.fondo }}</p>
                 </div>
                 <div style="max-width:80%">
@@ -90,7 +92,7 @@
                     <img class="font-img" v-if="fonti.icona !== null" :src="'http://95.110.132.24:8071/assets/'+fonti.icona" alt="">
                 </div>
                 <div>
-                    <h3>{{ fonti.titolo }}</h3>
+                    <h3 class="font-title">{{ fonti.titolo }}</h3>
                     <h4 v-if="fonti.data !== null">{{ fonti.data }}</h4>
                     <p v-if="fonti.segnatura !== null">Segnatura: {{ fonti.segnatura }}</p>
                 </div>
@@ -130,6 +132,30 @@ hr {
   border: none;
   height: 3px;
   background-color: rgb(120, 38, 46);
+}
+
+@keyframes loading {
+  0% {
+    opacity: 0%;
+  }
+  50% {
+    opacity: 100%
+  }
+  100% {
+    opacity: 0%;
+  }
+}
+
+#loading {
+  animation: loading 1.75s ease-in-out infinite;
+}
+
+#logo-container {
+  margin-top: 20px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #nav-container {
@@ -377,6 +403,15 @@ li {
     margin: 5px;
 }
 
+#musicale-font-container{
+  grid-template-columns: 0.7fr 1fr 0.8fr;
+    gap: 5px;
+}
+
+.font-title{
+  max-width: 80%;
+}
+
 .title-container{
   min-width: 100%;
   display: flex;
@@ -555,7 +590,8 @@ export default {
       fontiArchivistiche: [],
       fontiLetterarie: [],
 
-      musicale: true,
+      loading: true,
+      musicale: false,
       archivistiche: false,
       letterarie: false,
 
@@ -592,7 +628,7 @@ export default {
       showDropdown: false,
       dropdownLabel: "Eventi",
       selectedEvent: null,
-      selectedFilter: "family",
+      selectedFilter: "musicale",
       searchQuery: "",
       showAutocomplete: false,
       accordionState: {},
@@ -601,7 +637,6 @@ export default {
   },
   mounted() {
     this.fetchDataAndPopulateNodes();
-    document.addEventListener("click", this.hidePopupOutside.bind(this));
   },
   computed: {
     filteredCharacters() {
@@ -632,25 +667,7 @@ export default {
       }
       this.selectedFilter = filterValue;
     },
-    toggleDropdown() {
-      this.showDropdown = !this.showDropdown;
-    },
 
-    /* EVENT FILTERING LOGIC */
-
-    hasCharactersForEvent(eventId) {
-      const characters = this.charactersData.filter(function (character) {
-        return character.eventi.includes(eventId);
-      });
-      return characters.length > 0;
-    },
-    // Get the list of characters related to the given event
-    getCharactersForEvent(eventId) {
-      const characters = this.charactersData.filter((character) =>
-        character.eventi.includes(eventId)
-      );
-      return characters;
-    },
     getFontType(fonte) {
       if (fonte[0] == 1) {
         return "Fonte musicale";
@@ -660,248 +677,6 @@ export default {
         return "Fonte letterarie";
       } else {
         return "";
-      }
-    },
-    // Toggle the visibility of the accordion for the given event
-    toggleAccordion(eventId) {
-      if (this.isAccordionOpen(eventId)) {
-        this.accordionState[eventId] = false;
-      } else {
-        this.accordionState[eventId] = true;
-      }
-    },
-    // Check if the accordion for the given event is open
-    isAccordionOpen(eventId) {
-      return !!this.accordionState[eventId];
-    },
-    selectEvent(event) {
-      this.selectedEvent = event.id;
-      this.toggleDropdown();
-      this.filterGraphByEvent();
-    },
-    isNodeRelatedToEvent(node, selectedEventId) {
-      return node.data().info.eventi.includes(selectedEventId);
-    },
-    filterGraphByEvent() {
-      this.showAllNodes();
-      this.cy.nodes().forEach((node) => {
-        const related = this.isNodeRelatedToEvent(node, this.selectedEvent);
-        if (!related) {
-          node.hide();
-        }
-      });
-      const relatedNodes = this.cy.nodes().filter((node) => {
-        return this.isNodeRelatedToEvent(node, this.selectedEvent);
-      });
-      if (relatedNodes.length > 0) {
-        this.cy.fit(relatedNodes, 420);
-      }
-    },
-
-    /* CHARACTER SEARCH LOGIC */
-
-    //Shows the searched character and related nodes
-    filterGraph(character) {
-      const characterId = character.id;
-
-      this.cy.elements().hide();
-
-      // Show the selected character node and its edges
-      const characterNode = this.cy.getElementById(characterId);
-      if (characterNode.length > 0) {
-        characterNode.show();
-
-        // Show related nodes and their edges
-        this.cy.edges().forEach((edge) => {
-          const sourceId = edge.source().id();
-          const targetId = edge.target().id();
-
-          if (sourceId == characterId || targetId == characterId) {
-            edge.show();
-
-            // Show source and target nodes of the edge
-            this.cy.getElementById(sourceId).show();
-            this.cy.getElementById(targetId).show();
-          }
-        });
-        this.cy.fit(characterNode, 420);
-      }
-    },
-    updateAutocomplete() {
-      if (this.searchQuery == "") {
-        this.showAutocomplete = false;
-      } else {
-        const matchingCharacters = this.getMatchingCharacters();
-        this.showAutocomplete = matchingCharacters.length > 0;
-      }
-    },
-    getMatchingCharacters() {
-      const query = this.searchQuery.toLowerCase().trim();
-      return this.charactersData.filter((character) =>
-        character.nome_scelto.toLowerCase().includes(query)
-      );
-    },
-    selectCharacter(character) {
-      this.searchQuery = character.nome_scelto;
-      this.showAutocomplete = false;
-    },
-    searchCharacter() {
-      const query = this.searchQuery.toLowerCase().trim();
-      if (!query) {
-        this.showAllNodes();
-        return;
-      }
-      const character = this.charactersData.find((char) =>
-        char.nome_scelto.toLowerCase().includes(query)
-      );
-      if (character) {
-        // If the character is found, filter the graph to show only the selected character and its related nodes
-        this.filterGraph(character);
-      } else {
-        // If the character is not found, clear the graph display
-        this.clearGraph();
-      }
-    },
-    showAllNodes() {
-      // Show all nodes in the graph
-      this.cy.nodes().forEach((node) => {
-        if (node.connectedEdges().length !== 0) {
-          node.show();
-        }
-      });
-      this.cy.edges().show();
-    },
-
-    /* Extra functionalities */
-    hidePopupOutside(event) {
-      var popup = document.getElementById("popup");
-      if (
-        popup &&
-        popup.style.opacity === "1" &&
-        !popup.contains(event.target) &&
-        event.target !== this.clickedNode
-      ) {
-        popup.style.opacity = "0";
-        popup.style.zIndex = "-999";
-        this.clickedNode = null;
-        document.removeEventListener("click", this.hidePopupOutside);
-      }
-    },
-    getNodeSize(node) {
-      const connections = node.connectedEdges().length;
-      const baseSize = 35;
-      const sizeIncrement = 5;
-      const maxSize = 65;
-
-      // Calculate the size based on connections
-      let size = baseSize + connections * sizeIncrement;
-
-      // Limit the size to the maximum allowed size
-      size = Math.min(size, maxSize);
-
-      return size;
-    },
-    saveLayout() {
-      var positions = {};
-      this.cy.nodes().forEach(function (node) {
-        positions[node.id()] = {
-          x: node.position().x,
-          y: node.position().y,
-        };
-      });
-      localStorage.setItem("savedPositions", JSON.stringify(positions));
-    },
-
-    /* CREATE CYTOSCAPE GRAPH */
-    loadLayout() {
-      var savedPositions = JSON.parse(localStorage.getItem("savedPositions"));
-      if (savedPositions) {
-        Object.entries(savedPositions).forEach(([nodeId, position]) => {
-          const node = this.cy.getElementById(nodeId);
-          if (node) {
-            node.position(position);
-          }
-        });
-      } else {
-        if (this.filter === "all") {
-          this.layoutConfig = this.layout2;
-        } else {
-          this.layoutConfig = this.layout1;
-        }
-        this.cy = cytoscape({
-          container: document.getElementById("cy"),
-          elements: {
-            nodes: this.cyData.nodes,
-            edges: this.cyData.edges,
-          },
-
-          layout: this.layoutConfig,
-
-          style: [
-            {
-              selector: "node",
-              style: {
-                "background-image": (node) => {
-                  const info = node.data("info");
-                  return info.icona !== null
-                    ? `url(http://95.110.132.24:8071/assets/${info.icona})`
-                    : "none";
-                },
-                "background-fit": "cover",
-                // "background-color": (node) => {
-                //   const info = node.data("info");
-                //   if (info.icona !== null) {
-                //     return "transparent";
-                //   } else {
-                //     return info.luogo_nascita === "Roma"
-                //       ? "rgb(78, 6, 105)"
-                //       : "rgb(36, 68, 196)";
-                //   }
-                // },
-                "background-color": "#96b8d2",
-
-                "border-width": (node) => {
-                  const info = node.data("info");
-                  return info.virtuosa ? "6px" : "0";
-                },
-                "border-color": (node) => {
-                  const info = node.data("info");
-                  return info.virtuosa ? "rgb(120, 38, 46)" : "transparent";
-                },
-
-                //label: "data(id)",
-                "text-valign": "center",
-                "text-halign": "center",
-
-                width: "45px",
-                height: "45px",
-
-                color: "#ffffff",
-                "font-size": "12px",
-              },
-            },
-            {
-              selector: "edge",
-              style: {
-                width: 3,
-                "line-color": (edge) => {
-                  const relation = edge.data();
-                  if (relation.type === "maestro") {
-                    return "rgb(177, 80, 80)"; // Maestro relations
-                  } else if (relation.type === "mecenati") {
-                    return "rgb(45, 116, 59)"; // Mecenati relations
-                  } else {
-                    return "#96b8d2";
-                  }
-                },
-              },
-            },
-          ],
-          minZoom: 0.35,
-          maxZoom: 1.8,
-          pan: { x: 0, y: 0 },
-          boxSelectionEnabled: false,
-        });
       }
     },
 
@@ -954,19 +729,8 @@ export default {
 
         this.combineData();
 
-        this.cyData = this.formatDataForCytoscape(
-          charactersData,
-          this.maestroRelations,
-          this.mecenatiRelations,
-          this.maestroData,
-          this.mecenatiData
-        );
-
-        //console.log(cyData);
-        this.loadLayout();
-        this.populateCytoscapeGraph();
-        this.addCytoscapeEventListeners();
-        setTimeout((this.showEventList = true), 300);
+        this.musicale = true;
+        this.loading = false;
       } catch (error) {
         console.error("Error fetching data and populating nodes: ", error);
       }
@@ -1179,59 +943,6 @@ export default {
     getCharacterName(id) {
       const character = this.charactersData.find((char) => char.id === id);
       return character ? character.nome_scelto : `"Non conosciuto"`;
-    },
-
-    //Transforms characters data into cytoscape format
-    formatDataForCytoscape(
-      charactersData,
-      maestroRelations,
-      mecenatiRelations,
-      maestroData,
-      mecenatiData
-    ) {
-      const nodes = charactersData.map((character) => ({
-        data: {
-          id: character.id,
-          label: character.nome_scelto,
-          info: character,
-          relationships: {
-            mother: null,
-            father: null,
-            children: [],
-            spouse: null,
-            maestro: [],
-            mecenati: [],
-          },
-        },
-      }));
-
-      maestroRelations.forEach((relation) => {
-        const node = nodes.find(
-          (node) => node.data.id === relation.Virtuose_id
-        );
-        if (node) {
-          node.data.relationships.maestro.push(relation.maestro_id);
-        }
-      });
-
-      mecenatiRelations.forEach((relation) => {
-        const node = nodes.find(
-          (node) => node.data.id === relation.Virtuose_id
-        );
-        if (node) {
-          node.data.relationships.mecenati.push(relation.mecenati_id);
-        }
-      });
-
-      const edges = this.extractEdgesFromCharacters(
-        charactersData,
-        maestroRelations,
-        mecenatiRelations,
-        maestroData,
-        mecenatiData
-      );
-      this.updateRelationships(nodes, edges);
-      return { nodes, edges };
     },
 
     //Organizes all relations
