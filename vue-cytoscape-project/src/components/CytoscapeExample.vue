@@ -40,7 +40,7 @@
                 v-model="searchQuery"
                 @input="updateAutocomplete"
                 @keyup.enter="searchCharacter"
-                placeholder="Cerca una virtuosa..."
+                placeholder="Cerca una persona..."
               />
               <ul v-if="showAutocomplete" id="autocomplete">
                 <li
@@ -70,7 +70,7 @@
         <div id="cy"></div>
         <div id="aside" v-show="showAside" style="display: flex">
           <button id="closeAside" class="nav-button nav-button2">
-            <div class="btn-text filters">Chiudi</div>
+            <div class="btn-text filters" style="font-weight: bold;font-size:large;">x</div>
           </button>
           <div id="aside-content"></div>
         </div>
@@ -305,7 +305,7 @@ li {
 
 .search-container > input {
   padding: 10px;
-  min-width: 180px;
+  min-width: 300px;
   border: solid 2px rgb(100, 9, 18);
 }
 
@@ -521,16 +521,21 @@ h4 {
 }
 
 #closeAside {
+  position: absolute;
+  right: 15px;
+  top: 15px;
+
   background-color: rgb(100, 9, 18) !important;
   color: aliceblue !important;
   padding: 10px !important;
   font-family: Montserrat !important;
-  font-weight: 500 !important;
+  font-weight: 800 !important;
   align-items: center !important;
   justify-content: center !important;
   text-align: center !important;
 
-  max-width: 150px;
+  width: 35px;
+  height: 35px;
 }
 
 #aside h3,
@@ -864,7 +869,7 @@ export default {
             {
               selector: "edge",
               style: {
-                width: 3,
+                width: 5,
                 "line-color": (edge) => {
                   const relation = edge.data();
                   if (relation.type === "maestro") {

@@ -13,16 +13,16 @@
             v-model="searchQuery"
             @input="updateAutocomplete"
             @keyup.enter="searchCharacter"
-            placeholder="Filtrare per genere..."
+            placeholder="Cerca una canzone..."
           />
           <ul v-if="showAutocomplete" id="autocomplete">
             <li
               v-for="song in filteredSongs"
-              :key="song.genere"
+              :key="song.titolo"
               @click="selectCharacter(song)"
               class="character"
             >
-              {{ song.genere }}
+              {{ song.titolo }}
             </li>
           </ul>
         </div>
@@ -38,18 +38,20 @@
             <div class="block">
               <h2>{{ song.titolo }}</h2>
               <h3 v-if="song.data !== null">Data: {{ song.data }}</h3>
-              Autore:
+              <h4 v-if="song.compositore !== null">Compositore: {{ getCharacterName(song.compositore) }}</h4>
+            </div>
+            <div class="block" style="margin-top:30px">
+              <p v-if="song.genere !== null">Genere: {{ song.genere }}</p>
+              <p>{{ getFontType(song.fonte_repertorio) }}</p>
+              <p v-if="song.note !== null">{{ song.note }}</p>
+              <hr class="riga">
+              Cantata da:
               <p
                 v-for="character in song.relatedCharacters"
                 :key="character.characterId"
               >
                 {{ getCharacterName(character.characterId) }}
               </p>
-            </div>
-            <div class="block" style="margin-top:30px">
-              <p v-if="song.genere !== null">Genere: {{ song.genere }}</p>
-              <p>{{ getFontType(song.fonte_repertorio) }}</p>
-              <p v-if="song.note !== null">{{ song.note }}</p>
             </div>
           </div>
         </div>
@@ -175,7 +177,7 @@ hr {
 
 .search-container > input {
   padding: 10px;
-  min-width: 180px;
+  min-width: 320px;
   border: solid 2px rgb(100, 9, 18);
 }
 
@@ -183,7 +185,7 @@ hr {
   position: absolute;
   list-style: none;
   max-height: 200px;
-  max-width: 230px;
+  max-width: 320px;
   overflow-y: scroll;
   background-color: #fafafa;
   border: solid 2px rgb(100, 9, 18);
@@ -271,6 +273,12 @@ hr {
 .color {
   color: rgb(177, 80, 80);
   background-color: rgb(45, 116, 59);
+}
+
+.riga{
+  max-width: 75%;
+  height: 1px;
+  background-color: rgba(100, 9, 18, 0.5);
 }
 
 #container {
@@ -477,10 +485,10 @@ export default {
       const query = this.searchQuery.toLowerCase().trim();
       return this.repertorioData
         .filter((song) =>
-          song.genere && song.genere.toLowerCase().includes(query)
+          song.titolo && song.titolo.toLowerCase().includes(query)
         )
         .sort((a, b) => {
-          return a.genere.localeCompare(b.genere); // Sort alphabetically by character name
+          return a.titolo.localeCompare(b.titolo); // Sort alphabetically by character name
         });
     },
     filteredRepertorio() {
@@ -608,12 +616,12 @@ export default {
     },
     getMatchingCharacters() {
       const query = this.searchQuery.toLowerCase().trim();
-      return this.repertorioData.filter((song) => song.genere && 
-        song.genere.toLowerCase().includes(query)
+      return this.repertorioData.filter((song) => song.titolo && 
+        song.titolo.toLowerCase().includes(query)
       );
     },
     selectCharacter(song) {
-      this.searchQuery = song.genere;
+      this.searchQuery = song.titolo;
       this.showAutocomplete = false;
     },
     searchCharacter() {
@@ -622,8 +630,8 @@ export default {
         this.showAllNodes();
         return;
       }
-      const character = this.repertorioData.find((char) => char.genere &&
-        char.genere.toLowerCase().includes(query)
+      const character = this.repertorioData.find((char) => char.titolo &&
+        char.titolo.toLowerCase().includes(query)
       );
       if (character) {
         // If the genere is found, filter the list to show only the selected genere songs

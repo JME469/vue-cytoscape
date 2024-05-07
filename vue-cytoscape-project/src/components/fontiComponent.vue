@@ -53,6 +53,7 @@
                 <h3 class="font-title">{{ fonti.titolo }}</h3>
                 <h4 v-if="fonti.data !== null">{{ fonti.data }}</h4>
                 <p>Segnatura: {{ fonti.segnatura }}</p>
+                <h4 v-if="fonti.data !== null">{{ fonti.data }}</h4>
             </div>
             <div>
                 <p v-if="fonti.note !== null">{{ fonti.note }}</p><br>
@@ -404,7 +405,7 @@ li {
 }
 
 #musicale-font-container{
-  grid-template-columns: 0.7fr 1fr 0.8fr;
+  grid-template-columns: 0.7fr 0.85fr 0.8fr;
     gap: 5px;
 }
 
