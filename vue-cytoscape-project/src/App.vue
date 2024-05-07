@@ -1,15 +1,15 @@
 <template>
   <div id="app">
-    <fontiComponent />
+    <repertorioComponent />
   </div>
 </template>
 
 <script>
-import fontiComponent from "./components/fontiComponent.vue";
+import repertorioComponent from "./components/repertorioComponent.vue";
 
 export default {
   components: {
-    fontiComponent,
+    repertorioComponent,
   },
 };
 </script>

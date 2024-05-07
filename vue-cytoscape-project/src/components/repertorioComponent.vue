@@ -6,8 +6,29 @@
     </div>
     <div id="events" v-show="showEventList">
       <h1>Repertorio</h1>
+      <div id="searchBar-container">
+        <div class="search-container">
+          <input
+            type="text"
+            v-model="searchQuery"
+            @input="updateAutocomplete"
+            @keyup.enter="searchCharacter"
+            placeholder="Filtrare per genere..."
+          />
+          <ul v-if="showAutocomplete" id="autocomplete">
+            <li
+              v-for="song in filteredSongs"
+              :key="song.genere"
+              @click="selectCharacter(song)"
+              class="character"
+            >
+              {{ song.genere }}
+            </li>
+          </ul>
+        </div>
+      </div>
       <div
-        v-for="(song, index) in repertorioData"
+        v-for="(song, index) in filteredRepertorio"
         :key="song.id"
         :value="song.id"
         :class="[index % 2 === 0 ? 'light-grey' : 'white']"
@@ -194,7 +215,7 @@ hr {
 
 #events > h1 {
   text-align: center;
-  color: rgb(100, 9, 18);
+  margin-bottom: 30px;
 }
 
 #event > h2 {
@@ -452,15 +473,18 @@ export default {
     this.fetchDataAndPopulateNodes();
   },
   computed: {
-    filteredCharacters() {
+    filteredSongs() {
       const query = this.searchQuery.toLowerCase().trim();
-      return this.charactersData
-        .filter((character) =>
-          character.nome_scelto.toLowerCase().includes(query)
+      return this.repertorioData
+        .filter((song) =>
+          song.genere && song.genere.toLowerCase().includes(query)
         )
         .sort((a, b) => {
-          return a.nome_scelto.localeCompare(b.nome_scelto); // Sort alphabetically by character name
+          return a.genere.localeCompare(b.genere); // Sort alphabetically by character name
         });
+    },
+    filteredRepertorio() {
+      return this.filteredSongs;
     },
   },
   methods: {
@@ -584,12 +608,12 @@ export default {
     },
     getMatchingCharacters() {
       const query = this.searchQuery.toLowerCase().trim();
-      return this.charactersData.filter((character) =>
-        character.nome_scelto.toLowerCase().includes(query)
+      return this.repertorioData.filter((song) => song.genere && 
+        song.genere.toLowerCase().includes(query)
       );
     },
-    selectCharacter(character) {
-      this.searchQuery = character.nome_scelto;
+    selectCharacter(song) {
+      this.searchQuery = song.genere;
       this.showAutocomplete = false;
     },
     searchCharacter() {
@@ -598,15 +622,15 @@ export default {
         this.showAllNodes();
         return;
       }
-      const character = this.charactersData.find((char) =>
-        char.nome_scelto.toLowerCase().includes(query)
+      const character = this.repertorioData.find((char) => char.genere &&
+        char.genere.toLowerCase().includes(query)
       );
       if (character) {
-        // If the character is found, filter the graph to show only the selected character and its related nodes
-        this.filterGraph(character);
+        // If the genere is found, filter the list to show only the selected genere songs
+        this.filteredRepertorio = this.filteredSongs;
       } else {
-        // If the character is not found, clear the graph display
-        this.clearGraph();
+        // If the genre is not found, show all the songs
+        this.filteredRepertorio = this.repertorioData;
       }
     },
     //It calls the relevant functions in order to retrieve data and create the graph
