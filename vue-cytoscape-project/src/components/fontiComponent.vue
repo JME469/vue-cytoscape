@@ -43,15 +43,15 @@
     <div v-show="musicale">
       <div class="container">
         <div class="title-container">
-          <h2>Fonti musicali</h2>
+          <h1>Fonti musicali</h1>
         </div>
         <div id="musicale-font-container" class="font-container" v-for="(fonti, index) in fontiMusicali" :key="fonti.id" :value="fonti.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
             <div>
                 <img class="font-img" v-if="fonti.icona !== null" :src="'http://95.110.132.24:8071/assets/'+fonti.icona" alt="">
             </div>
             <div>
-                <h3 class="font-title">{{ fonti.titolo }}</h3>
-                <h4 v-if="fonti.data !== null">{{ fonti.data }}</h4>
+                <h2 class="font-title">{{ fonti.titolo }}</h2>
+                <h3 v-if="fonti.compositore !== null">Compositore: {{ fonti.compositore }}</h3>
                 <p>Segnatura: {{ fonti.segnatura }}</p>
                 <h4 v-if="fonti.data !== null">{{ fonti.data }}</h4>
             </div>
@@ -65,15 +65,15 @@
     <div v-show="archivistiche">
         <div class="container">
           <div class="title-container">
-            <h2>Fonti archivistiche</h2>
+            <h1>Fonti archivistiche</h1>
           </div>
             <div class="font-container" v-for="(fonti, index) in fontiArchivistiche" :key="fonti.id" :value="fonti.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
                 <div>
                     <img class="font-img" v-if="fonti.icona !== null" :src="'http://95.110.132.24:8071/assets/'+fonti.icona" alt="">
                 </div>
                 <div>
-                    <h3>{{ fonti.archivio }}</h3>
-                    <h4 class="font-title" v-if="fonti.titolo !== null" style="font-size:larger;font-weight:bold;">Titolo: {{ fonti.titolo }}</h4>
+                    <h2>{{ fonti.archivio }}</h2>
+                    <h3 class="font-title" v-if="fonti.titolo !== null" style="font-size:larger;font-weight:bold;">Titolo: {{ fonti.titolo }}</h3>
                     <p v-if="fonti.fondo !== null">Fondo: {{ fonti.fondo }}</p>
                 </div>
                 <div style="max-width:80%">
@@ -86,15 +86,15 @@
     <div v-show="letterarie">
         <div class="container">
           <div class="title-container">
-            <h2>Fonti letterarie</h2>
+            <h1>Fonti letterarie</h1>
           </div>
             <div class="font-container" v-for="(fonti, index) in fontiLetterarie" :key="fonti.id" :value="fonti.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
                 <div>
                     <img class="font-img" v-if="fonti.icona !== null" :src="'http://95.110.132.24:8071/assets/'+fonti.icona" alt="">
                 </div>
                 <div>
-                    <h3 class="font-title">{{ fonti.titolo }}</h3>
-                    <h4 v-if="fonti.data !== null">{{ fonti.data }}</h4>
+                    <h2 class="font-title">{{ fonti.titolo }}</h2>
+                    <h3 v-if="fonti.data !== null">{{ fonti.data }}</h3>
                     <p v-if="fonti.segnatura !== null">Segnatura: {{ fonti.segnatura }}</p>
                 </div>
                 <div style="max-width:75%">
@@ -402,6 +402,10 @@ li {
     gap: 15px;
     padding: 70px;
     margin: 5px;
+}
+
+.font-container p, h3, h4{
+  font-size: 18px;
 }
 
 #musicale-font-container{

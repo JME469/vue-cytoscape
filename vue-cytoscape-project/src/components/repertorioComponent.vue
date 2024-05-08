@@ -234,6 +234,7 @@ hr {
 
 #event-info > p {
   max-width: 100%;
+  font-size: 16px;
 }
 
 #event-info > h3 {
@@ -245,6 +246,10 @@ hr {
   flex-direction: column;
   gap: 15px;
   margin: 20px;
+}
+
+#event-content p, h4{
+  font-size: 18px;
 }
 
 .block{

@@ -94,8 +94,8 @@ li {
 }
 
 .event-info > p {
-  font-family: "Source Sans 3";
   max-width: 50%;
+  font-size: 18px;
 }
 
 .event-info {
