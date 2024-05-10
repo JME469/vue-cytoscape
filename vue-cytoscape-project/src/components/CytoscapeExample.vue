@@ -1,38 +1,10 @@
 <template>
   <div id="outer-container">
-    <div id="nav-container" class="nav-container2">
-      <ul id="nav2">
-        <li>
-          <button
-            id="family"
-            :class="{ selected: selectedFilter === 'family' }"
-            class="nav-button nav-button2"
-            @click="toggleFilter('family')"
-          >
-            <div class="btn-text filters">Famiglia</div>
-          </button>
-        </li>
-        <li>
-          <button
-            id="work"
-            :class="{ selected: selectedFilter === 'work' }"
-            class="nav-button nav-button2"
-            @click="toggleFilter('work')"
-          >
-            <div class="btn-text filters">Lavoro</div>
-          </button>
-        </li>
-        <li>
-          <button
-            id="all"
-            :class="{ selected: selectedFilter === 'all' }"
-            class="nav-button nav-button2"
-            @click="toggleFilter('all')"
-          >
-            <div class="btn-text filters">Network</div>
-          </button>
-        </li>
-        <li>
+    <!-- GRAPH AND FUNCTIONALITIES -->
+
+    <div v-show="showCytoscape">
+      <div id="container">
+        <div id="nav-container" class="nav-container2">
           <div id="searchBar-container">
             <div class="search-container">
               <input
@@ -57,23 +29,67 @@
               <button @click="searchCharacter">Cerca</button>
             </div>
           </div>
-        </li>
-      </ul>
-    </div>
-    <hr />
-
-    <!-- GRAPH AND FUNCTIONALITIES -->
-
-    <div v-show="showCytoscape">
-      <div id="container">
+          <ul id="nav2">
+            <li>
+              <button
+                id="family"
+                :class="{ selected: selectedFilter === 'family' }"
+                class="nav-button nav-button2"
+                @click="toggleFilter('family')"
+              >
+                <div class="btn-text filters">Famiglia</div>
+              </button>
+            </li>
+            <li>
+              <button
+                id="work"
+                :class="{ selected: selectedFilter === 'work' }"
+                class="nav-button nav-button2"
+                @click="toggleFilter('work')"
+              >
+                <div class="btn-text filters">Lavoro</div>
+              </button>
+            </li>
+            <li>
+              <button
+                id="all"
+                :class="{ selected: selectedFilter === 'all' }"
+                class="nav-button nav-button2"
+                @click="toggleFilter('all')"
+              >
+                <div class="btn-text filters">Network</div>
+              </button>
+            </li>
+          </ul>
+          <ul id="nav3">
+            <li>
+              <multiselect
+                v-model="selectedFilters"
+                :options="filterOptions"
+                placeholder="Select filters"
+                label="name"
+                track-by="id"
+                multiple
+              ></multiselect>
+            </li>
+          </ul>
+        </div>
         <!-- Cytoscape graph-->
         <div id="cy"></div>
         <div id="aside" v-show="showAside" style="display: flex">
           <button id="closeAside" class="nav-button nav-button2">
-            <div class="btn-text filters" style="font-weight: bold;font-size:large;">x</div>
+            <div
+              class="btn-text filters"
+              style="font-weight: bold; font-size: large"
+            >
+              x
+            </div>
           </button>
           <div id="aside-content"></div>
         </div>
+      </div>
+      <div id="download-container">
+        <button @click="downloadData">Scarica gli dati</button>
       </div>
     </div>
   </div>
@@ -139,18 +155,15 @@ hr {
 
 #nav-container {
   display: flex;
+  flex-direction: column;
+  gap: 20px;
   text-align: center;
   align-items: center;
   justify-content: center;
-  margin-top: 50px;
-}
-
-.nav-container2 {
-  display: flex;
-  text-align: center;
-  align-items: start !important;
-  justify-content: center;
-  margin-top: 20px;
+  float: left;
+  position: absolute;
+  left: 10px;
+  padding: 20px;
 }
 
 #nav {
@@ -165,7 +178,19 @@ hr {
 #nav2 {
   display: flex;
   flex-direction: row;
+  flex-flow: row-reverse;
   gap: 20px;
+  list-style: none;
+  list-style-type: none;
+  z-index: 1000;
+  margin-bottom: 30px;
+  align-items: center;
+}
+
+#nav3 {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
   list-style: none;
   list-style-type: none;
   z-index: 1000;
@@ -281,6 +306,7 @@ li {
   align-items: center;
   justify-content: center;
   height: 100%;
+  z-index: 1001;
 }
 
 #searchBar-container > div > button {
@@ -415,11 +441,12 @@ li {
   background-color: rgb(255, 255, 255);
   display: flex;
   justify-content: center;
+  margin-bottom: 50px;
 }
 
 #cy {
   width: 100%;
-  height: 1100px;
+  height: 900px;
   background-color: rgb(255, 255, 255);
   border: solid 2px rgb(100, 9, 18);
 }
@@ -466,7 +493,7 @@ li {
   color: rgb(67, 67, 67);
 }
 
-.chInfo p{
+.chInfo p {
   margin-bottom: 0.75em !important;
 }
 
@@ -543,21 +570,41 @@ h4 {
   font-family: "Source Sans 3" !important;
   font-size: medium !important;
 }
+
+#download-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 50px;
+}
+
+#download-container button {
+  padding: 15px;
+}
 </style>
 
 <script>
 import cytoscape from "cytoscape";
 import fcose from "cytoscape-fcose";
+import Multiselect from "vue-multiselect";
 
 cytoscape.use(fcose);
 
 export default {
+  components: {
+    Multiselect,
+  },
   data() {
     return {
       showCytoscape: true,
       showEventList: false,
       showPopup: false,
       showAside: false,
+
+      //Multi-select config
+      selectedFilters: [],
+      filterOptions: [],
 
       isPanning: false,
       initialPointerPosition: { x: 0, y: 0 },
@@ -572,11 +619,12 @@ export default {
       mecenatiRelations: [],
       maestroData: [],
       mecenatiData: [],
+      tipoMecenate: [],
       eventsData: [],
 
       cy: null,
       cyData: null,
-      filter: "family",
+      filter: "all",
       eventFilter: false,
       layout1: {
         name: "fcose",
@@ -607,10 +655,12 @@ export default {
       showDropdown: false,
       dropdownLabel: "Eventi",
       selectedEvent: null,
-      selectedFilter: "family",
+      selectedFilter: "all",
       searchQuery: "",
       showAutocomplete: false,
       accordionState: {},
+
+      filteredData: [],
     };
   },
   mounted() {
@@ -632,6 +682,23 @@ export default {
     },
   },
   methods: {
+    downloadData() {
+      const jsonData = JSON.stringify(this.filteredData, null, 2);
+
+      const blob = new Blob([jsonData], { type: "application/json" });
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "filtered_data.json";
+
+      document.body.appendChild(link);
+      link.click();
+
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+    },
     async toggleFilter(filterValue) {
       if (this.filter !== filterValue) {
         this.filter = filterValue;
@@ -914,6 +981,14 @@ export default {
         const mecenatiData = await this.retrieveMecenatiData();
         this.mecenatiData = mecenatiData;
 
+        const tipoMecenate = await this.retrieveTipoMecenate();
+        this.filterOptions = tipoMecenate.map((filter) => {
+          return {
+            id: filter.id,
+            name: filter.tipologia,
+          };
+        });
+
         const combinedMaestroData = this.combineMaestroData(
           maestroRelations,
           maestroData
@@ -1035,6 +1110,20 @@ export default {
       try {
         const response = await fetch(
           "http://95.110.132.24:8071/items/mecenati"
+        );
+        const responseData = await response.json();
+        const data = responseData.data;
+
+        return data;
+      } catch (error) {
+        console.error("Error fetching event relations: ", error);
+        throw error;
+      }
+    },
+    async retrieveTipoMecenate() {
+      try {
+        const response = await fetch(
+          "http://95.110.132.24:8071/items/tipo_mecenate"
         );
         const responseData = await response.json();
         const data = responseData.data;
@@ -1487,7 +1576,7 @@ export default {
             : "";
 
         const noteSection = info.note ? `<p><b>Info:</b> ${info.note}</p>` : "";
-  
+
         const pseudonimo =
           info.pseudonimo !== null ? `<p><i>${info.pseudonimo}</i></p>` : "";
         const nascita =
@@ -1521,7 +1610,8 @@ export default {
               <h3 style="margin-left:10px"><b>${info.nome_scelto}</b>${
           logoSrc !== ""
             ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
-            : ""}
+            : ""
+        }
               </h3>
         <h4 style="margin-left:10px">${pseudonimo}</h4>
         <br>
@@ -1754,7 +1844,7 @@ export default {
       // Add mouse event listeners for custom panning
 
       this.cy.ready(() => {
-        this.cy.zoom(0.75);
+        this.cy.zoom(0.6);
       });
     },
   },
