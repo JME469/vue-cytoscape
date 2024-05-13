@@ -17,6 +17,8 @@
     "cytoscape-euler": "^1.2.2",
     "cytoscape-fcose": "^2.2.0",
     "cytoscape-springy": "^1.4.2",
+    "primeicons": "^7.0.0",
+    "primevue": "^3.52.0",
     "vue": "^3.2.13",
     "vue-multiselect": "^3.0.0"
   },

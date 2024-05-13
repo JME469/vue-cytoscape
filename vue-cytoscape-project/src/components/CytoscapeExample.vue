@@ -63,14 +63,14 @@
           </ul>
           <ul id="nav3">
             <li>
-              <multiselect
+              <MultiSelect
                 v-model="selectedFilters"
+                display="chip"
                 :options="filterOptions"
                 placeholder="Select filters"
-                label="name"
-                track-by="id"
-                multiple
-              ></multiselect>
+                optionLabel="name"
+                @change="filterChange"
+              ></MultiSelect>
             </li>
           </ul>
         </div>
@@ -587,14 +587,10 @@ h4 {
 <script>
 import cytoscape from "cytoscape";
 import fcose from "cytoscape-fcose";
-import Multiselect from "vue-multiselect";
 
 cytoscape.use(fcose);
 
 export default {
-  components: {
-    Multiselect,
-  },
   data() {
     return {
       showCytoscape: true,
@@ -762,7 +758,33 @@ export default {
     },
 
     /* CHARACTER SEARCH LOGIC */
+    filterChange(){
+      this.filterGraphByRelations(this.selectedFilters);
+    },
 
+    filterGraphByRelations(selectedFilters) {
+
+        this.cy.elements().hide();
+
+        const selectedFiltersIds = selectedFilters.map(filter => filter.id);
+        console.log(selectedFiltersIds);
+
+        this.cy.edges().forEach((edge) => {
+            const sourceId = edge.source().id();
+            const targetId = edge.target().id();
+            const mecenateType = edge.data().mecenatiType;
+            console.log(mecenateType);
+
+            if (selectedFiltersIds.includes(mecenateType)) {
+                edge.show();
+                this.cy.getElementById(sourceId).show();
+                this.cy.getElementById(targetId).show();
+            }
+        });
+
+        this.cy.fit(this.cy.nodes(':visible'), 420);
+      
+    },
     //Shows the searched character and related nodes
     filterGraph(character) {
       const characterId = character.id;
@@ -1020,6 +1042,7 @@ export default {
         this.loadLayout();
         this.populateCytoscapeGraph();
         this.addCytoscapeEventListeners();
+        console.log(this.mecenatiData)
       } catch (error) {
         console.error("Error fetching data and populating nodes: ", error);
       }
@@ -1134,6 +1157,28 @@ export default {
         throw error;
       }
     },
+    async retrieveRepertorioData() {
+      const response = await fetch(
+        "http://95.110.132.24:8071/items/repertorio?filter[pubblicato][_eq]=1"
+      );
+      const responseData = await response.json();
+      const data = responseData.data;
+
+      for (const song of data) {
+        // Initialize an array to store related characters
+        song.relatedCharacters = [];
+
+        // Find corresponding relation in repertorioRelations
+        const relation = this.repertorioRelations.find(
+          (rel) => rel.repertorio_id === song.id
+        );
+        if (relation) {
+          // Get the character ID from the relation and add it to the song's relatedCharacters array
+          song.relatedCharacters.push({ characterId: relation.Virtuose_id });
+        }
+      }
+      return data;
+    },
 
     /* DATA HANDLING */
     //They translate the references to the corresponding characters
@@ -1169,6 +1214,7 @@ export default {
         return {
           relation,
           mecenati: mecenati.mecenate,
+          mecType: mecenati.tipo_mecenate,
         };
       });
     },
@@ -1205,12 +1251,12 @@ export default {
       this.charactersData.forEach((character) => {
         character.mecenati = [];
       });
-      combinedMecenatiData.forEach(({ relation, mecenati }) => {
+      combinedMecenatiData.forEach(({ relation, mecenati}) => {
         const character = this.charactersData.find(
           (char) => char.id === relation.Virtuose_id
         );
         if (character) {
-          // Update character's maestro relations
+          // Update character's mecenati relations
           if (!character.mecenati) {
             character.mecenati = [];
           }
@@ -1243,6 +1289,7 @@ export default {
             spouse: null,
             maestro: [],
             mecenati: [],
+            mecenateType: null,
           },
         },
       }));
@@ -1262,6 +1309,7 @@ export default {
         );
         if (node) {
           node.data.relationships.mecenati.push(relation.mecenati_id);
+          node.data.relationships.mecenateType;
         }
       });
 
@@ -1359,6 +1407,7 @@ export default {
 
           if (sourceExists && targetExists) {
             let relationType = "family";
+            let mecenateType = null;
 
             const maestro = maestroData.find((m) => m.maestro === relativeId);
             if (maestro) {
@@ -1384,6 +1433,7 @@ export default {
                   )
                 ) {
                   relationType = "mecenati";
+                  mecenateType = mecenati.tipo_mecenate;
                 }
               }
             }
@@ -1394,6 +1444,7 @@ export default {
                 source: character.id,
                 target: relativeId,
                 type: relationType,
+                mecenatiType: mecenateType,
               },
             });
           }

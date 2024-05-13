@@ -116,4 +116,9 @@ body{
 .multiselect .multiselect__element{
   margin-bottom: 10px;
 }
+
+.p-multiselect{
+  width: 350px;
+  overflow: hidden;
+}
 </style>
