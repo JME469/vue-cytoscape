@@ -38,7 +38,7 @@
 
     <!-- GRAPH AND FUNCTIONALITIES -->
     <div id="logo-container">
-      <img v-show="loading" id="loading" src="/wordpress/wp-content/themes/astra/assets/dist/img/vidimus_r.png" alt="Logo vidimus" width="500px">
+      <img v-show="loading" id="loading" src="/wp-content/themes/astra/assets/dist/img/vidimus_r.png" alt="Logo vidimus" width="500px">
     </div>
     <div v-show="musicale">
       <div class="container">
@@ -47,7 +47,7 @@
         </div>
         <div id="musicale-font-container" class="font-container" v-for="(fonti, index) in fontiMusicali" :key="fonti.id" :value="fonti.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
             <div>
-                <img class="font-img" v-if="fonti.icona !== null" :src="'http://95.110.132.24:8071/assets/'+fonti.icona" alt="">
+                <img class="font-img" v-if="fonti.icona !== null" :src="'https://directusvirtuose.vidimus.it/assets/'+fonti.icona" alt="">
             </div>
             <div>
                 <h2 class="font-title">{{ fonti.titolo }}</h2>
@@ -69,7 +69,7 @@
           </div>
             <div class="font-container" v-for="(fonti, index) in fontiArchivistiche" :key="fonti.id" :value="fonti.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
                 <div>
-                    <img class="font-img" v-if="fonti.icona !== null" :src="'http://95.110.132.24:8071/assets/'+fonti.icona" alt="">
+                    <img class="font-img" v-if="fonti.icona !== null" :src="'https://directusvirtuose.vidimus.it/assets/'+fonti.icona" alt="">
                 </div>
                 <div>
                     <h2>{{ fonti.archivio }}</h2>
@@ -90,7 +90,7 @@
           </div>
             <div class="font-container" v-for="(fonti, index) in fontiLetterarie" :key="fonti.id" :value="fonti.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
                 <div>
-                    <img class="font-img" v-if="fonti.icona !== null" :src="'http://95.110.132.24:8071/assets/'+fonti.icona" alt="">
+                    <img class="font-img" v-if="fonti.icona !== null" :src="'https://directusvirtuose.vidimus.it/assets/'+fonti.icona" alt="">
                 </div>
                 <div>
                     <h2 class="font-title">{{ fonti.titolo }}</h2>
@@ -744,7 +744,7 @@ export default {
     /* DATA RETRIEVING */
     async retrieveData() {
       const response = await fetch(
-        "http://95.110.132.24:8071/items/Virtuose?filter[pubblicato][_eq]=1"
+        "https://directusvirtuose.vidimus.it/items/Virtuose?filter[pubblicato][_eq]=1"
       );
       const responseData = await response.json();
       const data = responseData.data;
@@ -752,7 +752,7 @@ export default {
     },
     async retrieveRelations() {
       const response = await fetch(
-        "http://95.110.132.24:8071/items/Virtuose_Virtuose"
+        "https://directusvirtuose.vidimus.it/items/Virtuose_Virtuose"
       );
       const responseData = await response.json();
       const data = responseData.data;
@@ -760,7 +760,7 @@ export default {
     },
     async retrieveFontiMusicali() {
       const response = await fetch(
-        "http://95.110.132.24:8071/items/fonti_musicali"
+        "https://directusvirtuose.vidimus.it/items/fonti_musicali"
       );
       const responseData = await response.json();
       const data = responseData.data;
@@ -768,7 +768,7 @@ export default {
     },
     async retrieveFontiArchivistiche() {
       const response = await fetch(
-        "http://95.110.132.24:8071/items/fonti_archivistiche"
+        "https://directusvirtuose.vidimus.it/items/fonti_archivistiche"
       );
       const responseData = await response.json();
       const data = responseData.data;
@@ -776,7 +776,7 @@ export default {
     },
     async retrieveFontiLetterarie() {
       const response = await fetch(
-        "http://95.110.132.24:8071/items/Fonti_letterarie"
+        "https://directusvirtuose.vidimus.it/items/Fonti_letterarie"
       );
       const responseData = await response.json();
       const data = responseData.data;
@@ -785,7 +785,7 @@ export default {
 
     async retrieveEvents() {
       try {
-        const response = await fetch("http://95.110.132.24:8071/items/eventi");
+        const response = await fetch("https://directusvirtuose.vidimus.it/items/eventi");
         const eventData = await response.json();
         const events = eventData.data;
         return events;
@@ -797,7 +797,7 @@ export default {
     async retrieveEventRelations() {
       try {
         const response = await fetch(
-          "http://95.110.132.24:8071/items/Virtuose_eventi"
+          "https://directusvirtuose.vidimus.it/items/Virtuose_eventi"
         );
         const responseData = await response.json();
         const data = responseData.data;
@@ -810,7 +810,7 @@ export default {
     async retrieveMaestroRelations() {
       try {
         const response = await fetch(
-          "http://95.110.132.24:8071/items/Virtuose_maestro"
+          "https://directusvirtuose.vidimus.it/items/Virtuose_maestro"
         );
         const responseData = await response.json();
         const maestroRelations = responseData.data;
@@ -823,7 +823,7 @@ export default {
     },
     async retrieveMaestroData() {
       try {
-        const response = await fetch("http://95.110.132.24:8071/items/maestro");
+        const response = await fetch("https://directusvirtuose.vidimus.it/items/maestro");
         const responseData = await response.json();
         const maestroData = responseData.data;
 
@@ -836,7 +836,7 @@ export default {
     async retrieveMecenatiRelations() {
       try {
         const response = await fetch(
-          "http://95.110.132.24:8071/items/Virtuose_mecenati"
+          "https://directusvirtuose.vidimus.it/items/Virtuose_mecenati"
         );
         const responseData = await response.json();
         const data = responseData.data;
@@ -850,7 +850,7 @@ export default {
     async retrieveMecenatiData() {
       try {
         const response = await fetch(
-          "http://95.110.132.24:8071/items/mecenati"
+          "https://directusvirtuose.vidimus.it/items/mecenati"
         );
         const responseData = await response.json();
         const data = responseData.data;
@@ -1242,11 +1242,11 @@ export default {
         this.showPopup = true;
 
         const logoSrc = info.virtuosa
-          ? `/wordpress/wp-content/themes/astra/assets/dist/img/logo_r.png`
+          ? `/wp-content/themes/astra/assets/dist/img/logo_r.png`
           : "";
         const imageSrc =
           info.icona !== null
-            ? `http://95.110.132.24:8071/assets/${info.icona}`
+            ? `https://directusvirtuose.vidimus.it/assets/${info.icona}`
             : "";
 
         // const virtuoseLogo = info.virtuosa
@@ -1406,11 +1406,11 @@ export default {
       const content = document.getElementById("aside-content");
 
       const logoSrc = info.virtuosa
-        ? `/wordpress/wp-content/themes/astra/assets/dist/img/logo_r.png`
+        ? `/wp-content/themes/astra/assets/dist/img/logo_r.png`
         : "";
       const imageSrc =
         info.icona !== null
-          ? `http://95.110.132.24:8071/assets/${info.icona}`
+          ? `https://directusvirtuose.vidimus.it/assets/${info.icona}`
           : "";
 
       // Construct the content for the aside section

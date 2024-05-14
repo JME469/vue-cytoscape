@@ -69,7 +69,7 @@
                 :options="filterOptions"
                 placeholder="Select filters"
                 optionLabel="name"
-                @change="filterChange"
+                @change="filterChange(this.selectedFilters)"
               ></MultiSelect>
             </li>
           </ul>
@@ -535,7 +535,7 @@ h4 {
   float: right;
   right: 0;
   min-width: 350px;
-  max-width: 500px;
+  max-width: 650px;
   min-height: 700px;
   max-height: 1000px;
   overflow-y: scroll;
@@ -617,6 +617,8 @@ export default {
       mecenatiData: [],
       tipoMecenate: [],
       eventsData: [],
+      repertorioRelations: [],
+      repertorioData: [],
 
       cy: null,
       cyData: null,
@@ -758,8 +760,12 @@ export default {
     },
 
     /* CHARACTER SEARCH LOGIC */
-    filterChange(){
-      this.filterGraphByRelations(this.selectedFilters);
+    filterChange(selectedFilters){
+      if (selectedFilters.length < 1) {
+        this.showAllNodes();
+      } else{
+        this.filterGraphByRelations(this.selectedFilters);
+      }
     },
 
     filterGraphByRelations(selectedFilters) {
@@ -767,13 +773,11 @@ export default {
         this.cy.elements().hide();
 
         const selectedFiltersIds = selectedFilters.map(filter => filter.id);
-        console.log(selectedFiltersIds);
 
         this.cy.edges().forEach((edge) => {
             const sourceId = edge.source().id();
             const targetId = edge.target().id();
             const mecenateType = edge.data().mecenatiType;
-            console.log(mecenateType);
 
             if (selectedFiltersIds.includes(mecenateType)) {
                 edge.show();
@@ -929,7 +933,7 @@ export default {
                 "background-image": (node) => {
                   const info = node.data("info");
                   return info.icona !== null
-                    ? `url(http://95.110.132.24:8071/assets/${info.icona})`
+                    ? `url(https://directusvirtuose.vidimus.it/assets/${info.icona})`
                     : "none";
                 },
                 "background-fit": "cover",
@@ -1003,6 +1007,11 @@ export default {
         const mecenatiData = await this.retrieveMecenatiData();
         this.mecenatiData = mecenatiData;
 
+        const repertorioRelations = await this.retrieveRepertorioRelations();
+        this.repertorioRelations = repertorioRelations;
+        const repertorioData = await this.retrieveRepertorioData();
+        this.repertorioData = repertorioData;
+
         const tipoMecenate = await this.retrieveTipoMecenate();
         this.filterOptions = tipoMecenate.map((filter) => {
           return {
@@ -1042,7 +1051,6 @@ export default {
         this.loadLayout();
         this.populateCytoscapeGraph();
         this.addCytoscapeEventListeners();
-        console.log(this.mecenatiData)
       } catch (error) {
         console.error("Error fetching data and populating nodes: ", error);
       }
@@ -1051,7 +1059,7 @@ export default {
     /* DATA RETRIEVING */
     async retrieveData() {
       const response = await fetch(
-        "http://95.110.132.24:8071/items/Virtuose?filter[pubblicato][_eq]=1"
+        "https://directusvirtuose.vidimus.it/items/Virtuose?filter[pubblicato][_eq]=1"
       );
       const responseData = await response.json();
       const data = responseData.data;
@@ -1059,7 +1067,7 @@ export default {
     },
     async retrieveRelations() {
       const response = await fetch(
-        "http://95.110.132.24:8071/items/Virtuose_Virtuose"
+        "https://directusvirtuose.vidimus.it/items/Virtuose_Virtuose"
       );
       const responseData = await response.json();
       const data = responseData.data;
@@ -1067,7 +1075,7 @@ export default {
     },
     async retrieveEvents() {
       try {
-        const response = await fetch("http://95.110.132.24:8071/items/eventi");
+        const response = await fetch("https://directusvirtuose.vidimus.it/items/eventi");
         const eventData = await response.json();
         const events = eventData.data;
         return events;
@@ -1079,7 +1087,7 @@ export default {
     async retrieveEventRelations() {
       try {
         const response = await fetch(
-          "http://95.110.132.24:8071/items/Virtuose_eventi"
+          "https://directusvirtuose.vidimus.it/items/Virtuose_eventi"
         );
         const responseData = await response.json();
         const data = responseData.data;
@@ -1092,7 +1100,7 @@ export default {
     async retrieveMaestroRelations() {
       try {
         const response = await fetch(
-          "http://95.110.132.24:8071/items/Virtuose_maestro"
+          "https://directusvirtuose.vidimus.it/items/Virtuose_maestro"
         );
         const responseData = await response.json();
         const maestroRelations = responseData.data;
@@ -1105,7 +1113,7 @@ export default {
     },
     async retrieveMaestroData() {
       try {
-        const response = await fetch("http://95.110.132.24:8071/items/maestro");
+        const response = await fetch("https://directusvirtuose.vidimus.it/items/maestro");
         const responseData = await response.json();
         const maestroData = responseData.data;
 
@@ -1118,7 +1126,7 @@ export default {
     async retrieveMecenatiRelations() {
       try {
         const response = await fetch(
-          "http://95.110.132.24:8071/items/Virtuose_mecenati"
+          "https://directusvirtuose.vidimus.it/items/Virtuose_mecenati"
         );
         const responseData = await response.json();
         const data = responseData.data;
@@ -1132,7 +1140,7 @@ export default {
     async retrieveMecenatiData() {
       try {
         const response = await fetch(
-          "http://95.110.132.24:8071/items/mecenati"
+          "https://directusvirtuose.vidimus.it/items/mecenati"
         );
         const responseData = await response.json();
         const data = responseData.data;
@@ -1146,7 +1154,7 @@ export default {
     async retrieveTipoMecenate() {
       try {
         const response = await fetch(
-          "http://95.110.132.24:8071/items/tipo_mecenate"
+          "https://directusvirtuose.vidimus.it/items/tipo_mecenate"
         );
         const responseData = await response.json();
         const data = responseData.data;
@@ -1157,9 +1165,17 @@ export default {
         throw error;
       }
     },
+    async retrieveRepertorioRelations() {
+      const response = await fetch(
+        "https://directusvirtuose.vidimus.it/items/Virtuose_repertorio"
+      );
+      const responseData = await response.json();
+      const data = responseData.data;
+      return data;
+    },
     async retrieveRepertorioData() {
       const response = await fetch(
-        "http://95.110.132.24:8071/items/repertorio?filter[pubblicato][_eq]=1"
+        "https://directusvirtuose.vidimus.it/items/repertorio?filter[pubblicato][_eq]=1"
       );
       const responseData = await response.json();
       const data = responseData.data;
@@ -1619,11 +1635,11 @@ export default {
         this.showPopup = true;
 
         const logoSrc = info.virtuosa
-          ? `/wordpress/wp-content/themes/astra/assets/dist/img/logo_r.png`
+          ? `/wp-content/themes/astra/assets/dist/img/logo_r.png`
           : "";
         const imageSrc =
           info.icona !== null
-            ? `http://95.110.132.24:8071/assets/${info.icona}`
+            ? `https://directusvirtuose.vidimus.it/assets/${info.icona}`
             : "";
 
         const noteSection = info.note ? `<p><b>Info:</b> ${info.note}</p>` : "";
@@ -1721,7 +1737,6 @@ export default {
       }, 750);
     },
     closeAside() {
-      console.log("Close aside");
       document
         .getElementById("closeAside")
         .removeEventListener("click", this.closeAside);
@@ -1733,7 +1748,6 @@ export default {
     },
     handleNodeClick(event) {
       // Show detailed info about the clicked node in the aside section
-      console.log("function triggered");
 
       const node = event.target;
       const info = node.data("info");
@@ -1742,11 +1756,11 @@ export default {
       const content = document.getElementById("aside-content");
 
       const logoSrc = info.virtuosa
-        ? `/wordpress/wp-content/themes/astra/assets/dist/img/logo_r.png`
+        ? `/wp-content/themes/astra/assets/dist/img/logo_r.png`
         : "";
       const imageSrc =
         info.icona !== null
-          ? `http://95.110.132.24:8071/assets/${info.icona}`
+          ? `https://directusvirtuose.vidimus.it/assets/${info.icona}`
           : "";
 
       // Construct the content for the aside section
@@ -1833,6 +1847,30 @@ export default {
                     (event) => event.id === eventId
                   );
                   return event ? `${event.data} - ${event.luogo}` : "";
+                })
+                .join(" | ")}</p>`
+            : ""
+        }
+        ${
+          info.repertorio && info.repertorio.length > 0
+            ? `<p><b>Repertorio:</b> ${info.repertorio
+                .map((repertorioId) => {
+                  const song = this.repertorioData.find(
+                    (song) => song.id === repertorioId
+                  );
+                  return song ? `${song.titolo} - ${song.genere}` : "";
+                })
+                .join(" | ")}</p>`
+            : ""
+        }
+        ${
+          info.fonti_archivistiche && info.fonti_archivistiche.length > 0
+            ? `<p><b>Fonti archivistiche:</b> ${info.fonti_archivistiche
+                .map((fontiId) => {
+                  const fonti = this.repertorioData.find(
+                    (fonti) => fonti.id === fontiId
+                  );
+                  return fonti ? `${fonti.titolo} - ${fonti.titolo}` : "";
                 })
                 .join(" | ")}</p>`
             : ""

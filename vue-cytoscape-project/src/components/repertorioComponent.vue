@@ -2,7 +2,7 @@
   <div id="outer-container">
     <!-- EVENTS PAGE -->
     <div id="logo-container">
-      <img v-show="loading" id="loading" src="/wordpress/wp-content/themes/astra/assets/dist/img/vidimus_r.png" alt="Logo vidimus" width="500px">
+      <img v-show="loading" id="loading" src="/wp-content/themes/astra/assets/dist/img/vidimus_r.png" alt="Logo vidimus" width="500px">
     </div>
     <div id="events" v-show="showEventList">
       <h1>Repertorio</h1>
@@ -703,7 +703,7 @@ export default {
     /* DATA RETRIEVING */
     async retrieveData() {
       const response = await fetch(
-        "http://95.110.132.24:8071/items/Virtuose?filter[pubblicato][_eq]=1"
+        "https://directusvirtuose.vidimus.it/items/Virtuose?filter[pubblicato][_eq]=1"
       );
       const responseData = await response.json();
       const data = responseData.data;
@@ -711,7 +711,7 @@ export default {
     },
     async retrieveRelations() {
       const response = await fetch(
-        "http://95.110.132.24:8071/items/Virtuose_Virtuose"
+        "https://directusvirtuose.vidimus.it/items/Virtuose_Virtuose"
       );
       const responseData = await response.json();
       const data = responseData.data;
@@ -719,7 +719,7 @@ export default {
     },
     async retrieveRepertorioRelations() {
       const response = await fetch(
-        "http://95.110.132.24:8071/items/Virtuose_repertorio"
+        "https://directusvirtuose.vidimus.it/items/Virtuose_repertorio"
       );
       const responseData = await response.json();
       const data = responseData.data;
@@ -727,7 +727,7 @@ export default {
     },
     async retrieveRepertorioData() {
       const response = await fetch(
-        "http://95.110.132.24:8071/items/repertorio?filter[pubblicato][_eq]=1"
+        "https://directusvirtuose.vidimus.it/items/repertorio?filter[pubblicato][_eq]=1"
       );
       const responseData = await response.json();
       const data = responseData.data;
@@ -749,7 +749,7 @@ export default {
     },
     async retrieveEvents() {
       try {
-        const response = await fetch("http://95.110.132.24:8071/items/eventi");
+        const response = await fetch("https://directusvirtuose.vidimus.it/items/eventi");
         const eventData = await response.json();
         const events = eventData.data;
         return events;
@@ -761,7 +761,7 @@ export default {
     async retrieveEventRelations() {
       try {
         const response = await fetch(
-          "http://95.110.132.24:8071/items/Virtuose_eventi"
+          "https://directusvirtuose.vidimus.it/items/Virtuose_eventi"
         );
         const responseData = await response.json();
         const data = responseData.data;
@@ -774,7 +774,7 @@ export default {
     async retrieveMaestroRelations() {
       try {
         const response = await fetch(
-          "http://95.110.132.24:8071/items/Virtuose_maestro"
+          "https://directusvirtuose.vidimus.it/items/Virtuose_maestro"
         );
         const responseData = await response.json();
         const maestroRelations = responseData.data;
@@ -787,7 +787,7 @@ export default {
     },
     async retrieveMaestroData() {
       try {
-        const response = await fetch("http://95.110.132.24:8071/items/maestro");
+        const response = await fetch("https://directusvirtuose.vidimus.it/items/maestro");
         const responseData = await response.json();
         const maestroData = responseData.data;
 
@@ -800,7 +800,7 @@ export default {
     async retrieveMecenatiRelations() {
       try {
         const response = await fetch(
-          "http://95.110.132.24:8071/items/Virtuose_mecenati"
+          "https://directusvirtuose.vidimus.it/items/Virtuose_mecenati"
         );
         const responseData = await response.json();
         const data = responseData.data;
@@ -814,7 +814,7 @@ export default {
     async retrieveMecenatiData() {
       try {
         const response = await fetch(
-          "http://95.110.132.24:8071/items/mecenati"
+          "https://directusvirtuose.vidimus.it/items/mecenati"
         );
         const responseData = await response.json();
         const data = responseData.data;
