@@ -4,7 +4,14 @@
 
     <div v-show="showCytoscape">
       <div id="container">
-        <div id="nav-container" class="nav-container2">
+        <div>
+          <button 
+          id="menu-deploy"
+          @click="toggleFilterMenu">
+            Mostra il menu
+          </button>
+        </div>
+        <div v-show="filterMenuDisplay" id="nav-container" class="nav-container2">
           <div id="searchBar-container">
             <div class="search-container">
               <input
@@ -61,8 +68,8 @@
               </button>
             </li>
           </ul>
-          <ul id="nav3">
-            <li>
+          <ul id="nav3" style="z-index: 2000;">
+            <li style="z-index: 2000;">
               <MultiSelect
                 v-model="selectedFilters"
                 display="chip"
@@ -143,6 +150,20 @@ hr {
   position: absolute;
 }
 
+#menu-deploy{
+  border: solid 2px rgb(120, 38, 46);
+  background-color: white;
+  font-family: Montserrat;
+  font-weight: 500;
+  font-size: medium;
+  padding: 10px;
+  float: left;
+  position: absolute;
+  left: 10px;
+  transform: translateY(-50px);
+
+}
+
 #filter-menu {
   position: absolute;
   left: 50px;
@@ -164,6 +185,10 @@ hr {
   position: absolute;
   left: 10px;
   padding: 20px;
+  background-color: white;
+  border: solid 2px rgb(120, 38, 46);
+  z-index: 1005;
+  max-width: 290px;
 }
 
 #nav {
@@ -177,14 +202,21 @@ hr {
 
 #nav2 {
   display: flex;
-  flex-direction: row;
-  flex-flow: row-reverse;
-  gap: 20px;
+  flex-direction: column;
+  flex-flow: column-reverse;
+  gap: 10px;
   list-style: none;
   list-style-type: none;
   z-index: 1000;
   margin-bottom: 30px;
   align-items: center;
+  min-width: 125px;
+  max-width: 125px;
+}
+
+#nav2 li{
+  width: 100%;
+
 }
 
 #nav3 {
@@ -209,9 +241,9 @@ li {
   flex-direction: row;
   align-items: center;
   text-align: center;
-  height: 100%;
-  width: auto;
-  padding: 20px;
+  height: auto;
+  width: 100%;
+  padding: 15px;
   margin: 0;
   font-size: large;
   border: none;
@@ -262,6 +294,7 @@ li {
   font-weight: 600;
   transition: all 0.5s ease-out;
   text-align: center;
+  font-size: small;
 }
 
 .dropdown {
@@ -290,7 +323,7 @@ li {
 }
 
 .select {
-  max-width: 240px;
+  max-width: 200px;
   padding: 10px 20px;
   border: solid 1px rgb(120, 38, 46);
   border-radius: 10px;
@@ -316,6 +349,7 @@ li {
   color: rgb(76, 76, 76);
   font-family: Montserrat;
   font-weight: 600;
+  font-size: small;
   transition: all 0.5s ease-out;
   cursor: pointer;
 }
@@ -331,7 +365,7 @@ li {
 
 .search-container > input {
   padding: 10px;
-  min-width: 300px;
+  min-width: 175px;
   border: solid 2px rgb(100, 9, 18);
 }
 
@@ -339,7 +373,7 @@ li {
   position: absolute;
   list-style: none;
   max-height: 200px;
-  max-width: 230px;
+  max-width: 200px;
   overflow-y: scroll;
   background-color: #fafafa;
   border: solid 2px rgb(100, 9, 18);
@@ -437,16 +471,15 @@ li {
 }
 
 #container {
-  margin-top: 50px;
-  background-color: rgb(255, 255, 255);
+  margin-top: 150px;
   display: flex;
   justify-content: center;
   margin-bottom: 50px;
 }
 
 #cy {
-  width: 100%;
-  height: 900px;
+  width: 60%;
+  height: 675px;
   background-color: rgb(255, 255, 255);
   border: solid 2px rgb(100, 9, 18);
 }
@@ -534,10 +567,10 @@ h4 {
   position: absolute;
   float: right;
   right: 0;
-  min-width: 350px;
-  max-width: 650px;
-  min-height: 700px;
-  max-height: 1000px;
+  min-width: 400px;
+  max-width: 400px;
+  min-height: 675px;
+  max-height: 675px;
   overflow-y: scroll;
 
   background-color: white;
@@ -588,9 +621,18 @@ h4 {
 import cytoscape from "cytoscape";
 import fcose from "cytoscape-fcose";
 
+import 'primevue/resources/themes/saga-blue/theme.css';    
+import 'primevue/resources/primevue.min.css';                
+import 'primeicons/primeicons.css';
+
+import MultiSelect from 'primevue/multiselect';
+
 cytoscape.use(fcose);
 
 export default {
+  components: {
+    MultiSelect,
+  },
   data() {
     return {
       showCytoscape: true,
@@ -609,6 +651,8 @@ export default {
       clickedNode: null,
       hoverTimeout: null,
 
+      filterMenuDisplay: false,
+
       charactersData: [],
       relationsData: [],
       maestroRelations: [],
@@ -619,6 +663,10 @@ export default {
       eventsData: [],
       repertorioRelations: [],
       repertorioData: [],
+
+      fontiMusicali: [],
+      fontiArchivistiche: [],
+      fontiLetterarie: [],
 
       cy: null,
       cyData: null,
@@ -680,6 +728,9 @@ export default {
     },
   },
   methods: {
+    toggleFilterMenu(){
+      this.filterMenuDisplay = !this.filterMenuDisplay;
+    },
     downloadData() {
       const jsonData = JSON.stringify(this.filteredData, null, 2);
 
@@ -1012,6 +1063,13 @@ export default {
         const repertorioData = await this.retrieveRepertorioData();
         this.repertorioData = repertorioData;
 
+        const fontiMusicali = await this.retrieveFontiMusicali();
+        this.fontiMusicali = fontiMusicali;
+        const fontiArchivistiche = await this.retrieveFontiArchivistiche();
+        this.fontiArchivistiche = fontiArchivistiche;
+        const fontiLetterarie = await this.retrieveFontiLetterarie();
+        this.fontiLetterarie = fontiLetterarie;
+
         const tipoMecenate = await this.retrieveTipoMecenate();
         this.filterOptions = tipoMecenate.map((filter) => {
           return {
@@ -1193,6 +1251,30 @@ export default {
           song.relatedCharacters.push({ characterId: relation.Virtuose_id });
         }
       }
+      return data;
+    },
+    async retrieveFontiMusicali() {
+      const response = await fetch(
+        "https://directusvirtuose.vidimus.it/items/fonti_musicali"
+      );
+      const responseData = await response.json();
+      const data = responseData.data;
+      return data;
+    },
+    async retrieveFontiArchivistiche() {
+      const response = await fetch(
+        "https://directusvirtuose.vidimus.it/items/fonti_archivistiche"
+      );
+      const responseData = await response.json();
+      const data = responseData.data;
+      return data;
+    },
+    async retrieveFontiLetterarie() {
+      const response = await fetch(
+        "https://directusvirtuose.vidimus.it/items/Fonti_letterarie"
+      );
+      const responseData = await response.json();
+      const data = responseData.data;
       return data;
     },
 
@@ -1699,7 +1781,7 @@ export default {
         var popupWidth = popup.offsetWidth;
 
         var popupOffsetX = -550;
-        var popupOffsetY = -1100;
+        var popupOffsetY = -900;
         if (position.y > 750) {
           popupOffsetY = popupOffsetY - popupHeight;
         }
@@ -1791,6 +1873,9 @@ export default {
             ? `<p><b>Data di morte: </b>${info.data_morte}</p>`
             : ""
         }
+        <h4 id="famiglia-trigger" class="aside-subtitle" style="cursor:pointer;">Famiglia</h4>
+        <hr>
+        <div id="famiglia-info" style="display:none;">
         ${
           relations.father !== null
             ? `<p><b>Padre:</b> ${this.getCharacterName(relations.father)}</p>`
@@ -1824,7 +1909,12 @@ export default {
           info.madrina !== null
             ? `<p><b>Madrina:</b> ${this.getCharacterName(info.madrina)}</p>`
             : ""
-        }<br><br>
+        }
+      </div>
+        <br>
+        <h4 id="formazione-trigger" class="aside-subtitle" style="cursor:pointer;">Formazione</h4>
+        <hr>
+        <div id="formazione-info" style="display:none;">
         ${
           info.maestro && info.maestro.length > 0
             ? `<p><b>Maestro:</b> ${info.maestro
@@ -1832,13 +1922,11 @@ export default {
                 .join(", ")}</p>`
             : ""
         }
-        ${
-          info.mecenati && info.mecenati.length > 0
-            ? `<p><b>Mecenati:</b> ${info.mecenati
-                .map((mecenatiId) => this.getCharacterName(mecenatiId))
-                .join(", ")}</p>`
-            : ""
-        }<br>
+        </div>
+        <br>
+        <h4 id="attivita-trigger" class="aside-subtitle" style="cursor:pointer;">Attivita</h4>
+        <hr>
+        <div id="attivita-info" style="display:none;">
         ${
           info.eventi && info.eventi.length > 0
             ? `<p><b>Eventi:</b> ${info.eventi
@@ -1864,27 +1952,95 @@ export default {
             : ""
         }
         ${
-          info.fonti_archivistiche && info.fonti_archivistiche.length > 0
-            ? `<p><b>Fonti archivistiche:</b> ${info.fonti_archivistiche
+          info.mecenati && info.mecenati.length > 0
+            ? `<p><b>Mecenati:</b> ${info.mecenati
+                .map((mecenatiId) => this.getCharacterName(mecenatiId))
+                .join(", ")}</p>`
+            : ""
+        }
+        </div>
+        <br>
+        <h4 id="fonti-trigger" class="aside-subtitle" style="cursor:pointer;">Fonti</h4>
+        <hr>
+        <div id="fonti-info" style="display:none;">
+        ${
+          info.fonti_musicali && info.fonti_musicali.length > 0
+            ? `<p><b>Fonti musicali:</b> ${info.fonti_musicali
                 .map((fontiId) => {
-                  const fonti = this.repertorioData.find(
+                  const fonti = this.fontiMusicali.find(
                     (fonti) => fonti.id === fontiId
                   );
-                  return fonti ? `${fonti.titolo} - ${fonti.titolo}` : "";
+                  return fonti ? `${fonti.titolo} - ${fonti.compositore}` : "";
                 })
                 .join(" | ")}</p>`
             : ""
         }
-        ${info.note ? `<p><b>Info:</b> ${info.note}</p>` : ""}
+        ${
+          info.fonti_archivistiche && info.fonti_archivistiche.length > 0
+            ? `<p><b>Fonti archivistiche:</b> ${info.fonti_archivistiche
+                .map((fontiId) => {
+                  const fonti = this.fontiArchivistiche.find(
+                    (fonti) => fonti.id === fontiId
+                  );
+                  return fonti ? `${fonti.archivio_sigla} - ${fonti.busta} - ${fonti.carte}` : "";
+                })
+                .join(" | ")}</p>`
+            : ""
+        }
+        ${
+          info.fonti_letterarie && info.fonti_letterarie.length > 0
+            ? `<p><b>Fonti letterarie:</b> ${info.fonti_letterarie
+                .map((fontiId) => {
+                  const fonti = this.fontiLetterarie.find(
+                    (fonti) => fonti.id === fontiId
+                  );
+                  return fonti ? `${fonti.titolo} - ${fonti.autore}` : "";
+                })
+                .join(" | ")}</p>`
+            : ""
+        }
+        </div>
       </div>
     </div>
   `;
 
       // Show the aside section
       this.showAside = true;
+      document.getElementById('famiglia-trigger').addEventListener("click", this.toggleFamigliaInfo);
+      document.getElementById('formazione-trigger').addEventListener("click", this.toggleFormazioneInfo);
+      document.getElementById('attivita-trigger').addEventListener("click", this.toggleAttivitaInfo);
+      document.getElementById('fonti-trigger').addEventListener("click", this.toggleFontiInfo);
       document
         .getElementById("closeAside")
         .addEventListener("click", this.closeAside);
+    },
+    toggleFamigliaInfo(){
+      if (document.getElementById('famiglia-info').style.display !== "none") {
+          document.getElementById('famiglia-info').style.display = "none";
+        } else {
+          document.getElementById('famiglia-info').style.display = "block";
+        }
+    },
+    toggleFormazioneInfo(){
+      if (document.getElementById('formazione-info').style.display !== "none") {
+          document.getElementById('formazione-info').style.display = "none";
+        } else {
+          document.getElementById('formazione-info').style.display = "block";
+        }
+    },
+    toggleAttivitaInfo(){
+      if (document.getElementById('attivita-info').style.display !== "none") {
+          document.getElementById('attivita-info').style.display = "none";
+        } else {
+          document.getElementById('attivita-info').style.display = "block";
+        }
+    },
+    toggleFontiInfo(){
+      if (document.getElementById('fonti-info').style.display !== "none") {
+          document.getElementById('fonti-info').style.display = "none";
+        } else {
+          document.getElementById('fonti-info').style.display = "block";
+        }
     },
 
     handleNodeGrab(event) {

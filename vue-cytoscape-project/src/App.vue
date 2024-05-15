@@ -20,7 +20,7 @@ body{
 }
 
 #cy {
-  width: 100%;
+  width: 85%;
   height: 600px;
   background-color: rgb(235, 235, 235);
 }
@@ -51,6 +51,10 @@ body{
 #popup>div>img {
   border-radius: 10px;
   margin: 15px;
+}
+
+#aside-content .aside-subtitle{
+  color: rgb(130, 6, 18);
 }
 
 /* Example styles for vue-multiselect */
@@ -120,5 +124,10 @@ body{
 .p-multiselect{
   width: 350px;
   overflow: hidden;
+  z-index: 1004 !important;
+}
+
+.p-multiselect .p-multiselect-header, .p-multiselect-item-wrapper{
+  z-index: 2004 !important;
 }
 </style>
