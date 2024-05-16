@@ -5,37 +5,15 @@
     <div v-show="showCytoscape">
       <div id="container">
         <div>
-          <button 
-          id="menu-deploy"
-          @click="toggleFilterMenu">
+          <button id="menu-deploy" @click="toggleFilterMenu">
             Mostra il menu
           </button>
         </div>
-        <div v-show="filterMenuDisplay" id="nav-container" class="nav-container2">
-          <div id="searchBar-container">
-            <div class="search-container">
-              <input
-                type="text"
-                v-model="searchQuery"
-                @input="updateAutocomplete"
-                @keyup.enter="searchCharacter"
-                placeholder="Cerca una persona..."
-              />
-              <ul v-if="showAutocomplete" id="autocomplete">
-                <li
-                  v-for="character in filteredCharacters"
-                  :key="character.id"
-                  @click="selectCharacter(character)"
-                  class="character"
-                >
-                  {{ character.nome_scelto }}
-                </li>
-              </ul>
-            </div>
-            <div>
-              <button @click="searchCharacter">Cerca</button>
-            </div>
-          </div>
+        <div
+          v-show="filterMenuDisplay"
+          id="nav-container"
+          class="nav-container2"
+        >
           <ul id="nav2">
             <li>
               <button
@@ -68,13 +46,50 @@
               </button>
             </li>
           </ul>
-          <ul id="nav3" style="z-index: 2000;">
-            <li style="z-index: 2000;">
+          <div id="searchBar-container">
+            <div class="search-container">
+              <input
+                type="text"
+                v-model="searchQuery"
+                @input="updateAutocomplete"
+                @keyup.enter="searchCharacter"
+                placeholder="Cerca una persona..."
+              />
+              <ul v-if="showAutocomplete" id="autocomplete">
+                <li
+                  v-for="character in filteredCharacters"
+                  :key="character.id"
+                  @click="selectCharacter(character)"
+                  class="character"
+                >
+                  {{ character.nome_scelto }}
+                </li>
+              </ul>
+            </div>
+            <div>
+              <button @click="searchCharacter">
+                <img
+                  src="/wp-content/themes/astra/assets/dist/img/search.png"
+                  alt=""
+                  width="10px"
+                />
+              </button>
+              <button @click="clearSearch">
+                <img
+                  src="/wp-content/themes/astra/assets/dist/img/x.png"
+                  alt=""
+                  width="10px"
+                />
+              </button>
+            </div>
+          </div>
+          <ul id="nav3" style="z-index: 2000">
+            <li style="z-index: 2000">
               <MultiSelect
                 v-model="selectedFilters"
                 display="chip"
                 :options="filterOptions"
-                placeholder="Select filters"
+                placeholder="Tipologia lavoro"
                 optionLabel="name"
                 @change="filterChange(this.selectedFilters)"
               ></MultiSelect>
@@ -150,7 +165,7 @@ hr {
   position: absolute;
 }
 
-#menu-deploy{
+#menu-deploy {
   border: solid 2px rgb(120, 38, 46);
   background-color: white;
   font-family: Montserrat;
@@ -161,7 +176,7 @@ hr {
   position: absolute;
   left: 10px;
   transform: translateY(-50px);
-
+  cursor: pointer;
 }
 
 #filter-menu {
@@ -184,11 +199,11 @@ hr {
   float: left;
   position: absolute;
   left: 10px;
-  padding: 20px;
+  padding: 30px;
   background-color: white;
   border: solid 2px rgb(120, 38, 46);
   z-index: 1005;
-  max-width: 290px;
+  max-width: 300px;
 }
 
 #nav {
@@ -202,21 +217,14 @@ hr {
 
 #nav2 {
   display: flex;
-  flex-direction: column;
-  flex-flow: column-reverse;
+  flex-direction: row;
+  flex-flow: row-reverse;
   gap: 10px;
   list-style: none;
   list-style-type: none;
   z-index: 1000;
-  margin-bottom: 30px;
+  margin-bottom: 15px;
   align-items: center;
-  min-width: 125px;
-  max-width: 125px;
-}
-
-#nav2 li{
-  width: 100%;
-
 }
 
 #nav3 {
@@ -232,8 +240,6 @@ hr {
 
 li {
   height: 100%;
-  align-items: center;
-  justify-content: center;
 }
 
 .nav-button {
@@ -243,9 +249,9 @@ li {
   text-align: center;
   height: auto;
   width: 100%;
-  padding: 15px;
+  padding: 10px;
   margin: 0;
-  font-size: large;
+  font-size: medium;
   border: none;
   cursor: pointer;
   background: none;
@@ -365,7 +371,7 @@ li {
 
 .search-container > input {
   padding: 10px;
-  min-width: 175px;
+  min-width: 160px;
   border: solid 2px rgb(100, 9, 18);
 }
 
@@ -567,8 +573,8 @@ h4 {
   position: absolute;
   float: right;
   right: 0;
-  min-width: 400px;
-  max-width: 400px;
+  min-width: 390px;
+  max-width: 390px;
   min-height: 675px;
   max-height: 675px;
   overflow-y: scroll;
@@ -621,11 +627,11 @@ h4 {
 import cytoscape from "cytoscape";
 import fcose from "cytoscape-fcose";
 
-import 'primevue/resources/themes/saga-blue/theme.css';    
-import 'primevue/resources/primevue.min.css';                
-import 'primeicons/primeicons.css';
+import "primevue/resources/themes/saga-blue/theme.css";
+import "primevue/resources/primevue.min.css";
+import "primeicons/primeicons.css";
 
-import MultiSelect from 'primevue/multiselect';
+import MultiSelect from "primevue/multiselect";
 
 cytoscape.use(fcose);
 
@@ -728,26 +734,58 @@ export default {
     },
   },
   methods: {
-    toggleFilterMenu(){
+    toggleFilterMenu() {
       this.filterMenuDisplay = !this.filterMenuDisplay;
     },
     downloadData() {
-      const jsonData = JSON.stringify(this.filteredData, null, 2);
+  // Extracting IDs from visible nodes
+  const visibleNodeIds = this.cy.nodes(':visible').map(node => parseInt(node.data().id, 10));
+  
+  // Filter charactersData based on visible node IDs
+  const filteredCharactersData = this.charactersData
+    .filter(character => visibleNodeIds.includes(character.id))
+    .map(character => ({
+      id: character.id,
+      nome: (character.nome, character.cognome),
+      data_nascita: character.data_nascita,
+      data_morte: character.data_morte,
+      luogo_nascita: character.luogo_nascita,
+      luogo_morte: character.luogo_morte,
+      padre: character.padre, 
+      madre: character.madre,
+      padrino: character.padrino,
+      madrina: character.madrina,
+      figli_figlie: character.figli_figlie,
+      maestro: character.maestro,
+      mecenati: character.mecenati,
+      eventi: character.eventi,
+      fonti_musicali: character.fonti_musicali,
+      fonti_archivistiche: character.fonti_archivistiche,
+      fonti_letterarie: character.fonti_letterarie,
+    }));
 
-      const blob = new Blob([jsonData], { type: "application/json" });
+  // Convert filtered data to JSON
+  const jsonData = JSON.stringify(filteredCharactersData, null, 2);
 
-      const url = window.URL.createObjectURL(blob);
+  // Create a blob
+  const blob = new Blob([jsonData], { type: "application/json" });
 
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "filtered_data.json";
+  // Create a URL for the blob
+  const url = window.URL.createObjectURL(blob);
 
-      document.body.appendChild(link);
-      link.click();
+  // Create a link element
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "filtered_data.json";
 
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(link);
-    },
+  // Append link to document body and trigger click
+  document.body.appendChild(link);
+  link.click();
+
+  // Revoke the URL and remove the link element
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(link);
+},
     async toggleFilter(filterValue) {
       if (this.filter !== filterValue) {
         this.filter = filterValue;
@@ -811,34 +849,32 @@ export default {
     },
 
     /* CHARACTER SEARCH LOGIC */
-    filterChange(selectedFilters){
+    filterChange(selectedFilters) {
       if (selectedFilters.length < 1) {
         this.showAllNodes();
-      } else{
+      } else {
         this.filterGraphByRelations(this.selectedFilters);
       }
     },
 
     filterGraphByRelations(selectedFilters) {
+      this.cy.elements().hide();
 
-        this.cy.elements().hide();
+      const selectedFiltersIds = selectedFilters.map((filter) => filter.id);
 
-        const selectedFiltersIds = selectedFilters.map(filter => filter.id);
+      this.cy.edges().forEach((edge) => {
+        const sourceId = edge.source().id();
+        const targetId = edge.target().id();
+        const mecenateType = edge.data().mecenatiType;
 
-        this.cy.edges().forEach((edge) => {
-            const sourceId = edge.source().id();
-            const targetId = edge.target().id();
-            const mecenateType = edge.data().mecenatiType;
+        if (selectedFiltersIds.includes(mecenateType)) {
+          edge.show();
+          this.cy.getElementById(sourceId).show();
+          this.cy.getElementById(targetId).show();
+        }
+      });
 
-            if (selectedFiltersIds.includes(mecenateType)) {
-                edge.show();
-                this.cy.getElementById(sourceId).show();
-                this.cy.getElementById(targetId).show();
-            }
-        });
-
-        this.cy.fit(this.cy.nodes(':visible'), 420);
-      
+      this.cy.fit(this.cy.nodes(":visible"), 420);
     },
     //Shows the searched character and related nodes
     filterGraph(character) {
@@ -864,7 +900,7 @@ export default {
             this.cy.getElementById(targetId).show();
           }
         });
-        this.cy.fit(characterNode, 420);
+        this.cy.fit(characterNode, 360);
       }
     },
     updateAutocomplete() {
@@ -884,6 +920,12 @@ export default {
     selectCharacter(character) {
       this.searchQuery = character.nome_scelto;
       this.showAutocomplete = false;
+    },
+    clearSearch() {
+      this.showAllNodes();
+      this.searchQuery = "";
+      this.cy.fit(this.cy.nodes(":visible"), 100);
+      this.cy.zoom(0.45);
     },
     searchCharacter() {
       const query = this.searchQuery.toLowerCase().trim();
@@ -1133,7 +1175,9 @@ export default {
     },
     async retrieveEvents() {
       try {
-        const response = await fetch("https://directusvirtuose.vidimus.it/items/eventi");
+        const response = await fetch(
+          "https://directusvirtuose.vidimus.it/items/eventi"
+        );
         const eventData = await response.json();
         const events = eventData.data;
         return events;
@@ -1171,7 +1215,9 @@ export default {
     },
     async retrieveMaestroData() {
       try {
-        const response = await fetch("https://directusvirtuose.vidimus.it/items/maestro");
+        const response = await fetch(
+          "https://directusvirtuose.vidimus.it/items/maestro"
+        );
         const responseData = await response.json();
         const maestroData = responseData.data;
 
@@ -1349,7 +1395,7 @@ export default {
       this.charactersData.forEach((character) => {
         character.mecenati = [];
       });
-      combinedMecenatiData.forEach(({ relation, mecenati}) => {
+      combinedMecenatiData.forEach(({ relation, mecenati }) => {
         const character = this.charactersData.find(
           (char) => char.id === relation.Virtuose_id
         );
@@ -1873,7 +1919,7 @@ export default {
             ? `<p><b>Data di morte: </b>${info.data_morte}</p>`
             : ""
         }
-        <h4 id="famiglia-trigger" class="aside-subtitle" style="cursor:pointer;">Famiglia</h4>
+        <h4 id="famiglia-trigger" class="aside-subtitle" style="cursor:pointer;">Famiglia <img id="fam-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="10px"></h4>
         <hr>
         <div id="famiglia-info" style="display:none;">
         ${
@@ -1912,7 +1958,7 @@ export default {
         }
       </div>
         <br>
-        <h4 id="formazione-trigger" class="aside-subtitle" style="cursor:pointer;">Formazione</h4>
+        <h4 id="formazione-trigger" class="aside-subtitle" style="cursor:pointer;">Formazione <img id="form-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="10px"></h4>
         <hr>
         <div id="formazione-info" style="display:none;">
         ${
@@ -1924,7 +1970,7 @@ export default {
         }
         </div>
         <br>
-        <h4 id="attivita-trigger" class="aside-subtitle" style="cursor:pointer;">Attivita</h4>
+        <h4 id="attivita-trigger" class="aside-subtitle" style="cursor:pointer;">Attivita <img id="att-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="10px"></h4>
         <hr>
         <div id="attivita-info" style="display:none;">
         ${
@@ -1960,7 +2006,7 @@ export default {
         }
         </div>
         <br>
-        <h4 id="fonti-trigger" class="aside-subtitle" style="cursor:pointer;">Fonti</h4>
+        <h4 id="fonti-trigger" class="aside-subtitle" style="cursor:pointer;">Fonti <img id="font-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="10px"></h4>
         <hr>
         <div id="fonti-info" style="display:none;">
         ${
@@ -1982,7 +2028,9 @@ export default {
                   const fonti = this.fontiArchivistiche.find(
                     (fonti) => fonti.id === fontiId
                   );
-                  return fonti ? `${fonti.archivio_sigla} - ${fonti.busta} - ${fonti.carte}` : "";
+                  return fonti
+                    ? `${fonti.archivio_sigla} - ${fonti.busta} - ${fonti.carte}`
+                    : "";
                 })
                 .join(" | ")}</p>`
             : ""
@@ -2000,47 +2048,66 @@ export default {
             : ""
         }
         </div>
+        <div id="autore" style="font-size:smaller;text-align:right;margin-top:70px">
+          Creato da ${info.autore_scheda}
+        </div>
       </div>
     </div>
   `;
 
       // Show the aside section
       this.showAside = true;
-      document.getElementById('famiglia-trigger').addEventListener("click", this.toggleFamigliaInfo);
-      document.getElementById('formazione-trigger').addEventListener("click", this.toggleFormazioneInfo);
-      document.getElementById('attivita-trigger').addEventListener("click", this.toggleAttivitaInfo);
-      document.getElementById('fonti-trigger').addEventListener("click", this.toggleFontiInfo);
+      document
+        .getElementById("famiglia-trigger")
+        .addEventListener("click", this.toggleFamigliaInfo);
+      document
+        .getElementById("formazione-trigger")
+        .addEventListener("click", this.toggleFormazioneInfo);
+      document
+        .getElementById("attivita-trigger")
+        .addEventListener("click", this.toggleAttivitaInfo);
+      document
+        .getElementById("fonti-trigger")
+        .addEventListener("click", this.toggleFontiInfo);
       document
         .getElementById("closeAside")
         .addEventListener("click", this.closeAside);
     },
-    toggleFamigliaInfo(){
-      if (document.getElementById('famiglia-info').style.display !== "none") {
-          document.getElementById('famiglia-info').style.display = "none";
-        } else {
-          document.getElementById('famiglia-info').style.display = "block";
-        }
+    toggleFamigliaInfo() {
+      if (document.getElementById("famiglia-info").style.display !== "none") {
+        document.getElementById("famiglia-info").style.display = "none";
+        document.getElementById("fam-arrow").style.transform = "rotate(360deg)";
+      } else {
+        document.getElementById("famiglia-info").style.display = "block";
+        document.getElementById("fam-arrow").style.transform = "rotate(180deg)";
+      }
     },
-    toggleFormazioneInfo(){
-      if (document.getElementById('formazione-info').style.display !== "none") {
-          document.getElementById('formazione-info').style.display = "none";
-        } else {
-          document.getElementById('formazione-info').style.display = "block";
-        }
+    toggleFormazioneInfo() {
+      if (document.getElementById("formazione-info").style.display !== "none") {
+        document.getElementById("formazione-info").style.display = "none";
+        document.getElementById("form-arrow").style.transform = "rotate(360deg)";
+      } else {
+        document.getElementById("formazione-info").style.display = "block";
+        document.getElementById("form-arrow").style.transform = "rotate(180deg)";
+      }
     },
-    toggleAttivitaInfo(){
-      if (document.getElementById('attivita-info').style.display !== "none") {
-          document.getElementById('attivita-info').style.display = "none";
-        } else {
-          document.getElementById('attivita-info').style.display = "block";
-        }
+    toggleAttivitaInfo() {
+      if (document.getElementById("attivita-info").style.display !== "none") {
+        document.getElementById("attivita-info").style.display = "none";
+        document.getElementById("att-arrow").style.transform = "rotate(360deg)";
+      } else {
+        document.getElementById("attivita-info").style.display = "block";
+        document.getElementById("att-arrow").style.transform = "rotate(180deg)";
+      }
     },
-    toggleFontiInfo(){
-      if (document.getElementById('fonti-info').style.display !== "none") {
-          document.getElementById('fonti-info').style.display = "none";
-        } else {
-          document.getElementById('fonti-info').style.display = "block";
-        }
+    toggleFontiInfo() {
+      if (document.getElementById("fonti-info").style.display !== "none") {
+        document.getElementById("fonti-info").style.display = "none";
+        document.getElementById("font-arrow").style.transform = "rotate(360deg)";
+      } else {
+        document.getElementById("fonti-info").style.display = "block";
+        document.getElementById("font-arrow").style.transform = "rotate(180deg)";
+      }
     },
 
     handleNodeGrab(event) {
@@ -2089,7 +2156,8 @@ export default {
       // Add mouse event listeners for custom panning
 
       this.cy.ready(() => {
-        this.cy.zoom(0.6);
+        this.cy.fit(this.cy.nodes(":visible"), 100);
+        this.cy.zoom(0.5);
       });
     },
   },
