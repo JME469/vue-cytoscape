@@ -4,6 +4,18 @@
 
     <div v-show="showCytoscape">
       <div id="container">
+        <div id="modal" v-show="showModal">
+          <div id="fm-modal">
+            <h2>{{ fontObject.titolo }}</h2>
+            <h4>{{ fontObject.compositore!==null ? fontObject.compositore : "" }} {{ fontObject.data!==null ? fontObject.data : "" }}</h4>
+            <p>{{ fontObject.segnatura }}</p>
+            <p v-if="fontObject.note !== null">{{ fontObject.note }}</p>
+          </div>
+          <div id="fa-modal">
+            <h2>{{ fontObject.archivio_sigla }}  {{ fontObject.archivio }}</h2>
+          </div>
+          <div id="fl-modal"></div>
+        </div>
         <div>
           <button id="menu-deploy" @click="toggleFilterMenu">
             Mostra il menu
@@ -737,6 +749,9 @@ export default {
       accordionState: {},
 
       filteredData: [],
+
+      showModal: false,
+      fontObject: null,
     };
   },
   mounted() {
@@ -772,7 +787,7 @@ export default {
         .filter((character) => visibleNodeIds.includes(character.id))
         .map((character) => ({
           id: character.id,
-          nome: (character.nome, character.cognome),
+          nome: character.nome + character.cognome,
           data_nascita: character.data_nascita,
           data_morte: character.data_morte,
           luogo_nascita: character.luogo_nascita,
@@ -2079,7 +2094,7 @@ export default {
                     (fonti) => fonti.id === fontiId
                   );
                   return fonti
-                    ? `<a href="#" onclick.prevent="showFontDetails(${fontiId}, 'musicali')">${fonti.titolo} - ${fonti.compositore}</a>`
+                    ? `<a href="" class="fontLink fMusicale" id="fm-${fonti.id}">${fonti.titolo} - ${fonti.compositore}</a>`
                     : "";
                 })
                 .join("<br>")}</p>`
@@ -2093,7 +2108,7 @@ export default {
                     (fonti) => fonti.id === fontiId
                   );
                   return fonti
-                    ? `<a href="#" onclick.prevent="showFontDetails(${fontiId}, 'archivistiche')">${fonti.archivio_sigla} - ${fonti.busta} - ${fonti.carte}</a>`
+                    ? `<a href="" class="fontLink fArchivistiche" id="fa-${fonti.id}">${fonti.archivio_sigla} - ${fonti.busta} - ${fonti.carte}</a>`
                     : "";
                 })
                 .join("<br>")}</p>`
@@ -2107,9 +2122,9 @@ export default {
                     (fonti) => fonti.id === fontiId
                   );
                   return fonti
-                    ? `<a href="#" onclick.prevent="showFontDetails(${fontiId}, 'letterarie')">${
-                        fonti.titolo
-                      } - ${
+                    ? `<a href="" class="fontLink fLetterarie" id="fl-${
+                        fonti.id
+                      }">${fonti.titolo} - ${
                         fonti.autore !== null ? fonti.autore : "Non conosciuto"
                       }</a>`
                     : "";
@@ -2153,34 +2168,46 @@ export default {
       document
         .getElementById("closeAside")
         .addEventListener("click", this.closeAside);
+      document.querySelectorAll(".fontLink").forEach((link) => {
+        link.addEventListener("click", this.showFontDetails);
+      });
     },
-    showFontDetails(fontiId, fontiType) {
-      let fonti;
-      switch (fontiType) {
+    showFontDetails(event) {
+      // Prevent default link behavior
+      event.preventDefault();
+
+      // Extract font type and ID from element's classes or attributes
+      const fontType = event.target.classList.contains("fMusicale")
+        ? "musicali"
+        : event.target.classList.contains("fArchivistiche")
+        ? "archivistiche"
+        : event.target.classList.contains("fLetterarie")
+        ? "letterarie"
+        : "";
+        console.log(fontType);
+
+        const fontId = event.target.id.substring(3);
+        console.log(fontId);
+        let fontObject = null;
+
+      switch (fontType) {
         case "musicali":
-          fonti = this.fontiMusicali.find((f) => f.id === fontiId);
+          fontObject = this.fontiMusicali.find((font) => font.id == fontId);
           break;
+
         case "archivistiche":
-          fonti = this.fontiArchivistiche.find((f) => f.id === fontiId);
+          fontObject = this.fontiArchivistiche.find((font) => font.id == fontId);
           break;
+
         case "letterarie":
-          fonti = this.fontiLetterarie.find((f) => f.id === fontiId);
+          fontObject = this.fontiLetterarie.find((font) => font.id == fontId);
+          break;
+
+        default:
           break;
       }
 
-      if (fonti) {
-        console.log(fonti)
-        // Display the full information of the fonti in a popup or modal
-        alert(
-          `Title: ${fonti.titolo || ""}\nComposer: ${
-            fonti.compositore || ""
-          }\nArchive: ${fonti.archivio_sigla || ""}\nBusta: ${
-            fonti.busta || ""
-          }\nCarte: ${fonti.carte || ""}\nAuthor: ${
-            fonti.autore || "Non conosciuto"
-          }`
-        );
-      }
+      console.log(fontObject);
     },
     toggleFamigliaInfo() {
       if (document.getElementById("famiglia-info").style.display !== "none") {
