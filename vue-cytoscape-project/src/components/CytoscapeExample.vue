@@ -66,19 +66,27 @@
                 </li>
               </ul>
             </div>
-            <div>
-              <button @click="searchCharacter">
+            <div
+              style="
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                gap: 7px;
+              "
+            >
+              <button @click="searchCharacter" class="searchBar-button">
                 <img
                   src="/wp-content/themes/astra/assets/dist/img/search.png"
                   alt=""
-                  width="10px"
+                  class="searchBar-button-icon"
                 />
               </button>
-              <button @click="clearSearch">
+              <button @click="clearSearch" class="searchBar-button">
                 <img
                   src="/wp-content/themes/astra/assets/dist/img/x.png"
                   alt=""
-                  width="10px"
+                  class="searchBar-button-icon"
                 />
               </button>
             </div>
@@ -111,7 +119,7 @@
         </div>
       </div>
       <div id="download-container">
-        <button @click="downloadData">Scarica gli dati</button>
+        <button @click="downloadData">Scarica i dati</button>
       </div>
     </div>
   </div>
@@ -168,6 +176,7 @@ hr {
 #menu-deploy {
   border: solid 2px rgb(120, 38, 46);
   background-color: white;
+  color: rgb(15, 15, 15);
   font-family: Montserrat;
   font-weight: 500;
   font-size: medium;
@@ -348,6 +357,21 @@ li {
   z-index: 1001;
 }
 
+.searchBar-button {
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px !important;
+}
+
+.searchBar-button-icon {
+  width: 18px !important;
+  height: auto !important;
+  margin: 0 !important;
+}
+
 #searchBar-container > div > button {
   padding: 10px;
   background: none;
@@ -384,7 +408,7 @@ li {
   background-color: #fafafa;
   border: solid 2px rgb(100, 9, 18);
   margin-top: 5px;
-  z-index: 1002;
+  z-index: 10000;
 }
 
 .character {
@@ -738,54 +762,93 @@ export default {
       this.filterMenuDisplay = !this.filterMenuDisplay;
     },
     downloadData() {
-  // Extracting IDs from visible nodes
-  const visibleNodeIds = this.cy.nodes(':visible').map(node => parseInt(node.data().id, 10));
-  
-  // Filter charactersData based on visible node IDs
-  const filteredCharactersData = this.charactersData
-    .filter(character => visibleNodeIds.includes(character.id))
-    .map(character => ({
-      id: character.id,
-      nome: (character.nome, character.cognome),
-      data_nascita: character.data_nascita,
-      data_morte: character.data_morte,
-      luogo_nascita: character.luogo_nascita,
-      luogo_morte: character.luogo_morte,
-      padre: character.padre, 
-      madre: character.madre,
-      padrino: character.padrino,
-      madrina: character.madrina,
-      figli_figlie: character.figli_figlie,
-      maestro: character.maestro,
-      mecenati: character.mecenati,
-      eventi: character.eventi,
-      fonti_musicali: character.fonti_musicali,
-      fonti_archivistiche: character.fonti_archivistiche,
-      fonti_letterarie: character.fonti_letterarie,
-    }));
+      // Extracting IDs from visible nodes
+      const visibleNodeIds = this.cy
+        .nodes(":visible")
+        .map((node) => parseInt(node.data().id, 10));
 
-  // Convert filtered data to JSON
-  const jsonData = JSON.stringify(filteredCharactersData, null, 2);
+      // Filter charactersData based on visible node IDs
+      const filteredCharactersData = this.charactersData
+        .filter((character) => visibleNodeIds.includes(character.id))
+        .map((character) => ({
+          id: character.id,
+          nome: (character.nome, character.cognome),
+          data_nascita: character.data_nascita,
+          data_morte: character.data_morte,
+          luogo_nascita: character.luogo_nascita,
+          luogo_morte: character.luogo_morte,
+          padre: this.getCharacterName(character.padre),
+          madre: this.getCharacterName(character.madre),
+          padrino: this.getCharacterName(character.padrino),
+          madrina: this.getCharacterName(character.madrina),
+          marito_moglie: this.getCharacterName(character.marito_moglie),
+          figli_figlie: character.figli_figlie
+            .map((childId) => this.getCharacterName(childId))
+            .join(", "),
+          maestro: character.maestro
+            .map((maestroId) => this.getCharacterName(maestroId))
+            .join(", "),
+          mecenati: character.mecenati
+            .map((mecenateId) => this.getCharacterName(mecenateId))
+            .join(", "),
+          eventi: character.eventi
+            .map((eventId) => {
+              const event = this.eventsData.find(
+                (event) => event.id === eventId
+              );
+              return event ? `${event.data} - ${event.luogo}` : "";
+            })
+            .join(" | "),
+          fonti_musicali: character.fonti_musicali
+            .map((fontiId) => {
+              const fonti = this.fontiMusicali.find(
+                (fonti) => fonti.id === fontiId
+              );
+              return fonti ? `${fonti.titolo} - ${fonti.compositore}` : "";
+            })
+            .join(" | "),
+          fonti_archivistiche: character.fonti_archivistiche
+            .map((fontiId) => {
+              const fonti = this.fontiArchivistiche.find(
+                (fonti) => fonti.id === fontiId
+              );
+              return fonti
+                ? `${fonti.archivio_sigla} - ${fonti.busta} - ${fonti.carte}`
+                : "";
+            })
+            .join(" | "),
+          fonti_letterarie: character.fonti_letterarie
+            .map((fontiId) => {
+              const fonti = this.fontiLetterarie.find(
+                (fonti) => fonti.id === fontiId
+              );
+              return fonti ? `${fonti.titolo} - ${fonti.autore}` : "";
+            })
+            .join(" | "),
+        }));
 
-  // Create a blob
-  const blob = new Blob([jsonData], { type: "application/json" });
+      // Convert filtered data to JSON
+      const jsonData = JSON.stringify(filteredCharactersData, null, 2);
 
-  // Create a URL for the blob
-  const url = window.URL.createObjectURL(blob);
+      // Create a blob
+      const blob = new Blob([jsonData], { type: "application/json" });
 
-  // Create a link element
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "filtered_data.json";
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
 
-  // Append link to document body and trigger click
-  document.body.appendChild(link);
-  link.click();
+      // Create a link element
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "filtered_data.json";
 
-  // Revoke the URL and remove the link element
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(link);
-},
+      // Append link to document body and trigger click
+      document.body.appendChild(link);
+      link.click();
+
+      // Revoke the URL and remove the link element
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+    },
     async toggleFilter(filterValue) {
       if (this.filter !== filterValue) {
         this.filter = filterValue;
@@ -1410,7 +1473,9 @@ export default {
     },
     getCharacterName(id) {
       const character = this.charactersData.find((char) => char.id === id);
-      return character ? character.nome_scelto : `"Non conosciuto"`;
+      return character
+        ? character.nome + " " + character.cognome
+        : `"Non conosciuto"`;
     },
 
     //Transforms characters data into cytoscape format
@@ -1802,7 +1867,9 @@ export default {
           }
           
             <div class="chInfo">
-              <h3 style="margin-left:10px"><b>${info.nome_scelto}</b>${
+              <h3 style="margin-left:10px"><b>${
+                info.nome + " " + info.cognome
+              }</b>${
           logoSrc !== ""
             ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
             : ""
@@ -1894,13 +1961,8 @@ export default {
       // Construct the content for the aside section
       content.innerHTML = `
     <div id="content"><br>
-      ${
-        imageSrc !== ""
-          ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;margin-bottom:15px" alt="Icona" id="picture">`
-          : ""
-      }
       <div class="chInfo">
-        <h3 style="margin-left:10px"><b>${info.nome_scelto}</b>${
+        <h3 style="margin-left:10px"><b>${info.nome + " " + info.cognome}</b>${
         logoSrc !== ""
           ? `<img src="${logoSrc}" style="max-width:25px;margin-left:10px" alt="Logo" class="logo">`
           : ""
@@ -1919,7 +1981,7 @@ export default {
             ? `<p><b>Data di morte: </b>${info.data_morte}</p>`
             : ""
         }
-        <h4 id="famiglia-trigger" class="aside-subtitle" style="cursor:pointer;">Famiglia <img id="fam-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="10px"></h4>
+        <h4 id="famiglia-trigger" class="aside-subtitle" style="cursor:pointer;">Famiglia <img id="fam-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="15px"></h4>
         <hr>
         <div id="famiglia-info" style="display:none;">
         ${
@@ -1958,7 +2020,7 @@ export default {
         }
       </div>
         <br>
-        <h4 id="formazione-trigger" class="aside-subtitle" style="cursor:pointer;">Formazione <img id="form-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="10px"></h4>
+        <h4 id="formazione-trigger" class="aside-subtitle" style="cursor:pointer;">Formazione <img id="form-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="15px"></h4>
         <hr>
         <div id="formazione-info" style="display:none;">
         ${
@@ -1970,7 +2032,7 @@ export default {
         }
         </div>
         <br>
-        <h4 id="attivita-trigger" class="aside-subtitle" style="cursor:pointer;">Attivita <img id="att-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="10px"></h4>
+        <h4 id="attivita-trigger" class="aside-subtitle" style="cursor:pointer;">Attivita <img id="att-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="15px"></h4>
         <hr>
         <div id="attivita-info" style="display:none;">
         ${
@@ -2006,50 +2068,66 @@ export default {
         }
         </div>
         <br>
-        <h4 id="fonti-trigger" class="aside-subtitle" style="cursor:pointer;">Fonti <img id="font-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="10px"></h4>
+        <h4 id="fonti-trigger" class="aside-subtitle" style="cursor:pointer;">Fonti <img id="font-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="15px"></h4>
         <hr>
         <div id="fonti-info" style="display:none;">
         ${
           info.fonti_musicali && info.fonti_musicali.length > 0
-            ? `<p><b>Fonti musicali:</b> ${info.fonti_musicali
+            ? `<p><b>Fonti musicali:</b> <br>${info.fonti_musicali
                 .map((fontiId) => {
                   const fonti = this.fontiMusicali.find(
                     (fonti) => fonti.id === fontiId
                   );
-                  return fonti ? `${fonti.titolo} - ${fonti.compositore}` : "";
+                  return fonti
+                    ? `<a href="#" onclick.prevent="showFontDetails(${fontiId}, 'musicali')">${fonti.titolo} - ${fonti.compositore}</a>`
+                    : "";
                 })
-                .join(" | ")}</p>`
+                .join("<br>")}</p>`
             : ""
         }
         ${
           info.fonti_archivistiche && info.fonti_archivistiche.length > 0
-            ? `<p><b>Fonti archivistiche:</b> ${info.fonti_archivistiche
+            ? `<p><b>Fonti archivistiche:</b> <br>${info.fonti_archivistiche
                 .map((fontiId) => {
                   const fonti = this.fontiArchivistiche.find(
                     (fonti) => fonti.id === fontiId
                   );
                   return fonti
-                    ? `${fonti.archivio_sigla} - ${fonti.busta} - ${fonti.carte}`
+                    ? `<a href="#" onclick.prevent="showFontDetails(${fontiId}, 'archivistiche')">${fonti.archivio_sigla} - ${fonti.busta} - ${fonti.carte}</a>`
                     : "";
                 })
-                .join(" | ")}</p>`
+                .join("<br>")}</p>`
             : ""
         }
         ${
           info.fonti_letterarie && info.fonti_letterarie.length > 0
-            ? `<p><b>Fonti letterarie:</b> ${info.fonti_letterarie
+            ? `<p><b>Fonti letterarie:</b> <br>${info.fonti_letterarie
                 .map((fontiId) => {
                   const fonti = this.fontiLetterarie.find(
                     (fonti) => fonti.id === fontiId
                   );
-                  return fonti ? `${fonti.titolo} - ${fonti.autore}` : "";
+                  return fonti
+                    ? `<a href="#" onclick.prevent="showFontDetails(${fontiId}, 'letterarie')">${
+                        fonti.titolo
+                      } - ${
+                        fonti.autore !== null ? fonti.autore : "Non conosciuto"
+                      }</a>`
+                    : "";
                 })
-                .join(" | ")}</p>`
+                .join("<br>")}</p>`
             : ""
         }
         </div>
+        <br>
+        ${
+          imageSrc !== ""
+            ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;margin-bottom:15px" alt="Icona" id="picture">`
+            : ""
+        }
         <div id="autore" style="font-size:smaller;text-align:right;margin-top:70px">
-          Creato da ${info.autore_scheda}
+          ${
+            info.autore_scheda !== null ? "Creato da " + info.autore_scheda : ""
+          }
         </div>
       </div>
     </div>
@@ -2057,6 +2135,9 @@ export default {
 
       // Show the aside section
       this.showAside = true;
+      // if (document.getElementById('famiglia-info').innerHTML == "") {
+
+      // }
       document
         .getElementById("famiglia-trigger")
         .addEventListener("click", this.toggleFamigliaInfo);
@@ -2073,6 +2154,34 @@ export default {
         .getElementById("closeAside")
         .addEventListener("click", this.closeAside);
     },
+    showFontDetails(fontiId, fontiType) {
+      let fonti;
+      switch (fontiType) {
+        case "musicali":
+          fonti = this.fontiMusicali.find((f) => f.id === fontiId);
+          break;
+        case "archivistiche":
+          fonti = this.fontiArchivistiche.find((f) => f.id === fontiId);
+          break;
+        case "letterarie":
+          fonti = this.fontiLetterarie.find((f) => f.id === fontiId);
+          break;
+      }
+
+      if (fonti) {
+        console.log(fonti)
+        // Display the full information of the fonti in a popup or modal
+        alert(
+          `Title: ${fonti.titolo || ""}\nComposer: ${
+            fonti.compositore || ""
+          }\nArchive: ${fonti.archivio_sigla || ""}\nBusta: ${
+            fonti.busta || ""
+          }\nCarte: ${fonti.carte || ""}\nAuthor: ${
+            fonti.autore || "Non conosciuto"
+          }`
+        );
+      }
+    },
     toggleFamigliaInfo() {
       if (document.getElementById("famiglia-info").style.display !== "none") {
         document.getElementById("famiglia-info").style.display = "none";
@@ -2085,10 +2194,12 @@ export default {
     toggleFormazioneInfo() {
       if (document.getElementById("formazione-info").style.display !== "none") {
         document.getElementById("formazione-info").style.display = "none";
-        document.getElementById("form-arrow").style.transform = "rotate(360deg)";
+        document.getElementById("form-arrow").style.transform =
+          "rotate(360deg)";
       } else {
         document.getElementById("formazione-info").style.display = "block";
-        document.getElementById("form-arrow").style.transform = "rotate(180deg)";
+        document.getElementById("form-arrow").style.transform =
+          "rotate(180deg)";
       }
     },
     toggleAttivitaInfo() {
@@ -2103,10 +2214,12 @@ export default {
     toggleFontiInfo() {
       if (document.getElementById("fonti-info").style.display !== "none") {
         document.getElementById("fonti-info").style.display = "none";
-        document.getElementById("font-arrow").style.transform = "rotate(360deg)";
+        document.getElementById("font-arrow").style.transform =
+          "rotate(360deg)";
       } else {
         document.getElementById("fonti-info").style.display = "block";
-        document.getElementById("font-arrow").style.transform = "rotate(180deg)";
+        document.getElementById("font-arrow").style.transform =
+          "rotate(180deg)";
       }
     },
 
