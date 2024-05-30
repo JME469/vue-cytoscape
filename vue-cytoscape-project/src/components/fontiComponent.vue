@@ -32,78 +32,182 @@
             <div class="btn-text filters">Letterarie</div>
           </button>
         </li>
+        <li>
+          <button
+            id="bibliografia"
+            :class="{ selected: selectedFilter === 'bibliografia' }"
+            class="nav-button nav-button2"
+            @click="toggleFilter('bibliografia')"
+          >
+            <div class="btn-text filters">Bibliografia</div>
+          </button>
+        </li>
       </ul>
     </div>
     <hr />
 
     <!-- GRAPH AND FUNCTIONALITIES -->
     <div id="logo-container">
-      <img v-show="loading" id="loading" src="/wp-content/themes/astra/assets/dist/img/vidimus_r.png" alt="Logo vidimus" width="500px">
+      <img
+        v-show="loading"
+        id="loading"
+        src="/wp-content/themes/astra/assets/dist/img/vidimus_r.png"
+        alt="Logo vidimus"
+        width="500px"
+      />
     </div>
-    <div v-show="musicale">
+    <div v-show="selectedFilter === 'musicale'">
       <div class="container">
         <div class="title-container">
           <h1>Fonti musicali</h1>
         </div>
-        <div id="musicale-font-container" class="font-container" v-for="(fonti, index) in fontiMusicali" :key="fonti.id" :value="fonti.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
-            <div>
-                <img class="font-img" v-if="fonti.icona !== null" :src="'https://directusvirtuose.vidimus.it/assets/'+fonti.icona" alt="">
-            </div>
-            <div>
-                <h2 class="font-title">{{ fonti.titolo }}</h2>
-                <h3 v-if="fonti.compositore !== null">Compositore: {{ fonti.compositore }}</h3>
-                <p>Segnatura: {{ fonti.segnatura }}</p>
-                <h4 v-if="fonti.data !== null">{{ fonti.data }}</h4>
-            </div>
-            <div>
-                <p v-if="fonti.note !== null">{{ fonti.note }}</p><br>
-                <a v-if="fonti.link !== null" :href="fonti.link">Link</a>
-            </div>
+        <div
+          id="musicale-font-container"
+          class="font-container"
+          v-for="(fonti, index) in fontiMusicali"
+          :key="fonti.id"
+          :value="fonti.id"
+          :class="[index % 2 === 0 ? 'light-grey' : 'white']"
+        >
+          <div>
+            <h2 class="font-title">{{ fonti.titolo }}</h2>
+            <h3 v-if="fonti.compositore !== null">
+              Compositore: {{ fonti.compositore }}
+            </h3>
+            <p>Segnatura: {{ fonti.segnatura }}</p>
+            <h4 v-if="fonti.data !== null">{{ fonti.data }}</h4>
+          </div>
+          <div>
+            <p v-if="fonti.note !== null">{{ fonti.note }}</p>
+            <br />
+            <a v-if="fonti.link !== null" :href="fonti.link">Link</a>
+          </div>
+          <div>
+            <img
+              class="font-img"
+              v-if="fonti.icona !== null"
+              :src="'https://directusvirtuose.vidimus.it/assets/' + fonti.icona"
+              alt=""
+            />
+          </div>
         </div>
       </div>
     </div>
-    <div v-show="archivistiche">
-        <div class="container">
-          <div class="title-container">
-            <h1>Fonti archivistiche</h1>
+    <div v-show="selectedFilter === 'archivistiche'">
+      <div class="container">
+        <div class="title-container">
+          <h1>Fonti archivistiche</h1>
+        </div>
+        <div
+          class="font-container"
+          v-for="(fonti, index) in fontiArchivistiche"
+          :key="fonti.id"
+          :value="fonti.id"
+          :class="[index % 2 === 0 ? 'light-grey' : 'white']"
+        >
+          <div>
+            <img
+              class="font-img"
+              v-if="fonti.icona !== null"
+              :src="'https://directusvirtuose.vidimus.it/assets/' + fonti.icona"
+              alt=""
+            />
           </div>
-            <div class="font-container" v-for="(fonti, index) in fontiArchivistiche" :key="fonti.id" :value="fonti.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
-                <div>
-                    <img class="font-img" v-if="fonti.icona !== null" :src="'https://directusvirtuose.vidimus.it/assets/'+fonti.icona" alt="">
-                </div>
-                <div>
-                    <h2>{{ fonti.archivio }}</h2>
-                    <h3 class="font-title" v-if="fonti.titolo !== null" style="font-size:larger;font-weight:bold;">Titolo: {{ fonti.titolo }}</h3>
-                    <p v-if="fonti.fondo !== null">Fondo: {{ fonti.fondo }}</p>
-                </div>
-                <div style="max-width:80%">
-                    <p v-if="fonti.descrizione !== null">{{ fonti.descrizione }}</p>
-                    <p v-if="fonti.trascrizione !== null">{{ fonti.trascrizione }}</p>
-                </div>
-            </div>
+          <div>
+            <h2>{{ fonti.archivio }}</h2>
+            <h3
+              class="font-title"
+              v-if="fonti.titolo !== null"
+              style="font-size: larger; font-weight: bold"
+            >
+              Titolo: {{ fonti.titolo }}
+            </h3>
+            <p v-if="fonti.fondo !== null">Fondo: {{ fonti.fondo }}</p>
           </div>
+          <div style="max-width: 80%">
+            <p v-if="fonti.descrizione !== null">{{ fonti.descrizione }}</p>
+            <p v-if="fonti.trascrizione !== null">{{ fonti.trascrizione }}</p>
+          </div>
+        </div>
+      </div>
     </div>
-    <div v-show="letterarie">
-        <div class="container">
-          <div class="title-container">
-            <h1>Fonti letterarie</h1>
+    <div v-show="selectedFilter === 'letterarie'">
+      <div class="container">
+        <div class="title-container">
+          <h1>Fonti letterarie</h1>
+        </div>
+        <div
+          class="font-container"
+          v-for="(fonti, index) in fontiLetterarie"
+          :key="fonti.id"
+          :value="fonti.id"
+          :class="[index % 2 === 0 ? 'light-grey' : 'white']"
+        >
+          <div>
+            <img
+              class="font-img"
+              v-if="fonti.icona !== null"
+              :src="'https://directusvirtuose.vidimus.it/assets/' + fonti.icona"
+              alt=""
+            />
           </div>
-            <div class="font-container" v-for="(fonti, index) in fontiLetterarie" :key="fonti.id" :value="fonti.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
-                <div>
-                    <img class="font-img" v-if="fonti.icona !== null" :src="'https://directusvirtuose.vidimus.it/assets/'+fonti.icona" alt="">
-                </div>
-                <div>
-                    <h2 class="font-title">{{ fonti.titolo }}</h2>
-                    <h3 v-if="fonti.data !== null">{{ fonti.data }}</h3>
-                    <p v-if="fonti.segnatura !== null">Segnatura: {{ fonti.segnatura }}</p>
-                </div>
-                <div style="max-width:75%">
-                    <p v-if="fonti.note !== null">{{ fonti.note }}</p>
-                    <p v-if="fonti.trascrizione !== null">{{ fonti.trascrizione }}</p><br>
-                    <a v-if="fonti.link !== null" :href="fonti.link" style="max-width:100%">Link</a>
-                </div>
-            </div>
+          <div>
+            <h2 class="font-title">{{ fonti.titolo }}</h2>
+            <h3 v-if="fonti.data !== null">{{ fonti.data }}</h3>
+            <p v-if="fonti.segnatura !== null">
+              Segnatura: {{ fonti.segnatura }}
+            </p>
           </div>
+          <div style="max-width: 75%">
+            <p v-if="fonti.note !== null">{{ fonti.note }}</p>
+            <p v-if="fonti.trascrizione !== null">{{ fonti.trascrizione }}</p>
+            <br />
+            <a
+              v-if="fonti.link !== null"
+              :href="fonti.link"
+              style="max-width: 100%"
+              >Link</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-show="selectedFilter === 'bibliografia'">
+      <div class="container">
+        <div class="title-container">
+          <h1>Bibliografia</h1>
+        </div>
+        <div
+          id="bibliografia-font-container"
+          class="font-container"
+          v-for="(fonti, index) in fontiMusicali"
+          :key="fonti.id"
+          :value="fonti.id"
+          :class="[index % 2 === 0 ? 'light-grey' : 'white']"
+        >
+          <div>
+            <img
+              class="font-img"
+              v-if="fonti.icona !== null"
+              :src="'https://directusvirtuose.vidimus.it/assets/' + fonti.icona"
+              alt=""
+            />
+          </div>
+          <div>
+            <h2 class="font-title">{{ fonti.titolo }}</h2>
+            <h3 v-if="fonti.compositore !== null">
+              Compositore: {{ fonti.compositore }}
+            </h3>
+            <p>Segnatura: {{ fonti.segnatura }}</p>
+            <h4 v-if="fonti.data !== null">{{ fonti.data }}</h4>
+          </div>
+          <div>
+            <p v-if="fonti.note !== null">{{ fonti.note }}</p>
+            <br />
+            <a v-if="fonti.link !== null" :href="fonti.link">Link</a>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -140,7 +244,7 @@ hr {
     opacity: 0%;
   }
   50% {
-    opacity: 100%
+    opacity: 100%;
   }
   100% {
     opacity: 0%;
@@ -390,41 +494,43 @@ li {
   padding: 10px;
 }
 
-.container{
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.font-container{
-    display: grid;
-    grid-template-columns: 0.5fr 1fr 1fr;
-    gap: 15px;
-    padding: 70px;
-    margin: 5px;
+.font-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.5fr;
+  gap: 15px;
+  padding: 70px;
+  margin: 5px;
 }
 
-.font-container p, h3, h4{
+.font-container p,
+h3,
+h4 {
   font-size: 18px;
 }
 
-#musicale-font-container{
+#musicale-font-container {
   grid-template-columns: 0.7fr 0.85fr 0.8fr;
-    gap: 5px;
+  gap: 5px;
 }
 
-.font-title{
+.font-title {
   max-width: 80%;
 }
 
-.title-container{
+.title-container {
   min-width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.font-img{
+.font-img {
   width: 80%;
 }
 
@@ -591,6 +697,7 @@ export default {
       eventsData: [],
       repertorioData: [],
       repertorioRelations: [],
+
       fontiMusicali: [],
       fontiArchivistiche: [],
       fontiLetterarie: [],
@@ -599,6 +706,8 @@ export default {
       musicale: false,
       archivistiche: false,
       letterarie: false,
+
+      selectedFilter: "musicale",
 
       cy: null,
       cyData: null,
@@ -633,7 +742,6 @@ export default {
       showDropdown: false,
       dropdownLabel: "Eventi",
       selectedEvent: null,
-      selectedFilter: "musicale",
       searchQuery: "",
       showAutocomplete: false,
       accordionState: {},
@@ -642,6 +750,7 @@ export default {
   },
   mounted() {
     this.fetchDataAndPopulateNodes();
+    this.setFilterFromURL();
   },
   computed: {
     filteredCharacters() {
@@ -656,21 +765,21 @@ export default {
     },
   },
   methods: {
-    toggleFilter(filterValue) {
-      if (filterValue === "musicale") {
-        this.letterarie = false;
-        this.archivistiche = false;
-        this.musicale = true;
-      } else if (filterValue === "archivistiche") {
-        this.letterarie = false;
-        this.musicale = false;
-        this.archivistiche = true;
-      } else if (filterValue === "letterarie") {
-        this.musicale = false;
-        this.archivistiche = false;
-        this.letterarie = true;
+    toggleFilter(filter) {
+      this.selectedFilter = filter;
+      this.updateURL(filter);
+    },
+    setFilterFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const filter = urlParams.get('filter');
+      if (filter) {
+        this.selectedFilter = filter;
       }
-      this.selectedFilter = filterValue;
+    },
+    updateURL(filter) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('filter', filter);
+      window.history.pushState({}, '', url);
     },
 
     getFontType(fonte) {
@@ -705,34 +814,34 @@ export default {
         const fontiLetterarie = await this.retrieveFontiLetterarie();
         this.fontiLetterarie = fontiLetterarie;
 
-        const maestroRelations = await this.retrieveMaestroRelations();
-        this.maestroRelations = maestroRelations;
-        const mecenatiRelations = await this.retrieveMecenatiRelations();
-        this.mecenatiRelations = mecenatiRelations;
+        // const maestroRelations = await this.retrieveMaestroRelations();
+        // this.maestroRelations = maestroRelations;
+        // const mecenatiRelations = await this.retrieveMecenatiRelations();
+        // this.mecenatiRelations = mecenatiRelations;
 
-        const maestroData = await this.retrieveMaestroData();
-        this.maestroData = maestroData;
-        const mecenatiData = await this.retrieveMecenatiData();
-        this.mecenatiData = mecenatiData;
+        // const maestroData = await this.retrieveMaestroData();
+        // this.maestroData = maestroData;
+        // const mecenatiData = await this.retrieveMecenatiData();
+        // this.mecenatiData = mecenatiData;
 
-        const combinedMaestroData = this.combineMaestroData(
-          maestroRelations,
-          maestroData
-        );
-        const combinedMecenatiData = this.combineMecenatiData(
-          mecenatiRelations,
-          mecenatiData
-        );
+        // const combinedMaestroData = this.combineMaestroData(
+        //   maestroRelations,
+        //   maestroData
+        // );
+        // const combinedMecenatiData = this.combineMecenatiData(
+        //   mecenatiRelations,
+        //   mecenatiData
+        // );
 
-        this.updateCharacterMaestroRelations(combinedMaestroData);
-        this.updateCharacterMecenatiRelations(combinedMecenatiData);
+        // this.updateCharacterMaestroRelations(combinedMaestroData);
+        // this.updateCharacterMecenatiRelations(combinedMecenatiData);
 
-        this.updateCharacterEvents(
-          charactersData,
-          await this.retrieveEventRelations()
-        );
+        // this.updateCharacterEvents(
+        //   charactersData,
+        //   await this.retrieveEventRelations()
+        // );
 
-        this.combineData();
+        // this.combineData();
 
         this.musicale = true;
         this.loading = false;
@@ -785,7 +894,9 @@ export default {
 
     async retrieveEvents() {
       try {
-        const response = await fetch("https://directusvirtuose.vidimus.it/items/eventi");
+        const response = await fetch(
+          "https://directusvirtuose.vidimus.it/items/eventi"
+        );
         const eventData = await response.json();
         const events = eventData.data;
         return events;
@@ -823,7 +934,9 @@ export default {
     },
     async retrieveMaestroData() {
       try {
-        const response = await fetch("https://directusvirtuose.vidimus.it/items/maestro");
+        const response = await fetch(
+          "https://directusvirtuose.vidimus.it/items/maestro"
+        );
         const responseData = await response.json();
         const maestroData = responseData.data;
 

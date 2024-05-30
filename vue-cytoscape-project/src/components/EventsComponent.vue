@@ -2,13 +2,41 @@
   <div id="outer-container">
     <!-- EVENTS PAGE -->
     <div id="logo-container">
-      <img v-show="loading" id="loading" src="/wordpress/wp-content/themes/astra/assets/dist/img/vidimus_r.png" alt="Logo vidimus" width="500px">
+      <img v-show="loading" id="loading" src="/wp-content/themes/astra/assets/dist/img/vidimus_r.png" alt="Logo vidimus" width="500px">
     </div>
     <div id="events" v-show="showEventList">
       <h1>Eventi</h1>
-      <div v-for="(event, index) in eventsData" :key="event.id" :value="event.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
+      <div id="searchBar-container">
+        <div class="search-container">
+          <input
+            type="text"
+            v-model="searchQuery"
+            @input="updateAutocomplete"
+            @keyup.enter="searchCharacter"
+            placeholder="Cerca una persona o un repertorio..."
+          />
+          <ul v-if="showAutocomplete" id="autocomplete">
+            <li
+              v-for="event in filteredEvents"
+              :key="event.id"
+              @click="selectCharacter(event)"
+              class="character"
+            >
+              {{ event.luogo }}, {{ event.data }}
+            </li>
+          </ul>
+          <button @click="clearSearch" id="searchBar-button">
+            <img
+              src="/wp-content/themes/astra/assets/dist/img/x.png"
+              alt=""
+              class="searchBar-button-icon"
+            />
+          </button>
+        </div>
+      </div>
+      <div v-for="(event, index) in filteredEvents" :key="event.id" :value="event.id" :class="[index % 2 === 0 ? 'light-grey' : 'white']">
         <div class="event">
-          <h2>{{ event.data }}, {{ event.luogo }}</h2>
+          <h2>{{ event.luogo }}, {{ event.data }}</h2>
           <div class="event-info">
             <p v-if="event.note !== null">{{ event.note }}</p>
             <div class="characters">
@@ -68,6 +96,75 @@ body {
   justify-content: center;
 }
 
+#searchBar-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+#searchBar-container > div > button {
+  padding: 10px;
+  background: none;
+  border: solid 2px rgb(100, 9, 18);
+  color: rgb(76, 76, 76);
+  transition: all 0.5s ease-out;
+  cursor: pointer;
+}
+
+#searchBar-container > div > button:hover {
+  background-color: rgb(120, 38, 46);
+  color: aliceblue;
+}
+
+.search-container {
+  margin-right: 15px;
+  display: flex;
+  flex-direction: row;
+}
+
+.search-container > input {
+  padding: 10px;
+  min-width: 320px;
+  border: solid 2px rgb(100, 9, 18);
+}
+
+#autocomplete {
+  position: absolute;
+  list-style: none;
+  max-height: 200px;
+  max-width: 320px;
+  overflow-y: scroll;
+  background-color: #fafafa;
+  border: solid 2px rgb(100, 9, 18);
+  margin-top: 45px;
+  z-index: 1002;
+}
+
+#searchBar-button {
+  margin-left: 10px;
+  width: 40px;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px !important;
+}
+
+.character {
+  cursor: pointer;
+  padding: 10px;
+  font-family: Montserrat;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.character:hover {
+  background-color: rgb(100, 9, 18);
+  color: aliceblue;
+}
+
 li {
   height: 100%;
 }
@@ -75,6 +172,10 @@ li {
 #events {
   padding-bottom: 50px;
   padding-top: 40px;
+}
+
+#events *{
+  font-family: 'Source Sans 3';
 }
 
 #events > h1 {
@@ -94,8 +195,9 @@ li {
 }
 
 .event-info > p {
-  max-width: 50%;
-  font-size: 18px;
+  max-width: 1180px;
+  font-size: 20px;
+  color: #3a3a3a;
 }
 
 .event-info {
@@ -154,17 +256,8 @@ cytoscape.use(fcose);
 export default {
   data() {
     return {
-      showCytoscape: false,
       showEventList: false,
-      showPopup: false,
       loading: true,
-
-      isPanning: false,
-      initialPointerPosition: { x: 0, y: 0 },
-      nodeClicked: false,
-      popupInfo: {},
-      clickedNode: null,
-      hoverTimeout: null,
 
       charactersData: [],
       relationsData: [],
@@ -173,59 +266,43 @@ export default {
       maestroData: [],
       mecenatiData: [],
       eventsData: [],
+      eventRelationsData: [],
 
-      cy: null,
-      cyData: null,
-      filter: "family",
-      eventFilter: false,
-      layout1: {
-        name: "fcose",
-        nodeRepulsion: 35000,
-        randomize: true,
-        idealEdgeLength: 50,
-        numIter: 30000,
-        nestingFactor: 1000,
-        componentSpacing: 1000,
-        nodeOverlap: 10000,
-        animate: false,
-      },
-      layout2: {
-        name: "fcose",
-        nodeRepulsion: 100000,
-        randomize: true,
-        idealEdgeLength: 45,
-        numIter: 300000,
-        nestingFactor: 10000,
-        componentSpacing: 1000,
-        nodeOverlap: 100,
-        animate: false,
-      },
-      layoutConfig: null,
-
-      baseUrl: window.location.origin,
-
-      showDropdown: false,
-      dropdownLabel: "Eventi",
-      selectedEvent: null,
-      selectedFilter: "family",
       searchQuery: "",
       showAutocomplete: false,
-      accordionState: {},
-      showAside: false,
     };
   },
   mounted() {
     this.fetchDataAndPopulateNodes();
   },
   computed: {
-    filteredCharacters() {
+    filteredEvents() {
       const query = this.searchQuery.toLowerCase().trim();
-      return this.charactersData
-        .filter((character) =>
-          character.nome_scelto.toLowerCase().includes(query)
-        )
-        .sort((a, b) => {
-          return a.nome_scelto.localeCompare(b.nome_scelto); // Sort alphabetically by character name
+
+      return this.eventsData
+        .filter((event) => {
+          // Comprobar título
+          const matchesLuogo =
+            event.luogo && event.luogo.toLowerCase().includes(query);
+
+          // Comprobar género
+          const matchesData =
+            event.data && event.data.toLowerCase().includes(query);
+
+          // Comprobar personajes relacionados
+          const matchesRelatedCharacters = event.relatedCharacters.some(
+            (rel) => {
+              const character = this.charactersData.find(
+                (char) => char.id === rel.characterId
+              );
+              return (
+                character && character.nome_scelto.toLowerCase().includes(query)
+              );
+            }
+          );
+
+          //Devovlver verdadero si la query coincide con alguno de los campos
+          return matchesLuogo || matchesData || matchesRelatedCharacters;
         });
     },
   },
@@ -328,8 +405,8 @@ export default {
         character.nome_scelto.toLowerCase().includes(query)
       );
     },
-    selectCharacter(character) {
-      this.searchQuery = character.nome_scelto;
+    selectCharacter(event) {
+      this.searchQuery = event.luogo+", "+event.data;
       this.showAutocomplete = false;
     },
     searchCharacter() {
@@ -338,7 +415,7 @@ export default {
         this.showAllNodes();
         return;
       }
-      const character = this.charactersData.find((char) =>
+      const character = this.eventsData.find((char) =>
         char.nome_scelto.toLowerCase().includes(query)
       );
       if (character) {
@@ -349,148 +426,6 @@ export default {
         this.clearGraph();
       }
     },
-    showAllNodes() {
-      // Show all nodes in the graph
-      this.cy.nodes().forEach((node) => {
-        if (node.connectedEdges().length !== 0) {
-          node.show();
-        }
-      });
-      this.cy.edges().show();
-    },
-
-    /* Extra functionalities */
-    hidePopupOutside(event) {
-      var popup = document.getElementById("popup");
-      if (
-        popup &&
-        popup.style.opacity === "1" &&
-        !popup.contains(event.target) &&
-        event.target !== this.clickedNode
-      ) {
-        popup.style.opacity = "0";
-        popup.style.zIndex = "-999";
-        this.clickedNode = null;
-        document.removeEventListener("click", this.hidePopupOutside);
-      }
-    },
-    getNodeSize(node) {
-      const connections = node.connectedEdges().length;
-      const baseSize = 35;
-      const sizeIncrement = 5;
-      const maxSize = 65;
-
-      // Calculate the size based on connections
-      let size = baseSize + connections * sizeIncrement;
-
-      // Limit the size to the maximum allowed size
-      size = Math.min(size, maxSize);
-
-      return size;
-    },
-    saveLayout() {
-      var positions = {};
-      this.cy.nodes().forEach(function (node) {
-        positions[node.id()] = {
-          x: node.position().x,
-          y: node.position().y,
-        };
-      });
-      localStorage.setItem("savedPositions", JSON.stringify(positions));
-    },
-
-    /* CREATE CYTOSCAPE GRAPH */
-    loadLayout() {
-      var savedPositions = JSON.parse(localStorage.getItem("savedPositions"));
-      if (savedPositions) {
-        Object.entries(savedPositions).forEach(([nodeId, position]) => {
-          const node = this.cy.getElementById(nodeId);
-          if (node) {
-            node.position(position);
-          }
-        });
-      } else {
-        if (this.filter === "all") {
-          this.layoutConfig = this.layout2;
-        } else {
-          this.layoutConfig = this.layout1;
-        }
-        this.cy = cytoscape({
-          container: document.getElementById("cy"),
-          elements: {
-            nodes: this.cyData.nodes,
-            edges: this.cyData.edges,
-          },
-
-          layout: this.layoutConfig,
-
-          style: [
-            {
-              selector: "node",
-              style: {
-                "background-image": (node) => {
-                  const info = node.data("info");
-                  return info.icona !== null
-                    ? `url(https://directusvirtuose.vidimus.it/assets/${info.icona})`
-                    : "none";
-                },
-                "background-fit": "cover",
-                // "background-color": (node) => {
-                //   const info = node.data("info");
-                //   if (info.icona !== null) {
-                //     return "transparent";
-                //   } else {
-                //     return info.luogo_nascita === "Roma"
-                //       ? "rgb(78, 6, 105)"
-                //       : "rgb(36, 68, 196)";
-                //   }
-                // },
-                "background-color": "#96b8d2",
-
-                "border-width": (node) => {
-                  const info = node.data("info");
-                  return info.virtuosa ? "6px" : "0";
-                },
-                "border-color": (node) => {
-                  const info = node.data("info");
-                  return info.virtuosa ? "rgb(120, 38, 46)" : "transparent";
-                },
-
-                //label: "data(id)",
-                "text-valign": "center",
-                "text-halign": "center",
-
-                width: "45px",
-                height: "45px",
-
-                color: "#ffffff",
-                "font-size": "12px",
-              },
-            },
-            {
-              selector: "edge",
-              style: {
-                width: 3,
-                "line-color": (edge) => {
-                  const relation = edge.data();
-                  if (relation.type === "maestro") {
-                    return "rgb(177, 80, 80)"; // Maestro relations
-                  } else if (relation.type === "mecenati") {
-                    return "rgb(45, 116, 59)"; // Mecenati relations
-                  } else {
-                    return "#96b8d2";
-                  }
-                },
-              },
-            },
-          ],
-          minZoom: 0.35,
-          maxZoom: 1.8,
-          pan: { x: 0, y: 0 },
-          boxSelectionEnabled: false,
-        });
-      }
-    },
 
     /* MAIN FUNCTION */
     //It calls the relevant functions in order to retrieve data and create the graph
@@ -499,53 +434,16 @@ export default {
         const charactersData = await this.retrieveData();
         this.charactersData = charactersData;
 
+        const eventRelations = await this.retrieveEventRelations();
+        this.eventsRelations = eventRelations;
         const eventsData = await this.retrieveEvents();
         this.eventsData = eventsData;
-
-        const relationsData = await this.retrieveRelations();
-        this.relationsData = relationsData;
-
-        const maestroRelations = await this.retrieveMaestroRelations();
-        this.maestroRelations = maestroRelations;
-        const mecenatiRelations = await this.retrieveMecenatiRelations();
-        this.mecenatiRelations = mecenatiRelations;
-
-        const maestroData = await this.retrieveMaestroData();
-        this.maestroData = maestroData;
-        const mecenatiData = await this.retrieveMecenatiData();
-        this.mecenatiData = mecenatiData;
-
-        const combinedMaestroData = this.combineMaestroData(
-          maestroRelations,
-          maestroData
-        );
-        const combinedMecenatiData = this.combineMecenatiData(
-          mecenatiRelations,
-          mecenatiData
-        );
-
-        this.updateCharacterMaestroRelations(combinedMaestroData);
-        this.updateCharacterMecenatiRelations(combinedMecenatiData);
 
         this.updateCharacterEvents(
           charactersData,
           await this.retrieveEventRelations()
         );
 
-        this.combineData();
-
-        this.cyData = this.formatDataForCytoscape(
-          charactersData,
-          this.maestroRelations,
-          this.mecenatiRelations,
-          this.maestroData,
-          this.mecenatiData
-        );
-
-        //console.log(cyData);
-        //this.loadLayout();
-        //this.populateCytoscapeGraph();
-        //this.addCytoscapeEventListeners();
         setTimeout(this.showEventList = true, 150);
         this.loading = false;
       } catch (error) {
@@ -562,24 +460,27 @@ export default {
       const data = responseData.data;
       return data;
     },
-    async retrieveRelations() {
+    async retrieveEvents() {
       const response = await fetch(
-        "https://directusvirtuose.vidimus.it/items/Virtuose_Virtuose"
+        "https://directusvirtuose.vidimus.it/items/eventi"
       );
       const responseData = await response.json();
       const data = responseData.data;
-      return data;
-    },
-    async retrieveEvents() {
-      try {
-        const response = await fetch("https://directusvirtuose.vidimus.it/items/eventi");
-        const eventData = await response.json();
-        const events = eventData.data;
-        return events;
-      } catch (error) {
-        console.error("Error fetching events: ", error);
-        throw error;
+
+      for (const event of data) {
+        // Array para personajes relacionados
+        event.relatedCharacters = [];
+
+        // Encontrar la relacion correspondiente en la tabla de relaciones (Virtuose_repertorio)
+        const relation = this.eventRelationsData.find(
+          (rel) => rel.repertorio_id === event.id
+        );
+        if (relation) {
+          //Añade la id del personaje encontrado al array
+          event.relatedCharacters.push({ characterId: relation.Virtuose_id });
+        }
       }
+      return data;
     },
     async retrieveEventRelations() {
       try {
@@ -1384,7 +1285,6 @@ export default {
           node.hide();
         }
       });
-
       this.cy.nodes().forEach((node) => {
         const size = this.getNodeSize(node);
         node.style("width", size);

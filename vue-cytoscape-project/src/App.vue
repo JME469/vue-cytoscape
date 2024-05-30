@@ -1,15 +1,15 @@
 <template>
   <div id="app">
-    <CytoscapeExample />
+    <fontiComponent />
   </div>
 </template>
 
 <script>
-import CytoscapeExample from "./components/CytoscapeExample.vue";
+import fontiComponent from "./components/fontiComponent.vue";
 
 export default {
   components: {
-    CytoscapeExample,
+    fontiComponent,
   },
 };
 </script>
@@ -17,12 +17,6 @@ export default {
 <style>
 body{
   margin: 0px;
-}
-
-#cy {
-  width: 85%;
-  height: 600px;
-  background-color: rgb(235, 235, 235);
 }
 
 #popup>div {
@@ -122,7 +116,7 @@ body{
 }
 
 .p-multiselect{
-  width: 350px;
+  width: 230px;
   overflow: hidden;
   z-index: 1004 !important;
 }

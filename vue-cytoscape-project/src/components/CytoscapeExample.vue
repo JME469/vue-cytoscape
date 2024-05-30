@@ -1,32 +1,180 @@
 <template>
   <div id="outer-container">
     <!-- GRAPH AND FUNCTIONALITIES -->
-
+    <div id="view-switch">
+      <ul class="nav2" id="grafico-lista">
+        <li>
+          <button
+            id="lista-button"
+            :class="{ selected: selectedView === 'lista' }"
+            class="nav-button nav-button2 switch-button"
+            @click="toggleView('lista')"
+          >
+            <div class="btn-text filters">Lista</div>
+          </button>
+        </li>
+        <li>
+          <button
+            id="grafico-button"
+            :class="{ selected: selectedView === 'grafico' }"
+            class="nav-button nav-button2 switch-button"
+            @click="toggleView('grafico')"
+          >
+            <div class="btn-text filters">Grafico</div>
+          </button>
+        </li>
+      </ul>
+    </div>
     <div v-show="showCytoscape">
       <div id="container">
-        <div id="modal" v-show="showModal">
-          <div id="fm-modal">
+        <div id="modal" v-show="showModal" @click.self="closeModal">
+          <div id="search-results-modal" v-if="showSearchResults">
+            <span class="close" @click="closeModal">&times;</span>
+            <h2>
+              Risultati per <span id="show-query">"{{ searchQuery2 }}"</span>
+            </h2>
+            <ul>
+              <li
+                v-for="result in searchResults"
+                :key="result.data.id"
+                @click="handleSelectResult(result)"
+                class="search-result-item"
+              >
+                {{ getResultDisplayText(result) }}
+              </li>
+            </ul>
+          </div>
+          <div id="ev-modal" v-if="fontType === 'eventi'">
+            <span class="close" @click="closeModal">&times;</span>
+            <h2>{{ fontObject.luogo }}</h2>
+            <br />
+            <h3>{{ fontObject.data }}</h3>
+            <br />
+            <br />
+            <p v-if="fontObject.note !== null">Note: {{ fontObject.note }}</p>
+            <span style="cursor:pointer" @click="selectEvent(fontObject)">Filtra il grafico</span>
+          </div>
+          <div id="rep-modal" v-if="fontType === 'repertorio'">
+            <span class="close" @click="closeModal">&times;</span>
             <h2>{{ fontObject.titolo }}</h2>
-            <h4>{{ fontObject.compositore!==null ? fontObject.compositore : "" }} {{ fontObject.data!==null ? fontObject.data : "" }}</h4>
-            <p>{{ fontObject.segnatura }}</p>
-            <p v-if="fontObject.note !== null">{{ fontObject.note }}</p>
+            <br />
+            <h3>{{ fontObject.genere }}</h3>
+            <br />
+            <h4>{{ fontObject.data }}</h4>
+            <br />
+            <p v-if="fontObject.note !== null">Note: {{ fontObject.note }}</p>
+            <span style="cursor:pointer" @click="selectRepertorio(fontObject)">Filtra il grafico</span>
           </div>
-          <div id="fa-modal">
-            <h2>{{ fontObject.archivio_sigla }}  {{ fontObject.archivio }}</h2>
+          <div id="fm-modal" v-if="fontType === 'musicali'">
+            <span class="close" @click="closeModal">&times;</span>
+            <h2>{{ fontObject.titolo }}</h2>
+            <br />
+            <h4>
+              {{
+                fontObject.compositore !== null
+                  ? "Compositore: " + fontObject.compositore
+                  : ""
+              }}
+              {{ fontObject.data !== null ? "Data: " + fontObject.data : "" }}
+            </h4>
+            <br />
+            <p>Segnatura: {{ fontObject.segnatura }}</p>
+            <p v-if="fontObject.note !== null">Note: {{ fontObject.note }}</p>
           </div>
-          <div id="fl-modal"></div>
+          <div id="fa-modal" v-if="fontType === 'archivistiche'">
+            <span class="close" @click="closeModal">&times;</span>
+            <h2>{{ fontObject.archivio_sigla }} - {{ fontObject.archivio }}</h2>
+            <br />
+            <p>Busta: {{ fontObject.busta }}</p>
+            <p>Carte: {{ fontObject.carte }}</p>
+            <br />
+            <p v-if="fontObject.note !== null">Note: {{ fontObject.note }}</p>
+            <p>
+              {{
+                fontObject.descrizione !== null
+                  ? "Descrizione: " + fontObject.descrizione
+                  : ""
+              }}
+            </p>
+            <p>
+              {{
+                fontObject.trascrizione !== null
+                  ? "Trascrizione: " + fontObject.trascrizione
+                  : ""
+              }}
+            </p>
+          </div>
+          <div id="fl-modal" v-if="fontType === 'letterarie'">
+            <span class="close" @click="closeModal">&times;</span>
+            <h2>{{ fontObject.titolo }}</h2>
+            <br />
+            <h4>
+              {{
+                fontObject.autore !== null
+                  ? "Autore: " + fontObject.autore
+                  : "Non conosciuto"
+              }}<br />
+              {{
+                fontObject.editore !== null
+                  ? "Editore: " + fontObject.editore
+                  : "Non conosciuto"
+              }}
+            </h4>
+            <p>Data: {{ fontObject.data }}</p>
+            <p>Luogo: {{ fontObject.luogo }}</p>
+            <br />
+            <p v-if="fontObject.note !== null">Note: {{ fontObject.note }}</p>
+            <p>
+              {{
+                fontObject.trascrizione !== null
+                  ? "Trascrizione: " + fontObject.trascrizione
+                  : ""
+              }}
+            </p>
+          </div>
         </div>
-        <div>
-          <button id="menu-deploy" @click="toggleFilterMenu">
-            Mostra il menu
-          </button>
+        <div style="position: absolute; left: 5px">
+          <button id="menu-deploy" @click="toggleFilterMenu">Menu</button>
         </div>
         <div
           v-show="filterMenuDisplay"
           id="nav-container"
           class="nav-container2"
         >
-          <ul id="nav2">
+          <ul class="nav2" style="width: 100%">
+            <li style="width: 100%">
+              <button
+                id="all"
+                :class="{ selected: selectedFilter === 'all' }"
+                class="nav-button nav-button2"
+                @click="toggleFilter('all')"
+                style="width: 100%"
+              >
+                <div class="btn-text filters">Network</div>
+              </button>
+            </li>
+          </ul>
+          <ul class="nav2" style="width: 100%; margin-top: -15px">
+            <li id="container-reti">
+              <button
+                id="profesionali"
+                :class="{ selected: selectedFilter === 'mecenati' }"
+                class="nav-button nav-button2"
+                @click="toggleFilter('work', 'mecenati')"
+              >
+                <div class="btn-text filters">Reti professionali</div>
+              </button>
+            </li>
+            <li>
+              <button
+                id="formazione"
+                :class="{ selected: selectedFilter === 'maestro' }"
+                class="nav-button nav-button2"
+                @click="toggleFilter('work', 'maestro')"
+              >
+                <div class="btn-text filters">Formazione</div>
+              </button>
+            </li>
             <li>
               <button
                 id="family"
@@ -37,28 +185,25 @@
                 <div class="btn-text filters">Famiglia</div>
               </button>
             </li>
-            <li>
-              <button
-                id="work"
-                :class="{ selected: selectedFilter === 'work' }"
-                class="nav-button nav-button2"
-                @click="toggleFilter('work')"
+          </ul>
+          <ul
+            v-show="selectedFilter === 'mecenati'"
+            id="nav3"
+            style="z-index: 2000"
+          >
+            <li style="z-index: 2000">
+              <MultiSelect
+                v-model="selectedFilters"
+                display="chip"
+                :options="filterOptions"
+                placeholder="Tipi di relazioni"
+                optionLabel="name"
+                @change="filterChange(this.selectedFilters)"
               >
-                <div class="btn-text filters">Lavoro</div>
-              </button>
-            </li>
-            <li>
-              <button
-                id="all"
-                :class="{ selected: selectedFilter === 'all' }"
-                class="nav-button nav-button2"
-                @click="toggleFilter('all')"
-              >
-                <div class="btn-text filters">Network</div>
-              </button>
+              </MultiSelect>
             </li>
           </ul>
-          <div id="searchBar-container">
+          <div class="searchBar-container">
             <div class="search-container">
               <input
                 type="text"
@@ -67,7 +212,7 @@
                 @keyup.enter="searchCharacter"
                 placeholder="Cerca una persona..."
               />
-              <ul v-if="showAutocomplete" id="autocomplete">
+              <ul v-if="showAutocomplete" class="autocomplete">
                 <li
                   v-for="character in filteredCharacters"
                   :key="character.id"
@@ -103,21 +248,221 @@
               </button>
             </div>
           </div>
-          <ul id="nav3" style="z-index: 2000">
-            <li style="z-index: 2000">
-              <MultiSelect
-                v-model="selectedFilters"
-                display="chip"
-                :options="filterOptions"
-                placeholder="Tipologia lavoro"
-                optionLabel="name"
-                @change="filterChange(this.selectedFilters)"
-              ></MultiSelect>
-            </li>
-          </ul>
+          <div class="searchBar-container">
+            <div class="search-container">
+              <input
+                type="text"
+                v-model="searchQuery2"
+                @input="updateAutocomplete"
+                @keyup.enter="searchCharacter"
+                placeholder="Cerca in eventi, repertorio e fonti..."
+              />
+              <ul v-if="showAutocomplete2" class="autocomplete">
+                <li
+                  v-for="character in filteredCharacters"
+                  :key="character.id"
+                  @click="selectCharacter(character)"
+                  class="character"
+                >
+                  {{ character.nome_scelto }}
+                </li>
+              </ul>
+            </div>
+            <div
+              style="
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                gap: 7px;
+              "
+            >
+              <button @click="searchByWord" class="searchBar-button">
+                <img
+                  src="/wp-content/themes/astra/assets/dist/img/search.png"
+                  alt=""
+                  class="searchBar-button-icon"
+                />
+              </button>
+              <button @click="clearSearch2" class="searchBar-button">
+                <img
+                  src="/wp-content/themes/astra/assets/dist/img/x.png"
+                  alt=""
+                  class="searchBar-button-icon"
+                />
+              </button>
+            </div>
+          </div>
+          <div
+            id="ricerca-container"
+            class="aside-subtitle"
+            style="
+              width: 100%;
+              display: flex;
+              align-items: left;
+              justify-content: center;
+              margin-top: 20px;
+              margin-bottom: -8px;
+            "
+          >
+            <h4
+              id="ricerca-avanzata"
+              @click="toggleRicercaAvanzata"
+              style="
+                color: rgb(130, 6, 18);
+                font-size: large;
+                font-family: 'Source Sans 3';
+              "
+            >
+              Ricerca avanzata
+              <img
+                id="ric-arrow"
+                src="/wp-content/themes/astra/assets/dist/img/arrow.png"
+                alt="Search icon"
+                width="20px"
+              />
+            </h4>
+          </div>
+          <hr />
+          <form
+            @submit.prevent="handleSubmit"
+            v-show="showRicerca"
+            id="ricerca-form"
+          >
+            <div class="field-wrapper">
+              <label for="luogo">Luogo</label>
+              <div class="search-container">
+                <input
+                  type="text"
+                  id="luogo"
+                  v-model="searchFields.luogo"
+                  placeholder="Cerca una luogo..."
+                  class="fields-input"
+                />
+              </div>
+              <div>
+                <label>
+                  <input
+                    type="radio"
+                    name="luogo-filter"
+                    value="AND"
+                    v-model="searchFields.luogoFilter"
+                  />
+                  AND
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="luogo-filter"
+                    value="NOT"
+                    v-model="searchFields.luogoFilter"
+                  />
+                  NOT
+                </label>
+              </div>
+            </div>
+            <div class="field-wrapper">
+              <label for="anno">Anno</label>
+              <div class="search-container">
+                <input
+                  type="text"
+                  id="anno"
+                  v-model="searchFields.anno"
+                  placeholder="Cerca un anno..."
+                  class="fields-input"
+                />
+              </div>
+              <div>
+                <label>
+                  <input
+                    type="radio"
+                    name="anno-filter"
+                    value="AND"
+                    v-model="searchFields.annoFilter"
+                  />
+                  AND
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="anno-filter"
+                    value="NOT"
+                    v-model="searchFields.annoFilter"
+                  />
+                  NOT
+                </label>
+              </div>
+            </div>
+            <div class="field-wrapper">
+              <label for="persona">Persona</label>
+              <div class="search-container">
+                <input
+                  type="text"
+                  id="persona"
+                  v-model="searchFields.persona"
+                  placeholder="Cerca una persona..."
+                  class="fields-input"
+                />
+              </div>
+              <div>
+                <label>
+                  <input
+                    type="radio"
+                    name="persona-filter"
+                    value="AND"
+                    v-model="searchFields.personaFilter"
+                  />
+                  AND
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="persona-filter"
+                    value="NOT"
+                    v-model="searchFields.personaFilter"
+                  />
+                  NOT
+                </label>
+              </div>
+            </div>
+            <div id="field-buttons-wrapper">
+              <button type="submit">Cerca</button>
+              <button type="button" @click="resetFilters">Reset</button>
+            </div>
+          </form>
         </div>
         <!-- Cytoscape graph-->
-        <div id="cy"></div>
+        <div id="cy" v-show="view == 'grafico'"></div>
+        <div id="lista" v-show="view == 'lista'">
+          <div
+            v-for="character in filteredList"
+            :key="character.id"
+            @click="handleCharacterClick(character.id)"
+            class="list-character"
+            :class="{ highlighted: isSearchedCharacter(character) }"
+          >
+            {{ character.nome_scelto }}
+            {{
+              "(" +
+              (character.luogo_nascita != null
+                ? character.luogo_nascita
+                : "...") +
+              ", " +
+              (character.data_nascita != null ? character.data_nascita : "?") +
+              " - " +
+              (character.luogo_morte != null ? character.luogo_morte : "...") +
+              ", " +
+              (character.data_morte != null ? character.data_morte : "?") +
+              ")"
+            }}
+            <img
+              v-if="character.virtuosa === true"
+              src="/wp-content/themes/astra/assets/dist/img/logo_r.png"
+              alt="Logo virtuosa"
+              width="12px"
+            />
+          </div>
+        </div>
         <div id="aside" v-show="showAside" style="display: flex">
           <button id="closeAside" class="nav-button nav-button2">
             <div
@@ -130,9 +475,9 @@
           <div id="aside-content"></div>
         </div>
       </div>
-      <div id="download-container">
+      <!-- <div id="download-container">
         <button @click="downloadData">Scarica i dati</button>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
@@ -142,11 +487,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Syne:wght@400..800&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Montaga&display=swap");
-
-* {
-  margin: 0;
-  padding: 0;
-}
 
 body {
   min-width: 100vh;
@@ -161,6 +501,10 @@ hr {
   border: none;
   height: 3px;
   background-color: rgb(120, 38, 46);
+}
+
+.highlighted {
+  font-weight: bold;
 }
 
 #banner {
@@ -185,6 +529,28 @@ hr {
   position: absolute;
 }
 
+#view-switch {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+#grafico-lista {
+  margin: 0px;
+  gap: 0px !important;
+}
+
+.switch-button {
+  width: 100%;
+  padding: 14px 26px 14px 26px !important;
+  margin: 0;
+  font-size: larger !important;
+  transition: all 0.5s ease-out;
+  border-radius: 10px 10px 0px 0px !important;
+}
+
 #menu-deploy {
   border: solid 2px rgb(120, 38, 46);
   background-color: white;
@@ -194,7 +560,6 @@ hr {
   font-size: medium;
   padding: 10px;
   float: left;
-  position: absolute;
   left: 10px;
   transform: translateY(-50px);
   cursor: pointer;
@@ -210,21 +575,44 @@ hr {
   margin-top: 15px;
 }
 
+#ricerca-avanzata {
+  font-family: "Source Sans 3" !important;
+  cursor: pointer;
+}
+
+#ricerca-container {
+  text-align: left !important;
+  margin-top: 40px !important;
+}
+
+#ric-arrow {
+  margin: 0px !important;
+}
+
+#outer-container {
+  padding-top: 30px;
+}
+
+#container {
+  margin-top: 0px;
+  display: grid;
+  grid-template-columns: 30% 70%;
+  justify-content: center;
+  height: 100%;
+}
+
 #nav-container {
   display: flex;
   flex-direction: column;
   gap: 20px;
   text-align: center;
   align-items: center;
-  justify-content: center;
-  float: left;
-  position: absolute;
   left: 10px;
-  padding: 30px;
+  padding: 15px;
   background-color: white;
   border: solid 2px rgb(120, 38, 46);
-  z-index: 1005;
-  max-width: 300px;
+  z-index: 999;
+  max-width: 600px;
 }
 
 #nav {
@@ -236,7 +624,7 @@ hr {
   margin-bottom: 20px;
 }
 
-#nav2 {
+.nav2 {
   display: flex;
   flex-direction: row;
   flex-flow: row-reverse;
@@ -246,6 +634,25 @@ hr {
   z-index: 1000;
   margin-bottom: 15px;
   align-items: center;
+  justify-content: space-between;
+}
+
+.nav2 > li {
+  min-width: 25%;
+}
+
+#container-reti {
+  width: 40%;
+}
+
+#family,
+#formazione,
+#profesionali {
+  width: 100%;
+}
+
+#all {
+  width: 100% !important;
 }
 
 #nav3 {
@@ -256,7 +663,13 @@ hr {
   list-style-type: none;
   z-index: 1000;
   margin-bottom: 30px;
-  align-items: center;
+  justify-content: right;
+  width: 100%;
+}
+
+#nav3 > li {
+  display: flex;
+  justify-content: right;
 }
 
 li {
@@ -278,6 +691,8 @@ li {
   background: none;
   color: rgb(76, 76, 76);
   transition: all 0.5s ease-out;
+  border: solid 1px black;
+  border-radius: 10px;
 }
 
 .nav-button2 {
@@ -321,7 +736,7 @@ li {
   font-weight: 600;
   transition: all 0.5s ease-out;
   text-align: center;
-  font-size: small;
+  font-size: 12px;
 }
 
 .dropdown {
@@ -360,12 +775,11 @@ li {
   overflow: visible;
 }
 
-#searchBar-container {
+.searchBar-container {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  height: 100%;
   z-index: 1001;
 }
 
@@ -384,7 +798,7 @@ li {
   margin: 0 !important;
 }
 
-#searchBar-container > div > button {
+.searchBar-container > div > button {
   padding: 10px;
   background: none;
   border: solid 2px rgb(100, 9, 18);
@@ -396,7 +810,7 @@ li {
   cursor: pointer;
 }
 
-#searchBar-container > div > button:hover {
+.searchBar-container > div > button:hover {
   background-color: rgb(120, 38, 46);
   color: aliceblue;
 }
@@ -406,12 +820,56 @@ li {
 }
 
 .search-container > input {
-  padding: 10px;
-  min-width: 160px;
+  padding: 5px;
+  width: 260px;
   border: solid 2px rgb(100, 9, 18);
 }
 
-#autocomplete {
+.fields-input {
+  width: 175px !important;
+  margin: 0;
+}
+
+.field-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.field-wrapper > label {
+  min-width: 75px;
+  text-align: right;
+}
+
+#field-buttons-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+}
+
+#field-buttons-wrapper > button {
+  padding: 8px 22px 8px 22px;
+  background: none;
+  border: solid 2px rgb(100, 9, 18);
+  color: rgb(76, 76, 76);
+  font-family: Montserrat;
+  font-weight: 600;
+  font-size: small;
+  transition: all 0.5s ease-out;
+  cursor: pointer;
+}
+
+#field-buttons-wrapper > button:hover {
+  background-color: rgb(120, 38, 46);
+  color: aliceblue;
+}
+
+.autocomplete {
   position: absolute;
   list-style: none;
   max-height: 200px;
@@ -512,16 +970,9 @@ li {
   background-color: rgb(45, 116, 59);
 }
 
-#container {
-  margin-top: 150px;
-  display: flex;
-  justify-content: center;
-  margin-bottom: 50px;
-}
-
 #cy {
-  width: 60%;
-  height: 675px;
+  width: 100%;
+  height: 90vh;
   background-color: rgb(255, 255, 255);
   border: solid 2px rgb(100, 9, 18);
 }
@@ -550,11 +1001,12 @@ li {
 }
 
 .chInfo {
-  grid-column: 2;
+  grid-column: 1;
   display: flex;
   flex-direction: column;
   text-align: center;
   justify-content: center;
+  gap: 5px;
 }
 
 .chInfo h3,
@@ -607,19 +1059,20 @@ h4 {
   flex-direction: column;
 
   position: absolute;
-  float: right;
-  right: 0;
-  min-width: 390px;
-  max-width: 390px;
+  left: 45%;
+  min-width: 550px;
+  max-width: 550px;
   min-height: 675px;
   max-height: 675px;
   overflow-y: scroll;
 
   background-color: white;
   border: solid 2px rgb(100, 9, 18);
-  padding: 30px;
+  padding: 35px;
+  transform: translateY(-35px);
 
   z-index: 1000;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 #closeAside {
@@ -643,7 +1096,7 @@ h4 {
 #aside h3,
 h4 {
   font-family: "Source Sans 3" !important;
-  font-size: medium !important;
+  font-size: large !important;
 }
 
 #download-container {
@@ -656,6 +1109,84 @@ h4 {
 
 #download-container button {
   padding: 15px;
+}
+
+#modal {
+  position: fixed;
+  z-index: 9999 !important;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgb(0, 0, 0);
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Modal Content */
+#fm-modal,
+#fa-modal,
+#fl-modal,
+#ev-modal,
+#rep-modal,
+#search-results-modal {
+  position: relative;
+  background-color: #fefefe;
+  border: solid 2px rgb(100, 9, 18);
+  margin: 30% auto;
+  /* 10% from the top and centered */
+  padding: 150px;
+  width: 55%;
+  min-height: 40%;
+  max-height: 60%;
+  overflow: auto;
+  /* Could be more or less, depending on screen size */
+}
+
+.search-result-item {
+  cursor: pointer;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+.search-result-item:hover {
+  background-color: #f1f1f1;
+}
+
+/* The Close Button */
+.close {
+  position: absolute;
+  right: 30px;
+  top: 20px;
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+#lista {
+  max-height: 90vh;
+  height: 90vh;
+  overflow-y: scroll;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border: solid 2px rgb(100, 9, 18);
+  padding: 35px;
+}
+
+.list-character {
+  cursor: pointer;
+  font-size: large;
 }
 </style>
 
@@ -693,7 +1224,7 @@ export default {
       clickedNode: null,
       hoverTimeout: null,
 
-      filterMenuDisplay: false,
+      filterMenuDisplay: true,
 
       charactersData: [],
       relationsData: [],
@@ -705,6 +1236,8 @@ export default {
       eventsData: [],
       repertorioRelations: [],
       repertorioData: [],
+      sostegnoRelations: [],
+      sostegnoData: [],
 
       fontiMusicali: [],
       fontiArchivistiche: [],
@@ -713,12 +1246,13 @@ export default {
       cy: null,
       cyData: null,
       filter: "all",
+      workFilter: "",
       eventFilter: false,
       layout1: {
         name: "fcose",
         nodeRepulsion: 35000,
         randomize: true,
-        idealEdgeLength: 50,
+        idealEdgeLength: 90,
         numIter: 30000,
         nestingFactor: 1000,
         componentSpacing: 1000,
@@ -727,9 +1261,9 @@ export default {
       },
       layout2: {
         name: "fcose",
-        nodeRepulsion: 100000,
+        nodeRepulsion: 150000,
         randomize: true,
-        idealEdgeLength: 45,
+        idealEdgeLength: 80,
         numIter: 300000,
         nestingFactor: 10000,
         componentSpacing: 1000,
@@ -743,24 +1277,55 @@ export default {
       showDropdown: false,
       dropdownLabel: "Eventi",
       selectedEvent: null,
+      selectedRepertorio: null,
       selectedFilter: "all",
       searchQuery: "",
+      searchQuery2: "",
       showAutocomplete: false,
+      showAutocomplete2: false,
       accordionState: {},
 
       filteredData: [],
 
       showModal: false,
       fontObject: null,
+      showSearchResults: false,
+
+      selectedView: "grafico",
+      view: "grafico",
+
+      searchFields: {
+        luogo: "",
+        luogoFilter: "AND",
+        anno: "",
+        annoFilter: "AND",
+        persona: "",
+        personaFilter: "AND",
+      },
+
+      permaLinks: [],
+      showRicerca: false,
     };
   },
   mounted() {
     setTimeout(() => {
       this.fetchDataAndPopulateNodes();
-    }, 600);
+    }, 100);
     document.addEventListener("click", this.hidePopupOutside.bind(this));
   },
   computed: {
+    isSearchedCharacter() {
+      if (this.searchQuery === "") {
+        // If search query is empty, return a function that always returns false
+        return () => false;
+      } else {
+        // If search query is not empty, return a function that checks if character's name includes the search query
+        return (character) =>
+          character.nome_scelto
+            .toLowerCase()
+            .includes(this.searchQuery.toLowerCase());
+      }
+    },
     filteredCharacters() {
       const query = this.searchQuery.toLowerCase().trim();
       return this.charactersData
@@ -771,10 +1336,177 @@ export default {
           return a.nome_scelto.localeCompare(b.nome_scelto); // Sort alphabetically by character name
         });
     },
+    filteredList() {
+      if (!this.cy) {
+        return [];
+      }
+      var visibleNodeIds = this.cy
+        .nodes(":visible")
+        .map((node) => parseInt(node.data("id")));
+      return this.charactersData.filter((character) =>
+        visibleNodeIds.includes(character.id)
+      );
+    },
   },
   methods: {
+    searchInObjects(array, query) {
+      const lowerCaseQuery = query.toLowerCase();
+
+      function searchInObject(obj) {
+        for (let key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            const value = obj[key];
+            if (
+              typeof value === "string" &&
+              value.toLowerCase().includes(lowerCaseQuery)
+            ) {
+              return true;
+            }
+            if (typeof value === "object" && value !== null) {
+              if (Array.isArray(value)) {
+                if (value.some((item) => searchInObject(item))) {
+                  return true;
+                }
+              } else {
+                if (searchInObject(value)) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+        return false;
+      }
+
+      return array.filter((obj) => searchInObject(obj));
+    },
+    searchByWord() {
+      const query = this.searchQuery2.toLowerCase().trim();
+      if (!query) {
+        this.clearSearch2();
+        return;
+      }
+
+      const matchingCharacters = this.searchInObjects(
+        this.charactersData,
+        query
+      );
+      const matchingEvents = this.searchInObjects(this.eventsData, query);
+      const matchingRepertories = this.searchInObjects(
+        this.repertorioData,
+        query
+      );
+      const matchingFM = this.searchInObjects(this.fontiMusicali, query);
+      const matchingFA = this.searchInObjects(this.fontiArchivistiche, query);
+      const matchingFL = this.searchInObjects(this.fontiLetterarie, query);
+      // Add more data arrays as needed
+
+      this.searchResults = [
+        ...matchingCharacters.map((char) => ({
+          type: "character",
+          data: char,
+        })),
+        ...matchingEvents.map((event) => ({ type: "eventi", data: event })),
+        ...matchingRepertories.map((rep) => ({
+          type: "repertorio",
+          data: rep,
+        })),
+        ...matchingFM.map((font) => ({ type: "musicali", data: font })),
+        ...matchingFA.map((font) => ({ type: "archivistiche", data: font })),
+        ...matchingFL.map((font) => ({ type: "letterarie", data: font })),
+        // Add more mappings as needed
+      ];
+
+      if (this.searchResults.length > 0) {
+        this.showSearchResults = true;
+        this.showModal = true;
+      } else {
+        alert("No results found");
+      }
+    },
+
+    getResultDisplayText(result) {
+      switch (result.type) {
+        case "character":
+          return result.data.nome_scelto;
+        case "eventi":
+          return `${result.data.titolo} | ${result.data.data} (Evento)`;
+        case "repertorio":
+          return `${result.data.titolo} (Repertorio)`;
+        case "musicali":
+          return `${result.data.titolo} (F. Musicale)`;
+        case "archivistiche":
+          return `${result.data.archivio_sigla} - ${result.data.fondo} (F. Archivistiche)`;
+        case "letterarie":
+          return `${result.data.titolo} (F. Letterarie)`;
+        default:
+          return "Unknown";
+      }
+    },
+    handleSelectResult(result) {
+      console.log("Selected result:", result);
+
+      if (result.type === 'character') {
+        this.filterGraph(result.data);
+      } else {
+        this.showDetailedInfo(result.data, result.type);
+      }
+    },
+    showDetailedInfo(data, type) {
+      this.fontObject = data;
+      this.fontType = type;
+      this.openModal();
+      this.showSearchResults = false;
+    },
+
+    clearSearch2() {
+      // Implement logic to clear the search results
+      this.showAllNodes();
+      this.searchQuery2 = "";
+      this.cy.fit(this.cy.nodes(":visible"), 100);
+      this.cy.zoom(0.45);
+    },
+    filterCharacterList() {
+      return this.charactersData.sort((a, b) => {
+        return a.nome_scelto.localeCompare(b.nome_scelto); // Sort alphabetically by character name
+      });
+    },
+    handleSubmit() {
+      // Handle the form submission logic here
+      console.log(this.searchFields);
+      // Perform your search or filter action
+    },
+    resetFilters() {
+      this.searchFields = {
+        luogo: "",
+        luogoFilter: "AND",
+        anno: "",
+        annoFilter: "AND",
+        mecenate: "",
+        mecenateFilter: "AND",
+      };
+    },
+    toggleRicercaAvanzata() {
+      if (document.getElementById("ricerca-form").style.display !== "none") {
+        this.showRicerca = !this.showRicerca;
+        document.getElementById("ric-arrow").style.transform = "rotate(360deg)";
+      } else {
+        this.showRicerca = !this.showRicerca;
+        document.getElementById("ric-arrow").style.transform = "rotate(180deg)";
+      }
+    },
     toggleFilterMenu() {
       this.filterMenuDisplay = !this.filterMenuDisplay;
+      if (this.filterMenuDisplay == false) {
+        document.getElementById("container").style.gridTemplateColumns = "100%";
+        this.cy.fit(this.cy.nodes(":visible"), 100);
+        this.cy.zoom(0.8);
+      } else {
+        document.getElementById("container").style.gridTemplateColumns =
+          "30% 70%";
+        this.cy.fit(this.cy.nodes(":visible"), 100);
+        this.cy.zoom(0.65);
+      }
     },
     downloadData() {
       // Extracting IDs from visible nodes
@@ -799,6 +1531,9 @@ export default {
           marito_moglie: this.getCharacterName(character.marito_moglie),
           figli_figlie: character.figli_figlie
             .map((childId) => this.getCharacterName(childId))
+            .join(", "),
+          fratelli_sorelle: character.fratelli_sorelle
+            .map((fra_sor) => this.getCharacterName(fra_sor))
             .join(", "),
           maestro: character.maestro
             .map((maestroId) => this.getCharacterName(maestroId))
@@ -864,11 +1599,52 @@ export default {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
     },
-    async toggleFilter(filterValue) {
-      if (this.filter !== filterValue) {
+    async toggleFilter(filterValue, secondaryFilter = null) {
+      if (this.filter !== filterValue || this.workFilter !== secondaryFilter) {
         this.filter = filterValue;
         this.selectedFilter = filterValue;
         await this.fetchDataAndPopulateNodes();
+        if (secondaryFilter) {
+          this.selectedFilter = secondaryFilter;
+          this.workFilter = secondaryFilter;
+          this.filterGraphByWork();
+        }
+      }
+    },
+    filterGraphByWork() {
+      this.cy.elements().hide();
+
+      // Get the selected work type from the work filter
+      const selectedWorkType = this.workFilter;
+
+      // If no work type is selected, show all edges and nodes
+      if (!selectedWorkType || selectedWorkType === "all") {
+        this.cy.elements().show();
+      } else {
+        // Iterate over all edges and show/hide them based on the selected work type
+        this.cy.edges().forEach((edge) => {
+          const edgeType = edge.data("type"); // Assuming you have a data field for the relationship type
+
+          if (edgeType === selectedWorkType) {
+            // Show the edge
+            edge.show();
+
+            // Show the source and target nodes of the edge
+            const sourceId = edge.source().id();
+            const targetId = edge.target().id();
+            this.cy.getElementById(sourceId).show();
+            this.cy.getElementById(targetId).show();
+          }
+        });
+      }
+      // Fit the graph to the displayed elements
+      this.cy.fit(this.cy.nodes(":visible"), 420);
+    },
+
+    toggleView(filterValue) {
+      if (this.view !== filterValue) {
+        this.view = filterValue;
+        this.selectedView = filterValue;
       }
     },
     toggleDropdown() {
@@ -904,11 +1680,31 @@ export default {
     },
     selectEvent(event) {
       this.selectedEvent = event.id;
-      this.toggleDropdown();
+      this.closeModal();
       this.filterGraphByEvent();
+    },
+    selectRepertorio(repertorio) {
+      this.selectedRepertorio = repertorio.id;
+      this.closeModal();
+      this.filterGraphByRepertorio();
     },
     isNodeRelatedToEvent(node, selectedEventId) {
       return node.data().info.eventi.includes(selectedEventId);
+    },
+    isNodeRelatedToRepertorio(node, selectedRepertorioId) {
+      return node.data().info.repertorio.includes(selectedRepertorioId);
+    },
+    isNodeRelatedToFontType(node, fontType, fontId) {
+      switch (fontType) {
+        case "musicali":
+          return node.data().info.fontiMusicali.includes(fontId);
+        case "archivistiche":
+          return node.data().info.fontiArchivistiche.includes(fontId);
+        case "letterarie":
+          return node.data().info.fontiLetterarie.includes(fontId);
+        default:
+          return false;
+      }
     },
     filterGraphByEvent() {
       this.showAllNodes();
@@ -925,6 +1721,40 @@ export default {
         this.cy.fit(relatedNodes, 420);
       }
     },
+    filterGraphByRepertorio() {
+      console.log(this.selectedRepertorio);
+      this.showAllNodes();
+      this.cy.nodes().forEach((node) => {
+        const related = this.isNodeRelatedToRepertorio(
+          node,
+          this.selectedRepertorio
+        );
+        if (!related) {
+          node.hide();
+        }
+      });
+      const relatedNodes = this.cy.nodes().filter((node) => {
+        return this.isNodeRelatedToRepertorio(node, this.selectedRepertorio);
+      });
+      if (relatedNodes.length > 0) {
+        this.cy.fit(relatedNodes, 420);
+      }
+    },
+    filterGraphByFontType(fontType, font) {
+      this.showAllNodes();
+      this.cy.nodes().forEach((node) => {
+        const related = this.isNodeRelatedToFontType(node, fontType, font.id);
+        if (!related) {
+          node.hide();
+        }
+      });
+      const relatedNodes = this.cy.nodes().filter((node) => {
+        return this.isNodeRelatedToFontType(node, fontType, font.id);
+      });
+      if (relatedNodes.length > 0) {
+        this.cy.fit(relatedNodes, 420);
+      }
+    },
 
     /* CHARACTER SEARCH LOGIC */
     filterChange(selectedFilters) {
@@ -936,6 +1766,7 @@ export default {
     },
 
     filterGraphByRelations(selectedFilters) {
+      console.log(selectedFilters);
       this.cy.elements().hide();
 
       const selectedFiltersIds = selectedFilters.map((filter) => filter.id);
@@ -944,6 +1775,8 @@ export default {
         const sourceId = edge.source().id();
         const targetId = edge.target().id();
         const mecenateType = edge.data().mecenatiType;
+
+        console.log(`Edge ID: ${edge.id()}, Mecenati Type: ${mecenateType}`);
 
         if (selectedFiltersIds.includes(mecenateType)) {
           edge.show();
@@ -1049,9 +1882,17 @@ export default {
     },
     getNodeSize(node) {
       const connections = node.connectedEdges().length;
-      const baseSize = 35;
-      const sizeIncrement = 5;
-      const maxSize = 65;
+      const baseSize = 50;
+      const sizeIncrement = 10;
+      const maxSize = 140;
+
+      if (connections < 5) {
+        if (node.data("info").virtuosa !== true) {
+          node.style({
+            "background-color": "rgba(255, 255, 255, 0)",
+          });
+        }
+      }
 
       // Calculate the size based on connections
       let size = baseSize + connections * sizeIncrement;
@@ -1108,15 +1949,23 @@ export default {
                     : "none";
                 },
                 "background-fit": "cover",
-                "background-color": "#96b8d2",
+                "background-color": (node) => {
+                  const info = node.data("info");
+                  return info.virtuosa ? "rgb(100, 9, 18)" : "#96b8d2";
+                },
+
+                // "background-image": (node) => {
+                //   const info = node.data("info");
+                //   return info.virtuosa ? `url(https://directusvirtuose.vidimus.it/assets/${info.icona})` : "#96b8d2";
+                // },
 
                 "border-width": (node) => {
                   const info = node.data("info");
-                  return info.virtuosa ? "6px" : "0";
+                  return info.virtuosa ? "6px" : "8px";
                 },
                 "border-color": (node) => {
                   const info = node.data("info");
-                  return info.virtuosa ? "rgb(120, 38, 46)" : "transparent";
+                  return info.virtuosa ? "rgb(120, 38, 46)" : "#96b8d2";
                 },
 
                 //label: "data(id)",
@@ -1133,7 +1982,7 @@ export default {
             {
               selector: "edge",
               style: {
-                width: 5,
+                width: 4,
                 "line-color": (edge) => {
                   const relation = edge.data();
                   if (relation.type === "maestro") {
@@ -1144,6 +1993,16 @@ export default {
                     return "#96b8d2";
                   }
                 },
+                // "line-style": (edge) => {
+                //   const relation = edge.data();
+                //   if (relation.type === "maestro") {
+                //     return 'dashed';
+                //   } else if (relation.type === "mecenati") {
+                //     return 'dotted';
+                //   } else {
+                //     return 'solid';
+                //   }
+                // },
               },
             },
           ],
@@ -1183,6 +2042,11 @@ export default {
         const repertorioData = await this.retrieveRepertorioData();
         this.repertorioData = repertorioData;
 
+        const sostegnoRelations = await this.retrieveSostegnoRelations();
+        this.sostegnoRelations = sostegnoRelations;
+        const sostegnoData = await this.retrieveSostegnoData();
+        this.sostegnoData = sostegnoData;
+
         const fontiMusicali = await this.retrieveFontiMusicali();
         this.fontiMusicali = fontiMusicali;
         const fontiArchivistiche = await this.retrieveFontiArchivistiche();
@@ -1198,6 +2062,9 @@ export default {
           };
         });
 
+        const permaLinks = await this.retrievePermaLinks();
+        this.permaLinks = permaLinks;
+
         const combinedMaestroData = this.combineMaestroData(
           maestroRelations,
           maestroData
@@ -1207,8 +2074,14 @@ export default {
           mecenatiData
         );
 
+        const combinedSostegnoData = this.combineSostegnoData(
+          sostegnoRelations,
+          sostegnoData
+        );
+
         this.updateCharacterMaestroRelations(combinedMaestroData);
         this.updateCharacterMecenatiRelations(combinedMecenatiData);
+        this.updateCharacterSostegnoRelations(combinedSostegnoData);
 
         this.updateCharacterEvents(
           charactersData,
@@ -1221,9 +2094,13 @@ export default {
           charactersData,
           this.maestroRelations,
           this.mecenatiRelations,
+          this.sostegnoRelations,
           this.maestroData,
-          this.mecenatiData
+          this.mecenatiData,
+          this.sostegnoData
         );
+
+        this.filterCharacterList();
 
         //console.log(cyData);
         this.loadLayout();
@@ -1401,6 +2278,42 @@ export default {
       const data = responseData.data;
       return data;
     },
+    async retrieveSostegnoData() {
+      try {
+        const response = await fetch(
+          "https://directusvirtuose.vidimus.it/items/sostegno_economico"
+        );
+        const responseData = await response.json();
+        const sostegnoData = responseData.data;
+
+        return sostegnoData;
+      } catch (error) {
+        console.error("Error fetching maestro relations data: ", error);
+        throw error;
+      }
+    },
+    async retrieveSostegnoRelations() {
+      try {
+        const response = await fetch(
+          "https://directusvirtuose.vidimus.it/items/Virtuose_sostegno_economico"
+        );
+        const responseData = await response.json();
+        const data = responseData.data;
+
+        return data;
+      } catch (error) {
+        console.error("Error fetching event relations: ", error);
+        throw error;
+      }
+    },
+    async retrievePermaLinks() {
+      const response = await fetch(
+        "https://directusvirtuose.vidimus.it/shares"
+      );
+      const responseData = await response.json();
+      const data = responseData.data;
+      return data;
+    },
 
     /* DATA HANDLING */
     //They translate the references to the corresponding characters
@@ -1429,16 +2342,62 @@ export default {
       });
     },
     combineMecenatiData(mecenatiRelations, mecenatiData) {
-      return mecenatiRelations.map((relation) => {
-        const mecenati = mecenatiData.find(
-          (mecenati) => mecenati.id === relation.mecenati_id
-        );
-        return {
-          relation,
-          mecenati: mecenati.mecenate,
-          mecType: mecenati.tipo_mecenate,
-        };
-      });
+      return mecenatiRelations
+        .filter(
+          (relation) =>
+            relation.mecenati_id !== null && relation.Virtuose_id !== null
+        ) // Filter out relations with null mecenati_id or Virtuose_id
+        .map((relation) => {
+          const mecenati = mecenatiData.find(
+            (mecenati) => mecenati.id === relation.mecenati_id
+          );
+
+          if (!mecenati) {
+            console.error(
+              `Mecenati with ID ${relation.mecenati_id} not found in mecenatiData.`
+            );
+            return {
+              relation,
+              mecenati: null,
+              mecType: null,
+            };
+          }
+
+          return {
+            relation,
+            mecenati: mecenati.mecenate,
+            mecType: mecenati.tipo_mecenate,
+          };
+        });
+    },
+    combineSostegnoData(sostegnoRelations, sostegnoData) {
+      return sostegnoRelations
+        .filter(
+          (relation) =>
+            relation.sostegno_economico_id !== null &&
+            relation.Virtuose_id !== null
+        ) // Filter out relations with null mecenati_id or Virtuose_id
+        .map((relation) => {
+          const sostegno = sostegnoData.find(
+            (sostegno) => sostegno.id === relation.sostegno_economico_id
+          );
+
+          if (!sostegno) {
+            console.error(
+              `Mecenati with ID ${relation.sostegno_economico_id} not found in mecenatiData.`
+            );
+            return {
+              relation,
+              mecenati: null,
+              mecType: null,
+            };
+          }
+
+          return {
+            relation,
+            sostegno: sostegno.persona,
+          };
+        });
     },
     updateCharacterEvents(charactersData, eventRelationsData) {
       charactersData.forEach((character) => {
@@ -1486,6 +2445,23 @@ export default {
         }
       });
     },
+    updateCharacterSostegnoRelations(combinedSostegnoData) {
+      this.charactersData.forEach((character) => {
+        character.sostegno = [];
+      });
+      combinedSostegnoData.forEach(({ relation, sostegno }) => {
+        const character = this.charactersData.find(
+          (char) => char.id === relation.Virtuose_id
+        );
+        if (character) {
+          // Update character's mecenati relations
+          if (!character.sostegno) {
+            character.sostegno = [];
+          }
+          character.sostegno.push(sostegno);
+        }
+      });
+    },
     getCharacterName(id) {
       const character = this.charactersData.find((char) => char.id === id);
       return character
@@ -1498,25 +2474,32 @@ export default {
       charactersData,
       maestroRelations,
       mecenatiRelations,
+      sostegnoRelations,
       maestroData,
-      mecenatiData
+      mecenatiData,
+      sostegnoData
     ) {
-      const nodes = charactersData.map((character) => ({
-        data: {
-          id: character.id,
-          label: character.nome_scelto,
-          info: character,
-          relationships: {
-            mother: null,
-            father: null,
-            children: [],
-            spouse: null,
-            maestro: [],
-            mecenati: [],
-            mecenateType: null,
+      const nodes = charactersData.map((character) => {
+        //console.log(character);
+        return {
+          data: {
+            id: character.id,
+            label: character.nome_scelto,
+            info: character,
+            relationships: {
+              mother: null,
+              father: null,
+              children: [],
+              siblings: [],
+              spouse: null,
+              maestro: [],
+              mecenati: [],
+              mecenateType: null,
+              sostegno: [],
+            },
           },
-        },
-      }));
+        };
+      });
 
       maestroRelations.forEach((relation) => {
         const node = nodes.find(
@@ -1537,12 +2520,23 @@ export default {
         }
       });
 
+      this.sostegnoRelations.forEach((relation) => {
+        const node = nodes.find(
+          (node) => node.data.id === relation.Virtuose_id
+        );
+        if (node) {
+          node.data.relationships.sostegno.push(relation.sostegno_economico_id);
+        }
+      });
+
       const edges = this.extractEdgesFromCharacters(
         charactersData,
         maestroRelations,
         mecenatiRelations,
+        sostegnoRelations,
         maestroData,
-        mecenatiData
+        mecenatiData,
+        sostegnoData
       );
       this.updateRelationships(nodes, edges);
       return { nodes, edges };
@@ -1553,8 +2547,10 @@ export default {
       character,
       maestroRelations,
       mecenatiRelations,
+      sostegnoRelations,
       maestroData,
-      mecenatiData
+      mecenatiData,
+      sostegnoData
     ) {
       const relatives = [];
       if (this.filter === "family" || this.filter === "all") {
@@ -1601,6 +2597,16 @@ export default {
             }
           }
         });
+        sostegnoRelations.forEach((relation) => {
+          if (relation.Virtuose_id === character.id) {
+            const sostegno = sostegnoData.find(
+              (m) => m.id === relation.sostegno_economico_id
+            );
+            if (sostegno) {
+              relatives.push(sostegno.persona);
+            }
+          }
+        });
       }
       return relatives;
     },
@@ -1609,8 +2615,10 @@ export default {
       charactersData,
       maestroRelations,
       mecenatiRelations,
+      sostegnoRelations,
       maestroData,
-      mecenatiData
+      mecenatiData,
+      sostegnoData
     ) {
       const edges = [];
       charactersData.forEach((character) => {
@@ -1618,8 +2626,10 @@ export default {
           character,
           maestroRelations,
           mecenatiRelations,
+          sostegnoRelations,
           maestroData,
-          mecenatiData
+          mecenatiData,
+          sostegnoData
         );
         relatives.forEach((relativeId) => {
           const sourceExists = charactersData.some(
@@ -1658,6 +2668,20 @@ export default {
                 ) {
                   relationType = "mecenati";
                   mecenateType = mecenati.tipo_mecenate;
+                }
+              }
+              const sostegno = sostegnoData.find(
+                (m) => m.persona === relativeId
+              );
+              if (sostegno) {
+                if (
+                  sostegnoRelations.some(
+                    (relation) =>
+                      relation.Virtuose_id === character.id &&
+                      sostegno.persona === relativeId
+                  )
+                ) {
+                  relationType = "mecenati";
                 }
               }
             }
@@ -1830,6 +2854,10 @@ export default {
     },
     //Info popup handling
     handleNodeHover(event) {
+      event.target.connectedEdges().style({
+        "line-color": "#ff0000", // Change to desired color
+        width: "12px", // Change to desired width
+      });
       this.hoverTimeout = setTimeout(() => {
         const popup = document.getElementById("popup");
 
@@ -1845,12 +2873,10 @@ export default {
         const logoSrc = info.virtuosa
           ? `/wp-content/themes/astra/assets/dist/img/logo_r.png`
           : "";
-        const imageSrc =
-          info.icona !== null
-            ? `https://directusvirtuose.vidimus.it/assets/${info.icona}`
-            : "";
-
-        const noteSection = info.note ? `<p><b>Info:</b> ${info.note}</p>` : "";
+        // const imageSrc =
+        //   info.icona !== null
+        //     ? `https://directusvirtuose.vidimus.it/assets/${info.icona}`
+        //     : "";
 
         const pseudonimo =
           info.pseudonimo !== null ? `<p><i>${info.pseudonimo}</i></p>` : "";
@@ -1870,16 +2896,17 @@ export default {
           relations.mother !== null
             ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
             : "";
+        //   ${
+        //   imageSrc !== ""
+        //     ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;" alt="Icona" id="picture">`
+        //     : ""
+        // }
 
         // Construct the popup content
         popup.innerHTML = `
         <div id="content">
           
-          ${
-            imageSrc !== ""
-              ? `<img src="${imageSrc}" style="max-width:250px;max-height:300px;" alt="Icona" id="picture">`
-              : ""
-          }
+
           
             <div class="chInfo">
               <h3 style="margin-left:10px"><b>${
@@ -1896,8 +2923,6 @@ export default {
                 ${morte}        
                 ${fatherSection}
                 ${motherSection}
-                ${noteSection}
-
             </div>
         </div>
     `;
@@ -1908,8 +2933,8 @@ export default {
         var popupHeight = popup.offsetHeight;
         var popupWidth = popup.offsetWidth;
 
-        var popupOffsetX = -550;
-        var popupOffsetY = -900;
+        var popupOffsetX = -250;
+        var popupOffsetY = -1100;
         if (position.y > 750) {
           popupOffsetY = popupOffsetY - popupHeight;
         }
@@ -1934,10 +2959,10 @@ export default {
           } else {
             popup.style.border = "solid 1px grey";
           }
-          popup.style.width = "550px";
+          popup.style.width = "300px";
           popup.style.height = "auto";
           popup.style.opacity = "1";
-          popup.style.zIndex = "999";
+          popup.style.zIndex = "4999";
 
           // Add event listener to hide the popup when clicking outside of it
           document.addEventListener("click", this.hidePopupOutside);
@@ -1952,9 +2977,13 @@ export default {
         .removeEventListener("click", this.closeAside);
       this.showAside = false;
     },
-    handleNodeLeave() {
+    handleNodeLeave(event) {
       // Clear the timeout if the mouse leaves the node before the delay
       clearTimeout(this.hoverTimeout);
+      event.target.connectedEdges().style({
+        "line-color": "", // Reset to default color
+        width: "", // Reset to default width
+      });
     },
     handleNodeClick(event) {
       // Show detailed info about the clicked node in the aside section
@@ -1973,9 +3002,18 @@ export default {
           ? `https://directusvirtuose.vidimus.it/assets/${info.icona}`
           : "";
 
+      const formatDate = (isoString) => {
+        const date = new Date(isoString);
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are zero-based
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      };
+      const dateUpdated = formatDate(info.date_updated);
+
       // Construct the content for the aside section
       content.innerHTML = `
-    <div id="content"><br>
+      <div id="content"><br>
       <div class="chInfo">
         <h3 style="margin-left:10px"><b>${info.nome + " " + info.cognome}</b>${
         logoSrc !== ""
@@ -1998,7 +3036,7 @@ export default {
         }
         <h4 id="famiglia-trigger" class="aside-subtitle" style="cursor:pointer;">Famiglia <img id="fam-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="15px"></h4>
         <hr>
-        <div id="famiglia-info" style="display:none;">
+        <div id="famiglia-info">
         ${
           relations.father !== null
             ? `<p><b>Padre:</b> ${this.getCharacterName(relations.father)}</p>`
@@ -2007,6 +3045,13 @@ export default {
         ${
           relations.mother !== null
             ? `<p><b>Madre:</b> ${this.getCharacterName(relations.mother)}</p>`
+            : ""
+        }
+        ${
+          info.fratelli_sorelle && info.fratelli_sorelle.length > 0
+            ? `<p><b>Fratelli/Sorelle:</b> ${info.fratelli_sorelle
+                .map((sibling) => this.getCharacterName(sibling))
+                .join(", ")}</p>`
             : ""
         }
         ${
@@ -2037,7 +3082,7 @@ export default {
         <br>
         <h4 id="formazione-trigger" class="aside-subtitle" style="cursor:pointer;">Formazione <img id="form-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="15px"></h4>
         <hr>
-        <div id="formazione-info" style="display:none;">
+        <div id="formazione-info">
         ${
           info.maestro && info.maestro.length > 0
             ? `<p><b>Maestro:</b> ${info.maestro
@@ -2049,7 +3094,7 @@ export default {
         <br>
         <h4 id="attivita-trigger" class="aside-subtitle" style="cursor:pointer;">Attivita <img id="att-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="15px"></h4>
         <hr>
-        <div id="attivita-info" style="display:none;">
+        <div id="attivita-info">
         ${
           info.eventi && info.eventi.length > 0
             ? `<p><b>Eventi:</b> ${info.eventi
@@ -2081,11 +3126,18 @@ export default {
                 .join(", ")}</p>`
             : ""
         }
+        ${
+          info.sostegno && info.sostegno.length > 0
+            ? `<p><b>Sostegno economico:</b> ${info.sostegno
+                .map((sostegnoId) => this.getCharacterName(sostegnoId))
+                .join(", ")}</p>`
+            : ""
+        }
         </div>
         <br>
         <h4 id="fonti-trigger" class="aside-subtitle" style="cursor:pointer;">Fonti <img id="font-arrow" src="/wp-content/themes/astra/assets/dist/img/arrow.png" alt="Search icon" width="15px"></h4>
         <hr>
-        <div id="fonti-info" style="display:none;">
+        <div id="fonti-info">
         ${
           info.fonti_musicali && info.fonti_musicali.length > 0
             ? `<p><b>Fonti musicali:</b> <br>${info.fonti_musicali
@@ -2140,9 +3192,14 @@ export default {
             : ""
         }
         <div id="autore" style="font-size:smaller;text-align:right;margin-top:70px">
+          ${"Data di modifica: " + dateUpdated}<br>
           ${
-            info.autore_scheda !== null ? "Creato da " + info.autore_scheda : ""
-          }
+            info.autore_scheda !== null
+              ? "Creato da: " + info.autore_scheda
+              : ""
+          } <br>
+          <a href="/wp-content/themes/astra/assets/scheda/index.html" target="_blank">PermaLink</a>
+              
         </div>
       </div>
     </div>
@@ -2171,6 +3228,27 @@ export default {
       document.querySelectorAll(".fontLink").forEach((link) => {
         link.addEventListener("click", this.showFontDetails);
       });
+
+      localStorage.removeItem("nodeInfo");
+      localStorage.removeItem("nodeRelations");
+
+      // Store the data in local storage
+      localStorage.setItem("nodeInfo", JSON.stringify(info));
+      localStorage.setItem("nodeRelations", JSON.stringify(relations));
+    },
+    handleCharacterClick(characterId) {
+      // Find the corresponding node in Cytoscape
+      const node = this.cy.getElementById(characterId);
+
+      // Check if the node exists
+      if (node.length > 0) {
+        // Create a mock event object
+        const mockEvent = { target: node };
+        // Call handleNodeClick with the mock event
+        this.handleNodeClick(mockEvent);
+      } else {
+        console.error(`Node with id ${characterId} not found`);
+      }
     },
     showFontDetails(event) {
       // Prevent default link behavior
@@ -2184,11 +3262,9 @@ export default {
         : event.target.classList.contains("fLetterarie")
         ? "letterarie"
         : "";
-        console.log(fontType);
 
-        const fontId = event.target.id.substring(3);
-        console.log(fontId);
-        let fontObject = null;
+      const fontId = event.target.id.substring(3);
+      let fontObject = null;
 
       switch (fontType) {
         case "musicali":
@@ -2196,7 +3272,9 @@ export default {
           break;
 
         case "archivistiche":
-          fontObject = this.fontiArchivistiche.find((font) => font.id == fontId);
+          fontObject = this.fontiArchivistiche.find(
+            (font) => font.id == fontId
+          );
           break;
 
         case "letterarie":
@@ -2207,7 +3285,19 @@ export default {
           break;
       }
 
-      console.log(fontObject);
+      if (fontObject) {
+        this.fontObject = fontObject;
+        this.fontType = fontType;
+        this.openModal();
+      }
+    },
+    openModal() {
+      this.showModal = true;
+    },
+    closeModal() {
+      this.showModal = false;
+      this.fontObject = null;
+      this.fontType = "";
     },
     toggleFamigliaInfo() {
       if (document.getElementById("famiglia-info").style.display !== "none") {
@@ -2297,7 +3387,7 @@ export default {
 
       this.cy.ready(() => {
         this.cy.fit(this.cy.nodes(":visible"), 100);
-        this.cy.zoom(0.5);
+        this.cy.zoom(0.65);
       });
     },
   },
