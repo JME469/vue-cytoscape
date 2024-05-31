@@ -780,7 +780,6 @@ li {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  z-index: 1001;
 }
 
 .searchBar-button {
@@ -878,7 +877,7 @@ li {
   background-color: #fafafa;
   border: solid 2px rgb(100, 9, 18);
   margin-top: 5px;
-  z-index: 10000;
+  z-index: 9000 !important;
 }
 
 .character {

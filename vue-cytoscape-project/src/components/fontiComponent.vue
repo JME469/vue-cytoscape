@@ -69,13 +69,15 @@
           :value="fonti.id"
           :class="[index % 2 === 0 ? 'light-grey' : 'white']"
         >
-          <div>
+          <div style="text-align: right;">
             <h2 class="font-title">{{ fonti.titolo }}</h2>
             <h3 v-if="fonti.compositore !== null">
               Compositore: {{ fonti.compositore }}
             </h3>
             <p>Segnatura: {{ fonti.segnatura }}</p>
             <h4 v-if="fonti.data !== null">{{ fonti.data }}</h4>
+            <hr>
+            <p></p>
           </div>
           <div>
             <p v-if="fonti.note !== null">{{ fonti.note }}</p>
@@ -105,18 +107,9 @@
           :value="fonti.id"
           :class="[index % 2 === 0 ? 'light-grey' : 'white']"
         >
-          <div>
-            <img
-              class="font-img"
-              v-if="fonti.icona !== null"
-              :src="'https://directusvirtuose.vidimus.it/assets/' + fonti.icona"
-              alt=""
-            />
-          </div>
-          <div>
-            <h2>{{ fonti.archivio }}</h2>
+          <div style="text-align: right;">
+            <h2 class="font-title">{{ fonti.archivio }}</h2>
             <h3
-              class="font-title"
               v-if="fonti.titolo !== null"
               style="font-size: larger; font-weight: bold"
             >
@@ -127,6 +120,14 @@
           <div style="max-width: 80%">
             <p v-if="fonti.descrizione !== null">{{ fonti.descrizione }}</p>
             <p v-if="fonti.trascrizione !== null">{{ fonti.trascrizione }}</p>
+          </div>
+          <div>
+            <img
+              class="font-img"
+              v-if="fonti.icona !== null"
+              :src="'https://directusvirtuose.vidimus.it/assets/' + fonti.icona"
+              alt=""
+            />
           </div>
         </div>
       </div>
@@ -143,15 +144,7 @@
           :value="fonti.id"
           :class="[index % 2 === 0 ? 'light-grey' : 'white']"
         >
-          <div>
-            <img
-              class="font-img"
-              v-if="fonti.icona !== null"
-              :src="'https://directusvirtuose.vidimus.it/assets/' + fonti.icona"
-              alt=""
-            />
-          </div>
-          <div>
+          <div style="text-align: right;">
             <h2 class="font-title">{{ fonti.titolo }}</h2>
             <h3 v-if="fonti.data !== null">{{ fonti.data }}</h3>
             <p v-if="fonti.segnatura !== null">
@@ -169,6 +162,14 @@
               >Link</a
             >
           </div>
+          <div>
+            <img
+              class="font-img"
+              v-if="fonti.icona !== null"
+              :src="'https://directusvirtuose.vidimus.it/assets/' + fonti.icona"
+              alt=""
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -185,15 +186,7 @@
           :value="fonti.id"
           :class="[index % 2 === 0 ? 'light-grey' : 'white']"
         >
-          <div>
-            <img
-              class="font-img"
-              v-if="fonti.icona !== null"
-              :src="'https://directusvirtuose.vidimus.it/assets/' + fonti.icona"
-              alt=""
-            />
-          </div>
-          <div>
+          <div style="text-align: right;">
             <h2 class="font-title">{{ fonti.titolo }}</h2>
             <h3 v-if="fonti.compositore !== null">
               Compositore: {{ fonti.compositore }}
@@ -205,6 +198,14 @@
             <p v-if="fonti.note !== null">{{ fonti.note }}</p>
             <br />
             <a v-if="fonti.link !== null" :href="fonti.link">Link</a>
+          </div>
+          <div>
+            <img
+              class="font-img"
+              v-if="fonti.icona !== null"
+              :src="'https://directusvirtuose.vidimus.it/assets/' + fonti.icona"
+              alt=""
+            />
           </div>
         </div>
       </div>
@@ -232,10 +233,9 @@ body {
 }
 
 hr {
-  width: 100%;
-  margin-bottom: 20px;
+  margin: 10px;
   border: none;
-  height: 3px;
+  height: 1px;
   background-color: rgb(120, 38, 46);
 }
 
@@ -502,10 +502,14 @@ li {
 
 .font-container {
   display: grid;
-  grid-template-columns: 1fr 1fr 0.5fr;
+  grid-template-columns: 1fr 1fr 0.3fr;
   gap: 15px;
   padding: 70px;
   margin: 5px;
+}
+
+.font-container *{
+  font-family: 'Source Sans 3';
 }
 
 .font-container p,
@@ -514,13 +518,16 @@ h4 {
   font-size: 18px;
 }
 
-#musicale-font-container {
-  grid-template-columns: 0.7fr 0.85fr 0.8fr;
-  gap: 5px;
+.font-title{
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  font-style: italic !important;
 }
 
-.font-title {
-  max-width: 80%;
+#musicale-font-container {
+  padding-left: 15%; 
+  grid-template-columns: 0.85fr 1fr 0.6fr;
+  gap: 40px;
 }
 
 .title-container {
@@ -550,13 +557,6 @@ h4 {
   justify-content: center;
 }
 
-#cy {
-  width: 100%;
-  height: 1100px;
-  background-color: rgb(255, 255, 255);
-  border: solid 2px rgb(100, 9, 18);
-}
-
 #content {
   display: grid;
   grid-template-columns: auto auto;
@@ -580,92 +580,6 @@ h4 {
   float: right;
 }
 
-#chInfo {
-  grid-column: 2;
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-  justify-content: center;
-}
-
-#chInfo h3,
-#chInfo h4 {
-  font-family: "Source Sans 3" !important;
-  font-size: medium !important;
-}
-
-#chInfo h4 {
-  font-weight: lighter;
-  color: rgb(67, 67, 67);
-}
-
-.birthPlace {
-  margin: 0 0 10px 0;
-  margin-left: 20px;
-
-  font-weight: lighter;
-  font-size: small;
-
-  color: rgb(67, 67, 67);
-}
-
-#popup {
-  position: relative;
-  background-color: white;
-  border-radius: 15px;
-  border: 1px solid #ccc;
-  font-family: "Source Sans 3";
-  padding: 20px;
-  transition: opacity 0.4s ease, box-shadow 0.35s ease, transform 0.5s ease;
-}
-
-#popup h3,
-h4 {
-  font-family: "Source Sans 3" !important;
-  font-size: medium !important;
-}
-
-#popup:hover {
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-}
-
-#aside {
-  display: flex;
-  flex-direction: column;
-
-  position: absolute;
-  float: right;
-  right: 0;
-  min-width: 350px;
-  max-width: 500px;
-  min-height: 700px;
-  max-height: 1000px;
-  overflow-y: scroll;
-
-  background-color: white;
-  border: solid 2px rgb(100, 9, 18);
-  font-family: "Source Sans 3";
-  padding: 30px;
-}
-
-#closeAside {
-  background-color: rgb(100, 9, 18) !important;
-  color: aliceblue !important;
-  padding: 10px !important;
-  font-family: Montserrat !important;
-  font-weight: 500 !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
-
-  max-width: 150px;
-}
-
-#aside h3,
-h4 {
-  font-family: "Source Sans 3" !important;
-  font-size: medium !important;
-}
 </style>
 
 <script>
