@@ -2,72 +2,58 @@
   <div id="outer-container">
     <!-- EVENTS PAGE -->
     <div id="logo-container">
-      <img
-        v-show="loading"
-        id="loading"
-        src="/wp-content/themes/astra/assets/dist/img/vidimus_r.png"
-        alt="Logo vidimus"
-        width="500px"
-      />
+      <img v-show="loading" id="loading" src="/wp-content/themes/astra/assets/dist/img/vidimus_r.png" alt="Logo vidimus"
+        width="500px" />
     </div>
     <div id="events" v-show="showEventList">
       <h1>Eventi</h1>
       <div id="searchBar-container">
         <div class="search-container">
-          <input
-            type="text"
-            v-model="searchQuery"
-            placeholder="Cerca per data, luogo o virtuose..."
-          />
+          <input type="text" v-model="searchQuery" placeholder="Cerca per data, luogo o virtuose..." />
           <ul v-if="showAutocomplete" id="autocomplete">
-            <li
-              v-for="event in filteredEvents"
-              :key="event.id"
-              @click="selectCharacter(event)"
-              class="character"
-            >
+            <li v-for="event in filteredEvents" :key="event.id" @click="selectCharacter(event)" class="character">
               {{ event.luogo }}, {{ event.data }}
             </li>
           </ul>
           <button @click="clearSearch" id="searchBar-button">
-            <img
-              src="/wp-content/themes/astra/assets/dist/img/x.png"
-              alt=""
-              class="searchBar-button-icon"
-            />
+            <img src="/wp-content/themes/astra/assets/dist/img/x.png" alt="" class="searchBar-button-icon" />
           </button>
         </div>
       </div>
-      <div
-        v-for="(event, index) in filteredEvents"
-        :key="event.id"
-        :value="event.id"
-        :class="[index % 2 === 0 ? 'light-grey' : 'white']"
-      >
+      <div v-for="(event, index) in filteredEvents" :key="event.id" :value="event.id"
+        :class="[index % 2 === 0 ? 'light-grey' : 'white']">
         <div class="event">
           <p>{{ event.luogo }}, {{ event.data }}</p>
           <div class="event-info">
             <p v-if="event.note !== null">{{ event.note }}</p>
             <div v-if="event.relatedRepertorio.length > 0">
               <span class="subtitle">REPERTORIO</span>
-              <p
-                v-for="repertorio in event.relatedRepertorio"
-                :key="repertorio.id"
-                :value="repertorio.titolo"
-                class="subcontent"
-              >
+              <p v-for="repertorio in event.relatedRepertorio" :key="repertorio.id" :value="repertorio.titolo"
+                class="subcontent">
                 {{ repertorio.titolo }}
               </p>
             </div>
-            <hr />
+            <div v-if="event.relatedMecenati.length > 0">
+              <hr /><br>
+              <span class="subtitle">MECENATE</span>
+              <p v-for="mecenate in event.relatedMecenati" :key="mecenate.id" :value="mecenate.nome_scelto"
+                class="subcontent">
+                {{ mecenate.nome_scelto }}
+              </p>
+            </div>
+            <div v-if="event.relatedFonti.length > 0">
+              <hr /><br>
+              <span class="subtitle">FONTI</span>
+              <p v-for="font in event.relatedFonti" :key="font.id" :value="font.archivio"
+                class="subcontent">
+                {{ font.archivio_sigla }}, {{ font.fondo }}, {{ font.busta }}, {{ font.carte }}
+              </p>
+            </div>
             <div v-if="event.relatedCharacters.length > 0">
+              <hr /><br>
               <span class="subtitle">VIRTUOSE</span>
-              <p
-                v-for="character in event.relatedCharacters"
-                :key="character.id"
-                :value="character.nome_scelto"
-                class="subcontent"
-              >
+              <p v-for="character in event.relatedCharacters" :key="character.id" :value="character.nome_scelto"
+                class="subcontent">
                 {{ character.nome_scelto }}
               </p>
             </div>
@@ -100,9 +86,11 @@ body {
   0% {
     opacity: 0%;
   }
+
   50% {
     opacity: 100%;
   }
+
   100% {
     opacity: 0%;
   }
@@ -128,7 +116,7 @@ body {
   margin-bottom: 15px;
 }
 
-#searchBar-container > div > button {
+#searchBar-container>div>button {
   padding: 10px;
   background: none;
   border: solid 2px rgb(100, 9, 18);
@@ -137,7 +125,7 @@ body {
   cursor: pointer;
 }
 
-#searchBar-container > div > button:hover {
+#searchBar-container>div>button:hover {
   background-color: rgb(120, 38, 46);
   color: aliceblue;
 }
@@ -148,7 +136,7 @@ body {
   flex-direction: row;
 }
 
-.search-container > input {
+.search-container>input {
   padding: 10px;
   min-width: 320px;
   border: solid 2px rgb(100, 9, 18);
@@ -202,7 +190,7 @@ li {
   font-family: "Source Sans 3" !important;
 }
 
-#events > h1 {
+#events>h1 {
   text-align: center;
   margin: 20px;
 }
@@ -216,7 +204,7 @@ li {
   margin: 60px;
 }
 
-.event > p {
+.event>p {
   margin: 20px;
   font-weight: 600;
   font-style: italic;
@@ -224,7 +212,7 @@ li {
   text-align: center;
 }
 
-.event-info > p {
+.event-info>p {
   max-width: 1180px;
   font-size: 20px;
   color: #3a3a3a;
@@ -249,15 +237,15 @@ li {
   font-weight: bold;
 }
 
-.subtitle{
+.subtitle {
   color: rgb(100, 9, 18);
 }
 
-.subcontent{
+.subcontent {
   font-style: italic;
 }
 
-hr{
+hr {
   min-width: 500px;
 }
 
@@ -453,7 +441,7 @@ export default {
       try {
         const charactersData = await this.retrieveData();
         this.charactersData = charactersData;
-        const eventCharacterRelations =await this.retrieveEventCharacterRelations();
+        const eventCharacterRelations = await this.retrieveEventCharacterRelations();
         this.eventCharacterRelations = eventCharacterRelations;
 
         const mecenatiData = await this.retrieveMecenatiData();
@@ -517,6 +505,19 @@ export default {
         throw error;
       }
     },
+    async retrieveMecenatiData() {
+      try {
+        const response = await fetch(
+          "https://directusvirtuose.vidimus.it/items/mecenati"
+        );
+        const responseData = await response.json();
+        const data = responseData.data;
+        return data;
+      } catch (error) {
+        console.error("Error fetching event relations: ", error);
+        throw error;
+      }
+    },
     async retrieveEventFonti() {
       try {
         const response = await fetch(
@@ -570,7 +571,17 @@ export default {
             (rep) => rep.id === relation.mecenati_id
           );
           if (mecenati) {
-            event.relatedMecenati.push(mecenati);
+            // Find the corresponding character from the charactersData
+            const character = this.charactersData.find(
+              (char) => char.id === mecenati.mecenate
+            );
+            if (character) {
+              event.relatedMecenati.push(character);
+            } else {
+              console.warn(`Character not found for mecenate id: ${mecenati.mecenate}`);
+            }
+          } else {
+            console.warn(`Mecenati not found for id: ${relation.mecenati_id}`);
           }
         }
 
@@ -590,6 +601,21 @@ export default {
         // Add each related character to the event's relatedCharacters array
         for (const character of relatedCharacters) {
           event.relatedCharacters.push(character);
+        }
+
+        // Find all matching relationships in the eventRepertorioRelations array
+        const fontRelations = this.fontiRelations.filter(
+          (rel) => rel.eventi_id === event.id
+        );
+
+        // Add each related repertorio object to the event's relatedRepertorio array
+        for (const relation of fontRelations) {
+          const font = this.fontiArchivistiche.find(
+            (rep) => rep.id === relation.fonti_archivistiche_id
+          );
+          if (font) {
+            event.relatedFonti.push(font);
+          }
         }
       }
       return data;
@@ -622,38 +648,10 @@ export default {
       }
     },
 
-    async retrieveFontiMusicali() {
-      try {
-        const response = await fetch(
-          "https://directusvirtuose.vidimus.it/items/fonti_musicali"
-        );
-        const responseData = await response.json();
-        const data = responseData.data;
-        return data;
-      } catch (error) {
-        console.error("Error fetching event relations: ", error);
-        throw error;
-      }
-    },
-
     async retrieveFontiArchivistiche() {
       try {
         const response = await fetch(
           "https://directusvirtuose.vidimus.it/items/fonti_archivistiche"
-        );
-        const responseData = await response.json();
-        const data = responseData.data;
-        return data;
-      } catch (error) {
-        console.error("Error fetching event relations: ", error);
-        throw error;
-      }
-    },
-
-    async retrieveFontiLetterarie() {
-      try {
-        const response = await fetch(
-          "https://directusvirtuose.vidimus.it/items/Fonti_letterarie"
         );
         const responseData = await response.json();
         const data = responseData.data;
